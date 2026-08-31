@@ -52,6 +52,27 @@ header {
   color: #9db9e0;
 }
 
+.bouton-deconnexion {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 13px;
+  font: inherit;
+  color: #c3d6f0;
+  background: rgba(255, 255, 255, .07);
+  border: 1px solid rgba(255, 255, 255, .22);
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.bouton-deconnexion svg { color: #8dc2ff; }
+.bouton-deconnexion:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, .14);
+  border-color: #6ea8ff;
+}
+.bouton-deconnexion:hover svg { color: #fff; }
+
 .recherche { flex: 1; }
 .recherche input {
   width: 100%;
@@ -186,24 +207,11 @@ tr:last-child td { border-bottom: none; }
 .vide { color: var(--doux); text-align: center; margin-top: 60px; }
 
 footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 5px 18px;
+  padding: 6px 18px;
   font-size: 12px;
   color: #c3d6f0;
   background: var(--marine);
 }
-footer button {
-  font: inherit;
-  color: #c3d6f0;
-  background: none;
-  border: 1px solid rgba(255, 255, 255, .25);
-  border-radius: 4px;
-  padding: 2px 10px;
-  cursor: pointer;
-}
-footer button:hover { color: #fff; border-color: #6ea8ff; }
 
 
 /* ---------- écran de connexion (style poste de commande) ---------- */

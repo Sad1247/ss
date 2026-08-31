@@ -49,6 +49,15 @@
       <img src="santinel.png" alt="Santinel">
       <span>Parc informatique</span>
     </div>
+
+    <button id="deconnexion" type="button" class="bouton-deconnexion"
+            title="Fermer la session et revenir à l'écran de connexion">
+      <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true">
+        <path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0 2c-4.4 0-8 2.6-8 5.8V22h16v-2.2c0-3.2-3.6-5.8-8-5.8Z"/>
+      </svg>
+      Déconnexion
+    </button>
+
     <div class="recherche">
       <input id="terme" type="search" autocomplete="off"
              placeholder="Nom, poste, numéro de série ou service…">
@@ -68,10 +77,7 @@
     </section>
   </main>
 
-  <footer>
-    <span id="etat">Chargement…</span>
-    <button id="quitter-session" type="button">Fermer la session</button>
-  </footer>
+  <footer><span id="etat">Chargement…</span></footer>
 
 </div>
 

@@ -175,7 +175,7 @@ $("#formulaire").addEventListener("submit", async (evt) => {
   }
 });
 
-$("#quitter-session").onclick = async () => {
+$("#deconnexion").onclick = async () => {
   await pywebview.api.deconnexion();
   fiches = [];
   choisie = null;
