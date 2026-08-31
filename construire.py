@@ -1,6 +1,8 @@
 """Empaquetage de Santinel en exécutable Windows autonome.
 
-    python construire.py
+    python construire.py              # version normale, sans console
+    python construire.py --console    # garde la console noire ouverte : à
+                                      # utiliser si l'exe se ferme sans rien dire
 
 Produit  dist/Santinel.exe  : un seul fichier, sans installation de Python
 sur les postes. À lancer depuis Windows (PyInstaller ne fait pas de
@@ -21,7 +23,7 @@ def separateur() -> str:
     return ";" if sys.platform == "win32" else ":"
 
 
-def construire() -> int:
+def construire(console: bool = False) -> int:
     if sys.platform != "win32":
         print("Attention : hors Windows, l'exécutable produit ne sera pas un .exe.")
 
@@ -33,7 +35,7 @@ def construire() -> int:
         sys.executable, "-m", "PyInstaller",
         "--noconfirm",
         "--onefile",
-        "--windowed",                       # pas de console noire au lancement
+        "--console" if console else "--windowed",
         "--name", "Santinel",
         "--paths", str(APP),                # main.py fait « import donnees »
         "--add-data", f"{APP / 'interface'}{s}interface",
@@ -53,4 +55,4 @@ def construire() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(construire())
+    sys.exit(construire(console="--console" in sys.argv))
