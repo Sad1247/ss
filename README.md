@@ -27,8 +27,12 @@ Depuis Windows :
 python construire.py          # produit dist/Santinel.exe
 ```
 
-Un seul fichier, aucune installation de Python sur les postes. L'interface et
-`schema.sql` sont embarqués dans l'exécutable.
+Un seul fichier, aucune installation de Python sur les postes. L'interface,
+le logo et `schema.sql` sont embarqués dans l'exécutable, qui prend l'icône
+`ressources/santinel.ico`.
+
+`python construire.py --console` produit une variante qui garde la console
+ouverte, à utiliser si l'exe se ferme sans message.
 
 ## Emplacement des données
 
@@ -48,7 +52,10 @@ SANTINEL_DB=\\serveur\ti\parc.db
 | `app/donnees.py` | accès SQLite : `chercher`, `tous`, `retardataires` |
 | `app/schema.sql` | tables `employe`, `ordinateur`, `equipement` + vue `v_fiche` |
 | `app/interface/` | interface HTML / CSS / JS |
+| `app/interface/santinel.png` | logo (blanc, sur le bandeau marine) |
+| `ressources/santinel.ico` | icône de l'exécutable, dérivée du logo |
 | `outils/exemples.py` | jeu de données de démonstration |
+| `outils/icone.py` | régénère l'icône à partir du logo |
 | `construire.py` | empaquetage PyInstaller |
 
 ## Suivi des versions de FileMaker
