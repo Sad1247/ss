@@ -134,6 +134,58 @@ async function majCompteur() {
   p.dataset.zero = retard.length ? "non" : "oui";
 }
 
+/* ---------- connexion ---------- */
+
+async function ouvrirSession() {
+  $("#connexion").hidden = true;
+  $("#appli").hidden = false;
+  await charger();
+  await majCompteur();
+  $("#terme").focus();
+}
+
+function refuser(message) {
+  const erreur = $("#erreur");
+  erreur.textContent = message;
+  erreur.hidden = false;
+  const panneau = $(".panneau");
+  panneau.classList.remove("refus");
+  void panneau.offsetWidth;          // relance l'animation
+  panneau.classList.add("refus");
+  $("#motdepasse").value = "";
+  $("#motdepasse").focus();
+}
+
+$("#formulaire").addEventListener("submit", async (evt) => {
+  evt.preventDefault();
+  const bouton = $(".bouton-hud");
+  bouton.disabled = true;
+  try {
+    const ok = await pywebview.api.connexion($("#utilisateur").value, $("#motdepasse").value);
+    if (ok) {
+      $("#erreur").hidden = true;
+      await ouvrirSession();
+    } else {
+      refuser("Identifiants incorrects. Accès au parc refusé.");
+    }
+  } catch (err) {
+    refuser("Erreur de connexion : " + err);
+  } finally {
+    bouton.disabled = false;
+  }
+});
+
+$("#quitter-session").onclick = async () => {
+  await pywebview.api.deconnexion();
+  fiches = [];
+  choisie = null;
+  $("#appli").hidden = true;
+  $("#connexion").hidden = false;
+  $("#formulaire").reset();
+  $("#erreur").hidden = true;
+  $("#utilisateur").focus();
+};
+
 /* ---------- évènements ---------- */
 
 let minuterie;
@@ -151,8 +203,6 @@ document.querySelectorAll(".onglet").forEach((b) => {
   };
 });
 
-window.addEventListener("pywebviewready", async () => {
-  await charger();
-  await majCompteur();
-  $("#terme").focus();
+window.addEventListener("pywebviewready", () => {
+  $("#utilisateur").focus();
 });

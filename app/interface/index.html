@@ -7,31 +7,73 @@
 </head>
 <body>
 
-<header>
-  <div class="marque">
-    <img src="santinel.png" alt="Santinel">
-    <span>Parc informatique</span>
-  </div>
-  <div class="recherche">
-    <input id="terme" type="search" autocomplete="off"
-           placeholder="Nom, poste, numéro de série ou service…">
-  </div>
-  <nav class="onglets">
-    <button class="onglet actif" data-vue="tous">Tout le parc</button>
-    <button class="onglet" data-vue="retardataires">
-      À mettre à jour <span id="compteur-retard" class="pastille">0</span>
-    </button>
-  </nav>
-</header>
+<!-- ---------- écran de connexion ---------- -->
+<section id="connexion" class="ecran-connexion">
+  <form class="panneau" id="formulaire" autocomplete="off">
+    <span class="onglet-haut"></span>
+    <span class="coin hg"></span><span class="coin hd"></span>
+    <span class="coin bg"></span><span class="coin bd"></span>
+    <span class="flanc gauche"></span><span class="flanc droite"></span>
 
-<main>
-  <section id="liste" class="liste" aria-label="Fiches"></section>
-  <section id="detail" class="detail" aria-label="Détail de la fiche">
-    <p class="vide">Sélectionnez une fiche à gauche.</p>
-  </section>
-</main>
+    <img class="logo-connexion" src="santinel.png" alt="Santinel">
+    <h1>CONNEXION</h1>
 
-<footer><span id="etat">Chargement…</span></footer>
+    <label class="champ-hud">
+      <span class="icone" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="19" height="19" fill="currentColor">
+          <path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0 2c-4.4 0-8 2.6-8 5.8V22h16v-2.2c0-3.2-3.6-5.8-8-5.8Z"/>
+        </svg>
+      </span>
+      <input id="utilisateur" name="utilisateur" placeholder="Utilisateur" autocomplete="off">
+    </label>
+
+    <label class="champ-hud">
+      <span class="icone" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="19" height="19" fill="currentColor">
+          <path d="M17 9V7a5 5 0 0 0-10 0v2H5v13h14V9h-2Zm-8-2a3 3 0 0 1 6 0v2H9V7Z"/>
+        </svg>
+      </span>
+      <input id="motdepasse" name="motdepasse" type="password" placeholder="Mot de passe">
+    </label>
+
+    <p id="erreur" class="erreur" hidden></p>
+    <button type="submit" class="bouton-hud">Accéder au parc</button>
+  </form>
+</section>
+
+<!-- ---------- application ---------- -->
+<div id="appli" hidden>
+
+  <header>
+    <div class="marque">
+      <img src="santinel.png" alt="Santinel">
+      <span>Parc informatique</span>
+    </div>
+    <div class="recherche">
+      <input id="terme" type="search" autocomplete="off"
+             placeholder="Nom, poste, numéro de série ou service…">
+    </div>
+    <nav class="onglets">
+      <button class="onglet actif" data-vue="tous">Tout le parc</button>
+      <button class="onglet" data-vue="retardataires">
+        À mettre à jour <span id="compteur-retard" class="pastille">0</span>
+      </button>
+    </nav>
+  </header>
+
+  <main>
+    <section id="liste" class="liste" aria-label="Fiches"></section>
+    <section id="detail" class="detail" aria-label="Détail de la fiche">
+      <p class="vide">Sélectionnez une fiche à gauche.</p>
+    </section>
+  </main>
+
+  <footer>
+    <span id="etat">Chargement…</span>
+    <button id="quitter-session" type="button">Fermer la session</button>
+  </footer>
+
+</div>
 
 <script src="app.js"></script>
 </body>

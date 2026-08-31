@@ -22,10 +22,15 @@ body {
   color: var(--texte);
   background: var(--fond);
   height: 100vh;
-  display: flex;
-  flex-direction: column;
   overflow: hidden;
 }
+
+#appli {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+#appli[hidden] { display: none; }
 
 /* ---------- bandeau ---------- */
 
@@ -181,8 +186,156 @@ tr:last-child td { border-bottom: none; }
 .vide { color: var(--doux); text-align: center; margin-top: 60px; }
 
 footer {
-  padding: 6px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 18px;
   font-size: 12px;
   color: #c3d6f0;
   background: var(--marine);
+}
+footer button {
+  font: inherit;
+  color: #c3d6f0;
+  background: none;
+  border: 1px solid rgba(255, 255, 255, .25);
+  border-radius: 4px;
+  padding: 2px 10px;
+  cursor: pointer;
+}
+footer button:hover { color: #fff; border-color: #6ea8ff; }
+
+
+/* ---------- écran de connexion (style poste de commande) ---------- */
+
+.ecran-connexion {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(115% 85% at 50% 40%, #16386e 0%, #0a1c3c 55%, #06122a 100%);
+}
+.ecran-connexion[hidden] { display: none; }
+
+.panneau {
+  position: relative;
+  width: 600px;
+  max-width: 88vw;
+  padding: 52px 74px 46px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: linear-gradient(165deg, rgba(24, 62, 116, .55), rgba(11, 34, 71, .55));
+  border: 1px solid rgba(90, 169, 255, .28);
+}
+
+/* coins en équerre */
+.coin {
+  position: absolute;
+  width: 34px;
+  height: 34px;
+  border: 3px solid #5aa9ff;
+}
+.coin.hg { top: -1px; left: -1px;  border-right: none; border-bottom: none; }
+.coin.hd { top: -1px; right: -1px; border-left: none;  border-bottom: none; }
+.coin.bg { bottom: -1px; left: -1px;  border-right: none; border-top: none; }
+.coin.bd { bottom: -1px; right: -1px; border-left: none;  border-top: none; }
+
+/* accents biseautés sur les flancs */
+.flanc {
+  position: absolute;
+  top: 22%;
+  height: 56%;
+  width: 15px;
+  background: #1e7fe0;
+}
+.flanc.gauche  { left: -1px;  clip-path: polygon(0 0, 100% 14%, 100% 86%, 0 100%); }
+.flanc.droite  { right: -1px; clip-path: polygon(100% 0, 0 14%, 0 86%, 100% 100%); }
+
+/* languette centrale sur l'arête haute */
+.onglet-haut {
+  position: absolute;
+  top: -1px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 210px;
+  height: 30px;
+  background: #1e7fe0;
+  clip-path: polygon(0 0, 100% 0, 90% 100%, 10% 100%);
+}
+
+.logo-connexion { width: 250px; max-width: 70%; margin-bottom: 26px; }
+
+.panneau h1 {
+  margin: 0 0 26px;
+  font-size: 19px;
+  font-weight: 500;
+  letter-spacing: .32em;
+  text-indent: .32em;
+  color: #cfe4ff;
+}
+
+.champ-hud {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  margin-bottom: 14px;
+  background: rgba(30, 127, 224, .16);
+  border: 1px solid #5aa9ff;
+}
+.champ-hud:focus-within {
+  border-color: #9ccbff;
+  box-shadow: 0 0 0 3px rgba(90, 169, 255, .25);
+}
+.champ-hud .icone {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  color: #8dc2ff;
+  background: rgba(30, 127, 224, .38);
+}
+.champ-hud input {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 14px;
+  font: inherit;
+  color: #eaf3ff;
+  background: none;
+  border: none;
+}
+.champ-hud input:focus { outline: none; }
+.champ-hud input::placeholder { color: #7ea3d4; }
+
+.erreur {
+  width: 100%;
+  margin: 4px 0 0;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #ffc2bc;
+  background: rgba(192, 43, 29, .28);
+  border-left: 3px solid #ff6b5b;
+}
+.erreur[hidden] { display: none; }
+
+.bouton-hud {
+  width: 100%;
+  margin-top: 20px;
+  padding: 12px;
+  font: inherit;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: #06122a;
+  background: #38a0ff;
+  border: none;
+  cursor: pointer;
+  clip-path: polygon(14px 0, 100% 0, calc(100% - 14px) 100%, 0 100%);
+}
+.bouton-hud:hover { background: #62b6ff; }
+.bouton-hud:active { background: #2a8ae6; }
+
+.panneau.refus { animation: secousse .3s; }
+@keyframes secousse {
+  25% { transform: translateX(-9px); }
+  75% { transform: translateX(9px); }
 }

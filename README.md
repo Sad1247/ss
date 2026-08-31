@@ -34,6 +34,23 @@ le logo et `schema.sql` sont embarqués dans l'exécutable, qui prend l'icône
 `python construire.py --console` produit une variante qui garde la console
 ouverte, à utiliser si l'exe se ferme sans message.
 
+## Connexion
+
+L'application s'ouvre sur un écran de connexion. Identifiants par défaut :
+`Admin` / `Admin` (le nom d'utilisateur ignore la casse, pas le mot de
+passe). Pour les changer sans recompiler :
+
+```
+SANTINEL_UTILISATEUR=parc
+SANTINEL_MOTDEPASSE=un-mot-de-passe
+```
+
+Le contrôle est fait côté Python : tant que la session n'est pas ouverte,
+`chercher`, `tous` et `retardataires` refusent de répondre. Ce n'est pas
+pour autant un rempart sérieux — le fichier `parc.db` reste lisible par
+quiconque a accès au poste ou au partage réseau. C'est une barrière contre
+la consultation de passage, pas contre quelqu'un de déterminé.
+
 ## Emplacement des données
 
 Par défaut `%LOCALAPPDATA%\Santinel\parc.db`. Pour partager la même base entre
@@ -51,7 +68,7 @@ SANTINEL_DB=\\serveur\ti\parc.db
 | `app/main.py` | fenêtre pywebview, expose l'API Python au JavaScript |
 | `app/donnees.py` | accès SQLite : `chercher`, `tous`, `retardataires` |
 | `app/schema.sql` | tables `employe`, `ordinateur`, `equipement` + vue `v_fiche` |
-| `app/interface/` | interface HTML / CSS / JS |
+| `app/interface/` | écran de connexion et interface HTML / CSS / JS |
 | `app/interface/santinel.png` | logo (blanc, sur le bandeau marine) |
 | `ressources/santinel.ico` | icône de l'exécutable, dérivée du logo |
 | `outils/exemples.py` | jeu de données de démonstration |
