@@ -24,13 +24,16 @@ EMPLOYES = [
      "RH-02", "HP EliteDesk 800", "CZC2410XYZ", "2022-01-20", None),
     ("Alain Gagné", "Entrepôt", "418 555-0190", "310",
      "ENTREPOT-01", "Dell OptiPlex 3000", "9WQ4T1B", "2025-02-17", "22.0.1"),
-    ("Saad Anjar", "Informatique", "418 555-0101", "200",
+    ("Saad", "Informatique", "418 555-0101", "200",
      "TI-PORT-01", "Dell Latitude 5450", "H7X2M9P", "2025-06-09", "22.0.1"),
     ("Karine Doucet", "Marketing", "418 555-0163", "228",
      "MARKET-04", "Lenovo ThinkCentre M70q", "MJ0AB1CD", "2023-11-06", "20.3.1"),
     ("Luc Marchand", "Expédition", "418 555-0184", "305",
      "EXPED-02", "HP ProDesk 400 G9", "8CG3120FGH", "2024-03-25", None),
 ]
+
+# Fiches renommées après coup : appliqué aux bases déjà remplies.
+RENOMMAGES = {"Saad Anjar": "Saad"}
 
 EQUIPEMENTS = {
     "Marie Tremblay": [("Écran", "Dell P2422H 24 pouces", "CN0X1Y2Z"),
@@ -39,9 +42,9 @@ EQUIPEMENTS = {
     "Sophie Lavoie": [("Écran", "HP E243 24 pouces", "6CM8241QRS"),
                       ("Téléphone IP", "Yealink T46S", "80AB12CD34")],
     "Alain Gagné": [("Lecteur code-barres", "Zebra DS2208", "18240522500123")],
-    "Saad Anjar": [("Écran", "Dell U2723QE 27 pouces", "CN0P4R5T"),
-                   ("Écran", "Dell U2723QE 27 pouces", "CN0P4R5U"),
-                   ("Station d'accueil", "Dell WD19S", "5J8K2L1M")],
+    "Saad": [("Écran", "Dell U2723QE 27 pouces", "CN0P4R5T"),
+             ("Écran", "Dell U2723QE 27 pouces", "CN0P4R5U"),
+             ("Station d'accueil", "Dell WD19S", "5J8K2L1M")],
     "Karine Doucet": [("Écran", "Lenovo ThinkVision T24i", "V906C2XY"),
                       ("Casque", "Jabra Evolve2 40", "JB4471002")],
     "Luc Marchand": [("Imprimante étiquettes", "Zebra ZD421", "D4J213900456"),
@@ -53,6 +56,9 @@ def main() -> int:
     donnees.initialiser()
     ajoutes = 0
     with donnees.connexion() as cx:
+        for ancien, nouveau in RENOMMAGES.items():
+            cx.execute("UPDATE employe SET nom = ? WHERE nom = ?", (nouveau, ancien))
+
         deja = {ligne[0] for ligne in cx.execute("SELECT nom FROM employe")}
 
         for nom, service, tel, poste, ordi, modele, serie, date, fm in EMPLOYES:
