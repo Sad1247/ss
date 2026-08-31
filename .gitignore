@@ -1,2 +1,6 @@
 __pycache__/
 *.wav
+build/
+dist/
+*.spec
+*.db

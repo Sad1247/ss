@@ -1,3 +1,65 @@
+# ss
+
+Deux projets indépendants dans le même dépôt : **Santinel** (application de
+gestion du parc informatique) et **velvet-cat-jazz** (générateur de jazz lofi).
+
+---
+
+# Santinel — parc informatique
+
+Application de bureau Windows qui recense les employés, leur poste de travail,
+leurs équipements et la version de FileMaker installée. Fenêtre native
+(pywebview) avec une interface HTML, données dans un simple fichier SQLite.
+
+## Lancer en développement
+
+```bash
+pip install -r requirements.txt
+python outils/exemples.py     # facultatif : quelques fiches de démonstration
+python app/main.py
+```
+
+## Construire l'exécutable
+
+Depuis Windows :
+
+```bash
+python construire.py          # produit dist/Santinel.exe
+```
+
+Un seul fichier, aucune installation de Python sur les postes. L'interface et
+`schema.sql` sont embarqués dans l'exécutable.
+
+## Emplacement des données
+
+Par défaut `%LOCALAPPDATA%\Santinel\parc.db`. Pour partager la même base entre
+plusieurs postes, pointer la variable d'environnement `SANTINEL_DB` vers un
+partage réseau — sans recompiler :
+
+```
+SANTINEL_DB=\\serveur\ti\parc.db
+```
+
+## Structure
+
+| Chemin | Rôle |
+| --- | --- |
+| `app/main.py` | fenêtre pywebview, expose l'API Python au JavaScript |
+| `app/donnees.py` | accès SQLite : `chercher`, `tous`, `retardataires` |
+| `app/schema.sql` | tables `employe`, `ordinateur`, `equipement` + vue `v_fiche` |
+| `app/interface/` | interface HTML / CSS / JS |
+| `outils/exemples.py` | jeu de données de démonstration |
+| `construire.py` | empaquetage PyInstaller |
+
+## Suivi des versions de FileMaker
+
+`FILEMAKER_CIBLE` dans `app/donnees.py` définit la version considérée à jour
+(actuellement `22`). Une fiche dont la version ne commence pas par cette valeur
+— ou dont FileMaker n'est pas installé — apparaît dans l'onglet
+« À mettre à jour ». Ajuster cette constante lors des montées de version.
+
+---
+
 # velvet-cat-jazz
 
 Générateur de jazz lofi « vintage noir » — le genre de nappe qu'on trouve sur les

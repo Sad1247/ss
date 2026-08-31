@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Santinel — Parc informatique</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <div class="marque">Santinel<span>Parc informatique</span></div>
+  <div class="recherche">
+    <input id="terme" type="search" autocomplete="off"
+           placeholder="Nom, poste, numéro de série ou service…">
+  </div>
+  <nav class="onglets">
+    <button class="onglet actif" data-vue="tous">Tout le parc</button>
+    <button class="onglet" data-vue="retardataires">
+      À mettre à jour <span id="compteur-retard" class="pastille">0</span>
+    </button>
+  </nav>
+</header>
+
+<main>
+  <section id="liste" class="liste" aria-label="Fiches"></section>
+  <section id="detail" class="detail" aria-label="Détail de la fiche">
+    <p class="vide">Sélectionnez une fiche à gauche.</p>
+  </section>
+</main>
+
+<footer><span id="etat">Chargement…</span></footer>
+
+<script src="app.js"></script>
+</body>
+</html>

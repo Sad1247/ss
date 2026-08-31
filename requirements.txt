@@ -1,1 +1,7 @@
+# Santinel — parc informatique
+pywebview>=5.1
+pyinstaller>=6.6
+pillow>=10.3
+
+# velvet-cat-jazz — générateur lofi (lofi_jazz.py)
 numpy>=1.24
