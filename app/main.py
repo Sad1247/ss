@@ -67,6 +67,14 @@ class Api:
         self._exiger_session()
         return donnees.retardataires()
 
+    def compte(self):
+        """Renseignements sur la session en cours."""
+        self._exiger_session()
+        return {
+            "utilisateur": UTILISATEUR,
+            "base": str(donnees.chemin_base()),
+        }
+
     def definir_actif(self, employe_id, actif):
         """Bascule l'état d'emploi d'une fiche. Session obligatoire."""
         self._exiger_session()

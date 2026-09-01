@@ -204,8 +204,48 @@ $("#formulaire").addEventListener("submit", async (evt) => {
   }
 });
 
+const menu = $("#menu-compte");
+const boutonCompte = $("#bouton-compte");
+
+function ouvrirMenu(ouvert) {
+  menu.hidden = !ouvert;
+  boutonCompte.setAttribute("aria-expanded", ouvert ? "true" : "false");
+}
+
+boutonCompte.onclick = (evt) => {
+  evt.stopPropagation();
+  ouvrirMenu(menu.hidden);
+};
+
+document.addEventListener("click", () => ouvrirMenu(false));
+document.addEventListener("keydown", (evt) => {
+  if (evt.key === "Escape") {
+    ouvrirMenu(false);
+    $("#fenetre-compte").hidden = true;
+  }
+});
+
+$("#voir-compte").onclick = async () => {
+  ouvrirMenu(false);
+  try {
+    const infos = await pywebview.api.compte();
+    $("#compte-utilisateur").textContent = infos.utilisateur;
+    $("#compte-base").textContent = infos.base;
+    $("#fenetre-compte").hidden = false;
+  } catch (err) {
+    etat("Compte indisponible : " + err);
+  }
+};
+
+$("#fermer-compte").onclick = () => { $("#fenetre-compte").hidden = true; };
+$("#fenetre-compte").onclick = (evt) => {
+  if (evt.target === $("#fenetre-compte")) $("#fenetre-compte").hidden = true;
+};
+
 $("#deconnexion").onclick = async () => {
   await pywebview.api.deconnexion();
+  ouvrirMenu(false);
+  $("#fenetre-compte").hidden = true;
   fiches = [];
   choisie = null;
   $("#appli").hidden = true;

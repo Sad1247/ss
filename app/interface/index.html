@@ -61,13 +61,33 @@
       </button>
     </nav>
 
-    <button id="deconnexion" type="button" class="bouton-deconnexion"
-            title="Fermer la session et revenir à l'écran de connexion">
-      <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true">
-        <path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0 2c-4.4 0-8 2.6-8 5.8V22h16v-2.2c0-3.2-3.6-5.8-8-5.8Z"/>
-      </svg>
-      Déconnexion
-    </button>
+    <div class="menu-compte">
+      <button id="bouton-compte" type="button" class="bouton-deconnexion"
+              aria-haspopup="true" aria-expanded="false">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true">
+          <path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0 2c-4.4 0-8 2.6-8 5.8V22h16v-2.2c0-3.2-3.6-5.8-8-5.8Z"/>
+        </svg>
+        Compte
+        <svg class="chevron" viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true">
+          <path d="M7 10l5 5 5-5z"/>
+        </svg>
+      </button>
+
+      <div id="menu-compte" class="menu" hidden>
+        <button id="voir-compte" type="button" class="element-menu">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+            <path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0 2c-4.4 0-8 2.6-8 5.8V22h16v-2.2c0-3.2-3.6-5.8-8-5.8Z"/>
+          </svg>
+          Compte
+        </button>
+        <button id="deconnexion" type="button" class="element-menu">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+            <path d="M10 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h5v-2H6V6h4V4Zm5.6 3.6-1.4 1.4 2 2H9v2h7.2l-2 2 1.4 1.4L20 12l-4.4-4.4Z"/>
+          </svg>
+          Déconnexion
+        </button>
+      </div>
+    </div>
   </header>
 
   <main>
@@ -78,6 +98,18 @@
   </main>
 
   <footer><span id="etat">Chargement…</span></footer>
+
+  <div id="fenetre-compte" class="voile" hidden>
+    <div class="boite" role="dialog" aria-labelledby="titre-compte">
+      <h2 id="titre-compte">Compte</h2>
+      <dl class="infos-compte">
+        <dt>Utilisateur</dt><dd id="compte-utilisateur">—</dd>
+        <dt>Session</dt><dd>Ouverte</dd>
+        <dt>Fichier de données</dt><dd id="compte-base">—</dd>
+      </dl>
+      <button id="fermer-compte" type="button" class="bouton-etat">Fermer</button>
+    </div>
+  </div>
 
 </div>
 

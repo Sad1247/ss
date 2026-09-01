@@ -66,6 +66,81 @@ header {
   white-space: nowrap;
 }
 .bouton-deconnexion svg { color: #8dc2ff; }
+.bouton-deconnexion .chevron { margin-left: 1px; transition: transform .15s; }
+.bouton-deconnexion[aria-expanded="true"] .chevron { transform: rotate(180deg); }
+
+.menu-compte { position: relative; }
+
+.menu {
+  position: absolute;
+  top: calc(100% + 7px);
+  right: 0;
+  z-index: 20;
+  min-width: 195px;
+  padding: 5px;
+  background: var(--carte);
+  border: 1px solid var(--trait);
+  border-radius: 7px;
+  box-shadow: 0 8px 22px rgba(8, 26, 56, .3);
+}
+.menu[hidden] { display: none; }
+
+.element-menu {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 11px;
+  font: inherit;
+  text-align: left;
+  color: var(--texte);
+  background: none;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.element-menu svg { color: var(--doux); }
+.element-menu:hover { background: var(--bleu-pale); color: var(--marine); }
+.element-menu:hover svg { color: var(--bleu); }
+
+/* fenêtre « Compte » */
+.voile {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  background: rgba(8, 26, 56, .55);
+}
+.voile[hidden] { display: none; }
+
+.boite {
+  width: 430px;
+  max-width: 88vw;
+  padding: 24px 26px;
+  background: var(--carte);
+  border-radius: 10px;
+  box-shadow: 0 18px 44px rgba(8, 26, 56, .4);
+}
+.boite h2 { margin: 0 0 18px; font-size: 18px; color: var(--marine); }
+
+.infos-compte {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px 18px;
+  margin: 0 0 22px;
+}
+.infos-compte dt {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--doux);
+  padding-top: 2px;
+}
+.infos-compte dd {
+  margin: 0;
+  word-break: break-all;
+}
 .bouton-deconnexion:hover {
   color: #fff;
   background: rgba(255, 255, 255, .14);

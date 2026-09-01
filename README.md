@@ -45,6 +45,9 @@ SANTINEL_UTILISATEUR=parc
 SANTINEL_MOTDEPASSE=un-mot-de-passe
 ```
 
+Le menu **Compte**, à droite du bandeau, donne accès à la fiche de session
+(utilisateur, emplacement du fichier de données) et à la déconnexion.
+
 Le contrôle est fait côté Python : tant que la session n'est pas ouverte,
 `chercher`, `tous` et `retardataires` refusent de répondre. Ce n'est pas
 pour autant un rempart sérieux — le fichier `parc.db` reste lisible par
