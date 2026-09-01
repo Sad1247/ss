@@ -3,6 +3,7 @@
 const $ = (sel) => document.querySelector(sel);
 
 let session = null;    // {utilisateur, role} une fois connecté
+let editionCoordonnees = false;
 let vue = "tous";      // "tous" | "retardataires"
 let fiches = [];
 let choisie = null;
@@ -41,6 +42,7 @@ function dessinerListe() {
 
   liste.querySelectorAll(".entree").forEach((el) => {
     el.onclick = () => {
+      editionCoordonnees = false;
       choisie = Number(el.dataset.id);
       dessinerListe();
       dessinerDetail();
@@ -80,10 +82,20 @@ function dessinerDetail() {
     </div>
 
     <section class="bloc">
-      <h2>Coordonnées</h2>
+      <h2>
+        Coordonnées
+        ${peutModifier() ? (editionCoordonnees
+          ? `<span class="actions-bloc">
+               <button type="button" id="annuler-coordonnees" class="lien-action">Annuler</button>
+               <button type="button" id="enregistrer-coordonnees" class="lien-action fort">Enregistrer</button>
+             </span>`
+          : `<button type="button" id="modifier-coordonnees" class="lien-action">Modifier</button>`) : ""}
+      </h2>
       <div class="champs">
-        ${champ("Téléphone", f.telephone)}
-        ${champ("Poste interne", f.poste_interne)}
+        ${editionCoordonnees
+          ? champSaisie("Téléphone", "saisie-telephone", f.telephone) +
+            champSaisie("Poste interne", "saisie-poste", f.poste_interne)
+          : champ("Téléphone", f.telephone) + champ("Poste interne", f.poste_interne)}
       </div>
     </section>
 
@@ -110,7 +122,52 @@ function dessinerDetail() {
       ${equipements}
     </section>`;
 
-  if (peutModifier()) $("#basculer-etat").onclick = () => basculerEtat(f);
+  if (peutModifier()) {
+    $("#basculer-etat").onclick = () => basculerEtat(f);
+    if (editionCoordonnees) {
+      $("#annuler-coordonnees").onclick = () => {
+        editionCoordonnees = false;
+        dessinerDetail();
+      };
+      $("#enregistrer-coordonnees").onclick = () => enregistrerCoordonnees(f);
+      $(".champs input").focus();
+      document.querySelectorAll(".champs input").forEach((entree) => {
+        entree.onkeydown = (evt) => {
+          if (evt.key === "Enter") enregistrerCoordonnees(f);
+          if (evt.key === "Escape") { editionCoordonnees = false; dessinerDetail(); }
+        };
+      });
+    } else {
+      $("#modifier-coordonnees").onclick = () => {
+        editionCoordonnees = true;
+        dessinerDetail();
+      };
+    }
+  }
+}
+
+function champSaisie(etiquette, id, v) {
+  return `<div class="champ">
+            <div class="etiquette">${echapper(etiquette)}</div>
+            <input id="${id}" class="saisie" value="${echapper(v ?? "")}">
+          </div>`;
+}
+
+async function enregistrerCoordonnees(f) {
+  const bouton = $("#enregistrer-coordonnees");
+  bouton.disabled = true;
+  try {
+    const valeurs = await pywebview.api.definir_coordonnees(
+      f.id, $("#saisie-telephone").value, $("#saisie-poste").value);
+    f.telephone = valeurs.telephone;
+    f.poste_interne = valeurs.poste_interne;
+    editionCoordonnees = false;
+    dessinerDetail();
+    etat(`Coordonnées de ${f.nom} enregistrées.`);
+  } catch (err) {
+    bouton.disabled = false;
+    etat("Enregistrement refusé : " + err);
+  }
 }
 
 function peutModifier() {
@@ -141,6 +198,7 @@ function champ(etiquette, v) {
 /* ---------- données ---------- */
 
 async function charger() {
+  editionCoordonnees = false;
   const terme = $("#terme").value.trim();
   try {
     if (terme) {
@@ -253,6 +311,7 @@ $("#fenetre-compte").onclick = (evt) => {
 $("#deconnexion").onclick = async () => {
   await pywebview.api.deconnexion();
   session = null;
+  editionCoordonnees = false;
   ouvrirMenu(false);
   $("#fenetre-compte").hidden = true;
   fiches = [];

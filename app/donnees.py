@@ -97,6 +97,26 @@ def definir_actif(employe_id: int, actif: bool) -> bool:
     return bool(actif)
 
 
+def definir_coordonnees(employe_id: int, telephone: str, poste_interne: str) -> dict:
+    """Met à jour le téléphone et le poste interne. Renvoie les valeurs gardées.
+
+    Un champ laissé vide est enregistré comme absent (NULL) plutôt que comme
+    une chaîne vide, pour que la fiche affiche « — » comme ailleurs.
+    """
+    valeurs = {
+        "telephone": (telephone or "").strip() or None,
+        "poste_interne": (poste_interne or "").strip() or None,
+    }
+    with connexion() as cx:
+        curseur = cx.execute(
+            "UPDATE employe SET telephone = ?, poste_interne = ? WHERE id = ?",
+            (valeurs["telephone"], valeurs["poste_interne"], employe_id),
+        )
+        if curseur.rowcount == 0:
+            raise ValueError(f"Aucun employé avec l'identifiant {employe_id}.")
+    return valeurs
+
+
 def _fiche(cx: sqlite3.Connection, ligne: sqlite3.Row) -> dict:
     equipements = cx.execute(
         "SELECT type, description, numero_serie FROM equipement "

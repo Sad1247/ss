@@ -89,6 +89,16 @@ SANTINEL_DB=\\serveur\ti\parc.db
 | `outils/icone.py` | régénère l'icône à partir du logo |
 | `construire.py` | empaquetage PyInstaller |
 
+## Modifier une fiche
+
+Avec le compte administrateur, le bloc **Coordonnées** porte un bouton
+« Modifier » : les deux champs deviennent saisissables, `Entrée` enregistre,
+`Échap` ou « Annuler » abandonne. Un champ laissé vide est enregistré comme
+absent et la fiche affiche « — ».
+
+Le compte en lecture seule n'a pas ce bouton, et `definir_coordonnees` le
+refuserait de toute façon.
+
 ## Employés actifs et inactifs
 
 Chaque fiche porte un état affiché à droite dans la liste : vert « Actif »,

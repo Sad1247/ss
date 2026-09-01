@@ -298,6 +298,10 @@ main { flex: 1; display: flex; min-height: 0; }
   box-shadow: 0 1px 2px rgba(11, 47, 92, .05);
 }
 .bloc h2 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   margin: 0 0 13px;
   padding-bottom: 8px;
   font-size: 11px;
@@ -306,6 +310,36 @@ main { flex: 1; display: flex; min-height: 0; }
   color: var(--bleu);
   border-bottom: 1px solid var(--trait);
 }
+
+.actions-bloc { display: flex; gap: 6px; }
+
+.lien-action {
+  padding: 4px 10px;
+  font: inherit;
+  font-size: 12px;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--bleu);
+  background: none;
+  border: 1px solid var(--trait);
+  border-radius: 5px;
+  cursor: pointer;
+}
+.lien-action:hover:not(:disabled) { border-color: var(--bleu); background: var(--bleu-pale); }
+.lien-action.fort { color: #fff; background: var(--bleu); border-color: var(--bleu); }
+.lien-action.fort:hover:not(:disabled) { background: #1560d8; }
+.lien-action:disabled { opacity: .55; cursor: default; }
+
+.saisie {
+  width: 100%;
+  padding: 6px 9px;
+  font: inherit;
+  color: var(--texte);
+  background: var(--carte);
+  border: 1px solid var(--bleu);
+  border-radius: 5px;
+}
+.saisie:focus { outline: none; box-shadow: 0 0 0 3px rgba(29, 110, 240, .18); }
 
 .champs { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 13px 20px; }
 .champ .etiquette { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--doux); }
