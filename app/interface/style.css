@@ -329,6 +329,8 @@ main { flex: 1; display: flex; min-height: 0; }
 .lien-action.fort { color: #fff; background: var(--bleu); border-color: var(--bleu); }
 .lien-action.fort:hover:not(:disabled) { background: #1560d8; }
 .lien-action:disabled { opacity: .55; cursor: default; }
+.actions-suivi { display: flex; gap: 6px; }
+
 .lien-action.petit {
   margin-top: 7px;
   padding: 3px 9px;

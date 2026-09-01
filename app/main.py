@@ -119,6 +119,12 @@ class Api:
         self._exiger_administrateur()
         return donnees.definir_suivi(int(employe_id), bool(suivi))
 
+    def suivi_automatique(self, employe_id):
+        """Rend la fiche au calcul automatique. Administrateur."""
+        self._exiger_administrateur()
+        donnees.suivi_automatique(int(employe_id))
+        return True
+
     def definir_coordonnees(self, employe_id, telephone, poste_interne):
         """Enregistre les coordonnées d'une fiche. Réservé à l'administrateur."""
         self._exiger_administrateur()

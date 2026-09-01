@@ -8,8 +8,9 @@ CREATE TABLE IF NOT EXISTS employe (
     telephone     TEXT,
     poste_interne TEXT,
     actif         INTEGER NOT NULL DEFAULT 1,  -- 1 = en poste, 0 = inactif
-    -- 0 = exclu de l'onglet « À mettre à jour », quelle que soit sa version
-    suivi_filemaker INTEGER NOT NULL DEFAULT 1
+    -- Présence dans l'onglet « À mettre à jour », décidée à la main :
+    -- NULL = laisser la version FileMaker décider, 1 = toujours, 0 = jamais.
+    suivi_manuel  INTEGER
 );
 
 -- Un employé a au plus un poste de travail principal.
@@ -49,7 +50,7 @@ SELECT
     e.telephone,
     e.poste_interne,
     e.actif,
-    e.suivi_filemaker,
+    e.suivi_manuel,
     o.nom_ordinateur,
     o.modele,
     o.numero_serie,

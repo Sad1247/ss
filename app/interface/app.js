@@ -22,9 +22,9 @@ function etat(message) {
   $("#etat").textContent = message;
 }
 
-/** Fiche suivie dont FileMaker n'est pas à jour : celles de l'onglet. */
+/** Fiche figurant dans l'onglet « À mettre à jour ». */
 function aRelancer(f) {
-  return f.suivi && !f.filemaker_ok;
+  return f.suivi;
 }
 
 function peutModifier() {
@@ -118,16 +118,24 @@ function blocPoste(f) {
       `<div class="champ">
          <div class="etiquette">FileMaker</div>
          <div class="valeur">
-           <span class="etat-fm ${!f.suivi ? "hors" : f.filemaker_ok ? "ok" : "retard"}">
+           <span class="etat-fm ${f.suivi ? "retard" : f.filemaker_ok ? "ok" : "hors"}">
              ${echapper(f.version_filemaker)}${
-               !f.suivi ? " — hors suivi" : f.filemaker_ok ? "" : " — à mettre à jour"}
+               f.suivi ? " — à mettre à jour" : f.filemaker_ok ? "" : " — hors suivi"}
            </span>
          </div>
          ${peutModifier() && edition === null
-           ? `<button type="button" id="basculer-suivi" class="lien-action petit"
-                      title="Inclure ou retirer cette fiche de l'onglet « À mettre à jour »">
-                ${f.suivi ? "Retirer du suivi" : "Remettre au suivi"}
-              </button>`
+           ? `<div class="actions-suivi">
+                <button type="button" id="basculer-suivi" class="lien-action petit"
+                        title="Inclure ou retirer cette fiche de l'onglet « À mettre à jour »">
+                  ${f.suivi ? "Retirer du suivi" : "Mettre au suivi"}
+                </button>
+                ${f.suivi_choisi
+                  ? `<button type="button" id="suivi-auto" class="lien-action petit"
+                             title="Laisser de nouveau la version FileMaker décider">
+                       Automatique
+                     </button>`
+                  : ""}
+              </div>`
            : ""}
        </div>`;
   return `<section class="bloc">
@@ -210,6 +218,9 @@ function brancherFiche(f) {
 
   const suivi = $("#basculer-suivi");
   if (suivi) suivi.onclick = () => basculerSuivi(f);
+
+  const auto = $("#suivi-auto");
+  if (auto) auto.onclick = () => rendreAutomatique(f);
 
   document.querySelectorAll("[data-modifier]").forEach((b) => {
     b.onclick = () => {
@@ -305,15 +316,40 @@ async function basculerSuivi(f) {
   bouton.disabled = true;
   try {
     f.suivi = await pywebview.api.definir_suivi(f.id, !f.suivi);
-    dessinerListe();
-    dessinerDetail();
-    await majCompteur();
+    f.suivi_choisi = true;
+    await rafraichir();
     etat(f.suivi
-      ? `${f.nom} est de nouveau suivi pour FileMaker.`
-      : `${f.nom} ne figurera plus dans « À mettre à jour ».`);
+      ? `${f.nom} figure maintenant dans « À mettre à jour ».`
+      : `${f.nom} ne figure plus dans « À mettre à jour ».`);
   } catch (err) {
     bouton.disabled = false;
     etat("Modification refusée : " + err);
+  }
+}
+
+async function rendreAutomatique(f) {
+  const bouton = $("#suivi-auto");
+  bouton.disabled = true;
+  try {
+    await pywebview.api.suivi_automatique(f.id);
+    f.suivi_choisi = false;
+    f.suivi = !f.filemaker_ok;
+    await rafraichir();
+    etat(`${f.nom} suit de nouveau la version de FileMaker.`);
+  } catch (err) {
+    bouton.disabled = false;
+    etat("Modification refusée : " + err);
+  }
+}
+
+/** Redessine, et retire la fiche de la vue si elle n'y a plus sa place. */
+async function rafraichir() {
+  if (vue === "retardataires") {
+    await charger();
+  } else {
+    dessinerListe();
+    dessinerDetail();
+    await majCompteur();
   }
 }
 

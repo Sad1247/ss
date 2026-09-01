@@ -129,12 +129,15 @@ automatiquement au démarrage (voir `_migrer` dans `app/donnees.py`).
 — ou dont FileMaker n'est pas installé — apparaît dans l'onglet
 « À mettre à jour ». Ajuster cette constante lors des montées de version.
 
-Ce calcul automatique se corrige au cas par cas : sous la version FileMaker
-de la fiche, l'administrateur dispose d'un bouton **Retirer du suivi** /
-**Remettre au suivi**. Une fiche retirée n'apparaît plus dans l'onglet ni
-dans son compteur, et sa version s'affiche en gris « hors suivi » au lieu du
-rouge. C'est la colonne `employe.suivi_filemaker`, à 1 par défaut, ajoutée
-aux bases existantes par la même migration que `actif`.
+Ce calcul n'est qu'un défaut : sous la version FileMaker, l'administrateur
+décide au cas par cas avec **Mettre au suivi** / **Retirer du suivi**. Le
+choix l'emporte sur la version — n'importe quelle fiche peut entrer dans
+l'onglet, y compris un poste parfaitement à jour, et n'importe laquelle peut
+en sortir. Un bouton **Automatique** rend la fiche au calcul par la version.
+
+C'est la colonne `employe.suivi_manuel` : `NULL` (la version décide), `1`
+(toujours dans l'onglet) ou `0` (jamais). Les bases existantes la reçoivent
+au démarrage, en conservant les exclusions déjà faites.
 
 ---
 
