@@ -2,6 +2,7 @@
 
 const $ = (sel) => document.querySelector(sel);
 
+let session = null;    // {utilisateur, role} une fois connecté
 let vue = "tous";      // "tous" | "retardataires"
 let fiches = [];
 let choisie = null;
@@ -70,9 +71,11 @@ function dessinerDetail() {
       </div>
       <div class="controle-etat">
         <span class="etat-emploi ${f.actif ? "oui" : "non"}">${f.actif ? "Actif" : "Inactif"}</span>
-        <button type="button" id="basculer-etat" class="bouton-etat">
-          ${f.actif ? "Marquer inactif" : "Réactiver"}
-        </button>
+        ${peutModifier()
+          ? `<button type="button" id="basculer-etat" class="bouton-etat">
+               ${f.actif ? "Marquer inactif" : "Réactiver"}
+             </button>`
+          : `<span class="mention-lecture" title="Ce compte ne peut pas modifier les fiches">Lecture seule</span>`}
       </div>
     </div>
 
@@ -107,7 +110,11 @@ function dessinerDetail() {
       ${equipements}
     </section>`;
 
-  $("#basculer-etat").onclick = () => basculerEtat(f);
+  if (peutModifier()) $("#basculer-etat").onclick = () => basculerEtat(f);
+}
+
+function peutModifier() {
+  return session !== null && session.role === "administrateur";
 }
 
 async function basculerEtat(f) {
@@ -190,8 +197,8 @@ $("#formulaire").addEventListener("submit", async (evt) => {
   const bouton = $(".bouton-hud");
   bouton.disabled = true;
   try {
-    const ok = await pywebview.api.connexion($("#utilisateur").value, $("#motdepasse").value);
-    if (ok) {
+    session = await pywebview.api.connexion($("#utilisateur").value, $("#motdepasse").value);
+    if (session) {
       $("#erreur").hidden = true;
       await ouvrirSession();
     } else {
@@ -230,6 +237,7 @@ $("#voir-compte").onclick = async () => {
   try {
     const infos = await pywebview.api.compte();
     $("#compte-utilisateur").textContent = infos.utilisateur;
+    $("#compte-role").textContent = infos.role_libelle;
     $("#compte-base").textContent = infos.base;
     $("#fenetre-compte").hidden = false;
   } catch (err) {
@@ -244,6 +252,7 @@ $("#fenetre-compte").onclick = (evt) => {
 
 $("#deconnexion").onclick = async () => {
   await pywebview.api.deconnexion();
+  session = null;
   ouvrirMenu(false);
   $("#fenetre-compte").hidden = true;
   fiches = [];

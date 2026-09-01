@@ -36,23 +36,34 @@ ouverte, à utiliser si l'exe se ferme sans message.
 
 ## Connexion
 
-L'application s'ouvre sur un écran de connexion. Identifiants par défaut :
-`Admin` / `Admin` (le nom d'utilisateur ignore la casse, pas le mot de
-passe). Pour les changer sans recompiler :
+L'application s'ouvre sur un écran de connexion. Deux comptes :
+
+| Compte | Mot de passe | Droits |
+| --- | --- | --- |
+| `Admin` | `Admin` | consultation **et** modification |
+| `Invité` | `1234` | consultation seule |
+
+Le nom d'utilisateur ignore la casse et les accents (`Invité`, `invite` et
+`INVITE` sont le même compte) ; le mot de passe, non. Pour changer ces
+identifiants sans recompiler :
 
 ```
-SANTINEL_UTILISATEUR=parc
-SANTINEL_MOTDEPASSE=un-mot-de-passe
+SANTINEL_UTILISATEUR / SANTINEL_MOTDEPASSE          (compte administrateur)
+SANTINEL_INVITE      / SANTINEL_INVITE_MOTDEPASSE   (compte en lecture)
 ```
 
-Le menu **Compte**, à droite du bandeau, donne accès à la fiche de session
-(utilisateur, emplacement du fichier de données) et à la déconnexion.
+Le menu **Compte**, à droite du bandeau, indique le compte connecté et ses
+droits, et permet de se déconnecter.
 
-Le contrôle est fait côté Python : tant que la session n'est pas ouverte,
-`chercher`, `tous` et `retardataires` refusent de répondre. Ce n'est pas
-pour autant un rempart sérieux — le fichier `parc.db` reste lisible par
-quiconque a accès au poste ou au partage réseau. C'est une barrière contre
-la consultation de passage, pas contre quelqu'un de déterminé.
+Les droits sont appliqués côté Python, pas en masquant des boutons :
+`_exiger_session` protège la lecture, `_exiger_administrateur` protège
+l'écriture. Un compte en lecture seule voit la mention « Lecture seule » à
+la place du bouton d'état, et `definir_actif` le rejetterait de toute façon.
+
+Ce n'est pas pour autant un rempart sérieux — le fichier `parc.db` reste
+lisible par quiconque a accès au poste ou au partage réseau. C'est une
+barrière contre la consultation de passage, pas contre quelqu'un de
+déterminé.
 
 ## Emplacement des données
 

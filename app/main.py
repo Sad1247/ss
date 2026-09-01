@@ -7,16 +7,40 @@ Empaquetage :                 voir construire.py
 import os
 import secrets
 import sys
+import unicodedata
 from pathlib import Path
 
 import webview
 
 import donnees
 
-# Identifiants d'accès. Modifiables sans recompiler via les variables
-# d'environnement SANTINEL_UTILISATEUR et SANTINEL_MOTDEPASSE.
-UTILISATEUR = os.environ.get("SANTINEL_UTILISATEUR", "Admin")
-MOT_DE_PASSE = os.environ.get("SANTINEL_MOTDEPASSE", "Admin")
+# Comptes d'accès, chacun avec son rôle :
+#   administrateur — consultation et modification
+#   lecture        — consultation seule
+# Modifiables sans recompiler par variables d'environnement.
+COMPTES = {
+    "admin": {
+        "nom": os.environ.get("SANTINEL_UTILISATEUR", "Admin"),
+        "motdepasse": os.environ.get("SANTINEL_MOTDEPASSE", "Admin"),
+        "role": "administrateur",
+    },
+    "invite": {
+        "nom": os.environ.get("SANTINEL_INVITE", "Invité"),
+        "motdepasse": os.environ.get("SANTINEL_INVITE_MOTDEPASSE", "1234"),
+        "role": "lecture",
+    },
+}
+
+ROLES = {"administrateur": "Administrateur", "lecture": "Lecture seule"}
+
+
+def cle_compte(nom: str) -> str:
+    """Clé de recherche d'un compte : sans casse ni accents.
+
+    « Invité », « invite » ou « INVITE » désignent donc le même compte.
+    """
+    decompose = unicodedata.normalize("NFD", (nom or "").strip().lower())
+    return "".join(c for c in decompose if not unicodedata.combining(c))
 
 
 def dossier_ressources() -> Path:
@@ -34,24 +58,32 @@ class Api:
     """
 
     def __init__(self):
-        self.connecte = False
+        self.session = None
 
     # ----- session -----
 
     def connexion(self, utilisateur, motdepasse):
-        """Renvoie True si les identifiants sont bons."""
-        nom_ok = (utilisateur or "").strip().lower() == UTILISATEUR.lower()
-        passe_ok = secrets.compare_digest(motdepasse or "", MOT_DE_PASSE)
-        self.connecte = nom_ok and passe_ok
-        return self.connecte
+        """Ouvre la session. Renvoie le compte, ou None si le couple est faux."""
+        self.session = None
+        compte = COMPTES.get(cle_compte(utilisateur))
+        if compte and secrets.compare_digest(motdepasse or "", compte["motdepasse"]):
+            self.session = {"utilisateur": compte["nom"], "role": compte["role"]}
+        return self.session
 
     def deconnexion(self):
-        self.connecte = False
+        self.session = None
         return True
 
     def _exiger_session(self):
-        if not self.connecte:
+        if self.session is None:
             raise PermissionError("Session non authentifiée.")
+
+    def _exiger_administrateur(self):
+        self._exiger_session()
+        if self.session["role"] != "administrateur":
+            raise PermissionError(
+                "Ce compte est en lecture seule : modification refusée."
+            )
 
     # ----- parc -----
 
@@ -71,13 +103,15 @@ class Api:
         """Renseignements sur la session en cours."""
         self._exiger_session()
         return {
-            "utilisateur": UTILISATEUR,
+            "utilisateur": self.session["utilisateur"],
+            "role": self.session["role"],
+            "role_libelle": ROLES[self.session["role"]],
             "base": str(donnees.chemin_base()),
         }
 
     def definir_actif(self, employe_id, actif):
-        """Bascule l'état d'emploi d'une fiche. Session obligatoire."""
-        self._exiger_session()
+        """Bascule l'état d'emploi d'une fiche. Réservé à l'administrateur."""
+        self._exiger_administrateur()
         return donnees.definir_actif(int(employe_id), bool(actif))
 
 
