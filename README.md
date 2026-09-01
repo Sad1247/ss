@@ -75,6 +75,19 @@ SANTINEL_DB=\\serveur\ti\parc.db
 | `outils/icone.py` | régénère l'icône à partir du logo |
 | `construire.py` | empaquetage PyInstaller |
 
+## Employés actifs et inactifs
+
+Chaque fiche porte un état affiché à droite dans la liste : vert « Actif »,
+rouge « Inactif ». La colonne `employe.actif` vaut 1 par défaut. Faute
+d'écran de saisie pour l'instant, cela se change en SQL :
+
+```sql
+UPDATE employe SET actif = 0 WHERE nom = 'Sophie Lavoie';
+```
+
+Les bases créées avant l'ajout de cette colonne sont mises à niveau
+automatiquement au démarrage (voir `_migrer` dans `app/donnees.py`).
+
 ## Suivi des versions de FileMaker
 
 `FILEMAKER_CIBLE` dans `app/donnees.py` définit la version considérée à jour

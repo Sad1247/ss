@@ -29,10 +29,26 @@ def connexion() -> sqlite3.Connection:
 
 
 def initialiser() -> None:
-    """Crée les tables si la base est neuve."""
+    """Crée les tables si la base est neuve, et met à niveau les anciennes."""
     schema = (Path(__file__).parent / "schema.sql").read_text(encoding="utf-8")
     with connexion() as cx:
+        _migrer(cx)
         cx.executescript(schema)
+
+
+def _migrer(cx: sqlite3.Connection) -> None:
+    """Ajoute les colonnes apparues après coup aux bases existantes.
+
+    Tourne avant le schéma : la vue v_fiche s'appuie sur ces colonnes, et
+    CREATE TABLE IF NOT EXISTS ne touche pas une table déjà là.
+    """
+    tables = {ligne[0] for ligne in
+              cx.execute("SELECT name FROM sqlite_master WHERE type = 'table'")}
+    if "employe" not in tables:
+        return                      # base neuve : le schéma s'en charge
+    colonnes = {ligne["name"] for ligne in cx.execute("PRAGMA table_info(employe)")}
+    if "actif" not in colonnes:
+        cx.execute("ALTER TABLE employe ADD COLUMN actif INTEGER NOT NULL DEFAULT 1")
 
 
 def a_jour(version: str | None) -> bool:
@@ -81,6 +97,7 @@ def _fiche(cx: sqlite3.Connection, ligne: sqlite3.Row) -> dict:
         "service": ligne["service"],
         "telephone": ligne["telephone"],
         "poste_interne": ligne["poste_interne"],
+        "actif": bool(ligne["actif"]),
         "nom_ordinateur": ligne["nom_ordinateur"],
         "modele": ligne["modele"],
         "numero_serie": ligne["numero_serie"],

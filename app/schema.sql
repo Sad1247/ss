@@ -6,7 +6,8 @@ CREATE TABLE IF NOT EXISTS employe (
     nom           TEXT NOT NULL,
     service       TEXT,
     telephone     TEXT,
-    poste_interne TEXT
+    poste_interne TEXT,
+    actif         INTEGER NOT NULL DEFAULT 1   -- 1 = en poste, 0 = inactif
 );
 
 -- Un employé a au plus un poste de travail principal.
@@ -35,13 +36,17 @@ CREATE INDEX IF NOT EXISTS idx_equipement_employe ON equipement(employe_id);
 CREATE INDEX IF NOT EXISTS idx_employe_nom        ON employe(nom);
 
 -- Vue à plat consommée par donnees.py : une ligne = une fiche employé.
-CREATE VIEW IF NOT EXISTS v_fiche AS
+-- Reconstruite à chaque démarrage : une vue ne contient pas de données, et
+-- « CREATE VIEW IF NOT EXISTS » laisserait une ancienne définition en place.
+DROP VIEW IF EXISTS v_fiche;
+CREATE VIEW v_fiche AS
 SELECT
     e.id,
     e.nom,
     e.service,
     e.telephone,
     e.poste_interne,
+    e.actif,
     o.nom_ordinateur,
     o.modele,
     o.numero_serie,

@@ -15,21 +15,22 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "app"))
 import donnees  # noqa: E402
 
 EMPLOYES = [
-    # nom, service, téléphone, poste, ordinateur, modèle, série, mise en service, FileMaker
+    # nom, service, téléphone, poste, ordinateur, modèle, série,
+    # mise en service, FileMaker, actif
     ("Marie Tremblay", "Comptabilité", "418 555-0142", "221",
-     "COMPTA-01", "Dell OptiPlex 7010", "5KJ9L2Q", "2023-04-11", "22.0.1"),
+     "COMPTA-01", "Dell OptiPlex 7010", "5KJ9L2Q", "2023-04-11", "22.0.1", 1),
     ("Jean Bourgeois", "Direction", "418 555-0118", "201",
-     "DIR-PORT-03", "Lenovo ThinkPad T14", "PF3H8821", "2024-09-02", "21.1.3"),
+     "DIR-PORT-03", "Lenovo ThinkPad T14", "PF3H8821", "2024-09-02", "21.1.3", 1),
     ("Sophie Lavoie", "Ressources humaines", "418 555-0177", "245",
-     "RH-02", "HP EliteDesk 800", "CZC2410XYZ", "2022-01-20", None),
+     "RH-02", "HP EliteDesk 800", "CZC2410XYZ", "2022-01-20", None, 0),
     ("Alain Gagné", "Entrepôt", "418 555-0190", "310",
-     "ENTREPOT-01", "Dell OptiPlex 3000", "9WQ4T1B", "2025-02-17", "22.0.1"),
+     "ENTREPOT-01", "Dell OptiPlex 3000", "9WQ4T1B", "2025-02-17", "22.0.1", 1),
     ("Saad", "Informatique", "418 555-0101", "200",
-     "TI-PORT-01", "Dell Latitude 5450", "H7X2M9P", "2025-06-09", "22.0.1"),
+     "TI-PORT-01", "Dell Latitude 5450", "H7X2M9P", "2025-06-09", "22.0.1", 1),
     ("Karine Doucet", "Marketing", "418 555-0163", "228",
-     "MARKET-04", "Lenovo ThinkCentre M70q", "MJ0AB1CD", "2023-11-06", "20.3.1"),
+     "MARKET-04", "Lenovo ThinkCentre M70q", "MJ0AB1CD", "2023-11-06", "20.3.1", 1),
     ("Luc Marchand", "Expédition", "418 555-0184", "305",
-     "EXPED-02", "HP ProDesk 400 G9", "8CG3120FGH", "2024-03-25", None),
+     "EXPED-02", "HP ProDesk 400 G9", "8CG3120FGH", "2024-03-25", None, 0),
 ]
 
 # Fiches renommées après coup : appliqué aux bases déjà remplies.
@@ -61,13 +62,15 @@ def main() -> int:
 
         deja = {ligne[0] for ligne in cx.execute("SELECT nom FROM employe")}
 
-        for nom, service, tel, poste, ordi, modele, serie, date, fm in EMPLOYES:
+        for nom, service, tel, poste, ordi, modele, serie, date, fm, actif in EMPLOYES:
+            # les fiches d'exemple déjà en base reçoivent quand même leur état
+            cx.execute("UPDATE employe SET actif = ? WHERE nom = ?", (actif, nom))
             if nom in deja:
                 continue
             cur = cx.execute(
-                "INSERT INTO employe (nom, service, telephone, poste_interne) "
-                "VALUES (?, ?, ?, ?)",
-                (nom, service, tel, poste),
+                "INSERT INTO employe (nom, service, telephone, poste_interne, actif) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (nom, service, tel, poste, actif),
             )
             employe_id = cur.lastrowid
             cx.execute(

@@ -29,10 +29,13 @@ function dessinerListe() {
     return;
   }
   liste.innerHTML = fiches.map((f) => `
-    <article class="entree ${f.filemaker_ok ? "" : "retard"} ${f.id === choisie ? "actif" : ""}"
+    <article class="entree ${f.filemaker_ok ? "" : "retard"} ${f.id === choisie ? "choisie" : ""}"
              data-id="${f.id}">
-      <div class="nom">${echapper(f.nom)}</div>
-      <div class="meta">${valeur(f.service)} · ${valeur(f.nom_ordinateur)}</div>
+      <div class="entree-texte">
+        <div class="nom">${echapper(f.nom)}</div>
+        <div class="meta">${valeur(f.service)} · ${valeur(f.nom_ordinateur)}</div>
+      </div>
+      <span class="etat-emploi ${f.actif ? "oui" : "non"}">${f.actif ? "Actif" : "Inactif"}</span>
     </article>`).join("");
 
   liste.querySelectorAll(".entree").forEach((el) => {
