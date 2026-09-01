@@ -67,6 +67,11 @@ class Api:
         self._exiger_session()
         return donnees.retardataires()
 
+    def definir_actif(self, employe_id, actif):
+        """Bascule l'état d'emploi d'une fiche. Session obligatoire."""
+        self._exiger_session()
+        return donnees.definir_actif(int(employe_id), bool(actif))
+
 
 def main():
     donnees.initialiser()

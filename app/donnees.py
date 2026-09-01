@@ -85,6 +85,18 @@ def retardataires() -> list[dict]:
     return [f for f in tous() if not f["filemaker_ok"]]
 
 
+def definir_actif(employe_id: int, actif: bool) -> bool:
+    """Marque un employé actif ou inactif. Renvoie l'état enregistré."""
+    with connexion() as cx:
+        curseur = cx.execute(
+            "UPDATE employe SET actif = ? WHERE id = ?",
+            (1 if actif else 0, employe_id),
+        )
+        if curseur.rowcount == 0:
+            raise ValueError(f"Aucun employé avec l'identifiant {employe_id}.")
+    return bool(actif)
+
+
 def _fiche(cx: sqlite3.Connection, ligne: sqlite3.Row) -> dict:
     equipements = cx.execute(
         "SELECT type, description, numero_serie FROM equipement "

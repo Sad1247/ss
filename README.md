@@ -78,12 +78,12 @@ SANTINEL_DB=\\serveur\ti\parc.db
 ## Employés actifs et inactifs
 
 Chaque fiche porte un état affiché à droite dans la liste : vert « Actif »,
-rouge « Inactif ». La colonne `employe.actif` vaut 1 par défaut. Faute
-d'écran de saisie pour l'instant, cela se change en SQL :
+rouge « Inactif ». Le bouton en haut à droite de la fiche (« Marquer
+inactif » / « Réactiver ») bascule l'état et l'enregistre aussitôt dans la
+colonne `employe.actif`, qui vaut 1 par défaut.
 
-```sql
-UPDATE employe SET actif = 0 WHERE nom = 'Sophie Lavoie';
-```
+L'écriture passe par `Api.definir_actif`, protégée par la session au même
+titre que la lecture : sans connexion, elle est refusée.
 
 Les bases créées avant l'ajout de cette colonne sont mises à niveau
 automatiquement au démarrage (voir `_migrer` dans `app/donnees.py`).

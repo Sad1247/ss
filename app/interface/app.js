@@ -63,8 +63,18 @@ function dessinerDetail() {
     : '<p class="vide" style="margin:0">Aucun équipement enregistré.</p>';
 
   $("#detail").innerHTML = `
-    <h1>${echapper(f.nom)}</h1>
-    <p class="sous-titre">${valeur(f.service)}</p>
+    <div class="entete-fiche">
+      <div>
+        <h1>${echapper(f.nom)}</h1>
+        <p class="sous-titre">${valeur(f.service)}</p>
+      </div>
+      <div class="controle-etat">
+        <span class="etat-emploi ${f.actif ? "oui" : "non"}">${f.actif ? "Actif" : "Inactif"}</span>
+        <button type="button" id="basculer-etat" class="bouton-etat">
+          ${f.actif ? "Marquer inactif" : "Réactiver"}
+        </button>
+      </div>
+    </div>
 
     <section class="bloc">
       <h2>Coordonnées</h2>
@@ -96,6 +106,22 @@ function dessinerDetail() {
       <h2>Équipements</h2>
       ${equipements}
     </section>`;
+
+  $("#basculer-etat").onclick = () => basculerEtat(f);
+}
+
+async function basculerEtat(f) {
+  const bouton = $("#basculer-etat");
+  bouton.disabled = true;
+  try {
+    f.actif = await pywebview.api.definir_actif(f.id, !f.actif);
+    dessinerListe();
+    dessinerDetail();
+    etat(`${f.nom} est désormais ${f.actif ? "actif" : "inactif"}.`);
+  } catch (err) {
+    bouton.disabled = false;
+    etat("Modification refusée : " + err);
+  }
 }
 
 function champ(etiquette, v) {

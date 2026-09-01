@@ -189,8 +189,30 @@ main { flex: 1; display: flex; min-height: 0; }
 .etat-emploi.non { color: var(--retard); background: var(--retard-fond); }
 
 .detail { flex: 1; overflow-y: auto; padding: 24px 28px; }
+.entete-fiche {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+.controle-etat { display: flex; align-items: center; gap: 10px; }
+
+.bouton-etat {
+  padding: 7px 13px;
+  font: inherit;
+  color: var(--marine);
+  background: var(--carte);
+  border: 1px solid var(--trait);
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.bouton-etat:hover:not(:disabled) { border-color: var(--bleu); color: var(--bleu); }
+.bouton-etat:disabled { opacity: .5; cursor: default; }
+
 .detail h1 { margin: 0 0 2px; font-size: 23px; color: var(--marine); }
-.detail .sous-titre { margin: 0 0 20px; color: var(--doux); }
+.detail .sous-titre { margin: 0; color: var(--doux); }
 
 .bloc {
   margin-bottom: 16px;
