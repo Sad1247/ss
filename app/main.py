@@ -114,6 +114,11 @@ class Api:
         self._exiger_administrateur()
         return donnees.definir_actif(int(employe_id), bool(actif))
 
+    def definir_suivi(self, employe_id, suivi):
+        """Inclut ou retire une fiche du suivi FileMaker. Administrateur."""
+        self._exiger_administrateur()
+        return donnees.definir_suivi(int(employe_id), bool(suivi))
+
     def definir_coordonnees(self, employe_id, telephone, poste_interne):
         """Enregistre les coordonnées d'une fiche. Réservé à l'administrateur."""
         self._exiger_administrateur()

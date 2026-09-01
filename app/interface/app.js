@@ -22,6 +22,11 @@ function etat(message) {
   $("#etat").textContent = message;
 }
 
+/** Fiche suivie dont FileMaker n'est pas à jour : celles de l'onglet. */
+function aRelancer(f) {
+  return f.suivi && !f.filemaker_ok;
+}
+
 function peutModifier() {
   return session !== null && session.role === "administrateur";
 }
@@ -36,7 +41,7 @@ function dessinerListe() {
     return;
   }
   liste.innerHTML = fiches.map((f) => `
-    <article class="entree ${f.filemaker_ok ? "" : "retard"} ${f.id === choisie ? "choisie" : ""}"
+    <article class="entree ${aRelancer(f) ? "retard" : ""} ${f.id === choisie ? "choisie" : ""}"
              data-id="${f.id}">
       <div class="entree-texte">
         <div class="nom">${echapper(f.nom)}</div>
@@ -113,10 +118,17 @@ function blocPoste(f) {
       `<div class="champ">
          <div class="etiquette">FileMaker</div>
          <div class="valeur">
-           <span class="etat-fm ${f.filemaker_ok ? "ok" : "retard"}">
-             ${echapper(f.version_filemaker)}${f.filemaker_ok ? "" : " — à mettre à jour"}
+           <span class="etat-fm ${!f.suivi ? "hors" : f.filemaker_ok ? "ok" : "retard"}">
+             ${echapper(f.version_filemaker)}${
+               !f.suivi ? " — hors suivi" : f.filemaker_ok ? "" : " — à mettre à jour"}
            </span>
          </div>
+         ${peutModifier() && edition === null
+           ? `<button type="button" id="basculer-suivi" class="lien-action petit"
+                      title="Inclure ou retirer cette fiche de l'onglet « À mettre à jour »">
+                ${f.suivi ? "Retirer du suivi" : "Remettre au suivi"}
+              </button>`
+           : ""}
        </div>`;
   return `<section class="bloc">
             <h2>Poste de travail ${actionsBloc("poste")}</h2>
@@ -195,6 +207,9 @@ function brancherFiche(f) {
 
   const basculer = $("#basculer-etat");
   if (basculer) basculer.onclick = () => basculerEtat(f);
+
+  const suivi = $("#basculer-suivi");
+  if (suivi) suivi.onclick = () => basculerSuivi(f);
 
   document.querySelectorAll("[data-modifier]").forEach((b) => {
     b.onclick = () => {
@@ -285,6 +300,23 @@ async function enregistrer(f) {
   }
 }
 
+async function basculerSuivi(f) {
+  const bouton = $("#basculer-suivi");
+  bouton.disabled = true;
+  try {
+    f.suivi = await pywebview.api.definir_suivi(f.id, !f.suivi);
+    dessinerListe();
+    dessinerDetail();
+    await majCompteur();
+    etat(f.suivi
+      ? `${f.nom} est de nouveau suivi pour FileMaker.`
+      : `${f.nom} ne figurera plus dans « À mettre à jour ».`);
+  } catch (err) {
+    bouton.disabled = false;
+    etat("Modification refusée : " + err);
+  }
+}
+
 async function basculerEtat(f) {
   const bouton = $("#basculer-etat");
   bouton.disabled = true;
@@ -307,7 +339,7 @@ async function charger() {
   try {
     if (terme) {
       fiches = await pywebview.api.chercher(terme);
-      if (vue === "retardataires") fiches = fiches.filter((f) => !f.filemaker_ok);
+      if (vue === "retardataires") fiches = fiches.filter(aRelancer);
     } else {
       fiches = vue === "retardataires"
         ? await pywebview.api.retardataires()

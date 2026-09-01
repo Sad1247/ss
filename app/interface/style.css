@@ -329,6 +329,13 @@ main { flex: 1; display: flex; min-height: 0; }
 .lien-action.fort { color: #fff; background: var(--bleu); border-color: var(--bleu); }
 .lien-action.fort:hover:not(:disabled) { background: #1560d8; }
 .lien-action:disabled { opacity: .55; cursor: default; }
+.lien-action.petit {
+  margin-top: 7px;
+  padding: 3px 9px;
+  font-size: 11px;
+  color: var(--doux);
+}
+.lien-action.petit:hover:not(:disabled) { color: var(--bleu); }
 
 .saisie {
   width: 100%;
@@ -354,6 +361,7 @@ main { flex: 1; display: flex; min-height: 0; }
 }
 .etat-fm.ok     { color: var(--ok);     background: var(--ok-fond); }
 .etat-fm.retard { color: var(--retard); background: var(--retard-fond); }
+.etat-fm.hors   { color: var(--doux);   background: var(--fond); }
 
 table { width: 100%; border-collapse: collapse; }
 

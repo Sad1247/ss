@@ -7,7 +7,9 @@ CREATE TABLE IF NOT EXISTS employe (
     service       TEXT,
     telephone     TEXT,
     poste_interne TEXT,
-    actif         INTEGER NOT NULL DEFAULT 1   -- 1 = en poste, 0 = inactif
+    actif         INTEGER NOT NULL DEFAULT 1,  -- 1 = en poste, 0 = inactif
+    -- 0 = exclu de l'onglet « À mettre à jour », quelle que soit sa version
+    suivi_filemaker INTEGER NOT NULL DEFAULT 1
 );
 
 -- Un employé a au plus un poste de travail principal.
@@ -47,6 +49,7 @@ SELECT
     e.telephone,
     e.poste_interne,
     e.actif,
+    e.suivi_filemaker,
     o.nom_ordinateur,
     o.modele,
     o.numero_serie,

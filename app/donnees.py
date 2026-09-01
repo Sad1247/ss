@@ -50,6 +50,9 @@ def _migrer(cx: sqlite3.Connection) -> None:
     colonnes = {ligne["name"] for ligne in cx.execute("PRAGMA table_info(employe)")}
     if "actif" not in colonnes:
         cx.execute("ALTER TABLE employe ADD COLUMN actif INTEGER NOT NULL DEFAULT 1")
+    if "suivi_filemaker" not in colonnes:
+        cx.execute("ALTER TABLE employe "
+                   "ADD COLUMN suivi_filemaker INTEGER NOT NULL DEFAULT 1")
 
 
 def a_jour(version: str | None) -> bool:
@@ -82,8 +85,12 @@ def tous() -> list[dict]:
 
 
 def retardataires() -> list[dict]:
-    """Postes dont FileMaker n'est pas à la version cible."""
-    return [f for f in tous() if not f["filemaker_ok"]]
+    """Postes suivis dont FileMaker n'est pas à la version cible.
+
+    Une fiche retirée du suivi n'y figure jamais, même si sa version est
+    ancienne : c'est le sens de la colonne suivi_filemaker.
+    """
+    return [f for f in tous() if f["suivi"] and not f["filemaker_ok"]]
 
 
 def definir_actif(employe_id: int, actif: bool) -> bool:
@@ -96,6 +103,15 @@ def definir_actif(employe_id: int, actif: bool) -> bool:
         if curseur.rowcount == 0:
             raise ValueError(f"Aucun employé avec l'identifiant {employe_id}.")
     return bool(actif)
+
+
+def definir_suivi(employe_id: int, suivi: bool) -> bool:
+    """Inclut ou retire une fiche de l'onglet « À mettre à jour »."""
+    with connexion() as cx:
+        _exiger_employe(cx, employe_id)
+        cx.execute("UPDATE employe SET suivi_filemaker = ? WHERE id = ?",
+                   (1 if suivi else 0, employe_id))
+    return bool(suivi)
 
 
 def definir_coordonnees(employe_id: int, telephone: str, poste_interne: str) -> dict:
@@ -203,6 +219,7 @@ def _fiche(cx: sqlite3.Connection, ligne: sqlite3.Row) -> dict:
         "telephone": ligne["telephone"],
         "poste_interne": ligne["poste_interne"],
         "actif": bool(ligne["actif"]),
+        "suivi": bool(ligne["suivi_filemaker"]),
         "nom_ordinateur": ligne["nom_ordinateur"],
         "modele": ligne["modele"],
         "numero_serie": ligne["numero_serie"],
