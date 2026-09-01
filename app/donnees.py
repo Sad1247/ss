@@ -50,8 +50,7 @@ def _migrer(cx: sqlite3.Connection) -> None:
     colonnes = {ligne["name"] for ligne in cx.execute("PRAGMA table_info(employe)")}
     if "actif" not in colonnes:
         cx.execute("ALTER TABLE employe ADD COLUMN actif INTEGER NOT NULL DEFAULT 1")
-    for colonne in ("nom_utilisateur", "courriel", "titre",
-                    "compagnie", "statut", "licence_fm"):
+    for colonne in ("nom_utilisateur", "courriel", "titre", "compagnie"):
         if colonne not in colonnes:
             cx.execute(f"ALTER TABLE employe ADD COLUMN {colonne} TEXT")
 
@@ -166,7 +165,7 @@ def definir_coordonnees(employe_id: int, coordonnees: dict) -> dict:
 
 CHAMPS_COORDONNEES = ("telephone", "poste_interne", "nom_utilisateur", "courriel")
 
-CHAMPS_EMPLOI = ("titre", "compagnie", "service", "statut", "licence_fm")
+CHAMPS_EMPLOI = ("titre", "compagnie", "service")
 
 CHAMPS_POSTE = ("nom_ordinateur", "modele", "numero_serie", "mise_en_service",
                 "version_filemaker", "cpu", "type_appareil")
@@ -185,7 +184,7 @@ def _oui_non(brut) -> bool | None:
 
 
 def definir_emploi(employe_id: int, emploi: dict) -> dict:
-    """Enregistre le titre, la compagnie, le département, le statut, la licence."""
+    """Enregistre le titre, la compagnie et le département."""
     valeurs = {c: ((emploi or {}).get(c) or "").strip() or None
                for c in CHAMPS_EMPLOI}
     with connexion() as cx:
@@ -295,8 +294,6 @@ def _fiche(cx: sqlite3.Connection, ligne: sqlite3.Row) -> dict:
         "courriel": ligne["courriel"],
         "titre": ligne["titre"],
         "compagnie": ligne["compagnie"],
-        "statut": ligne["statut"],
-        "licence_fm": ligne["licence_fm"],
         "actif": bool(ligne["actif"]),
         "suivi": _suivi(ligne),
         "suivi_choisi": ligne["suivi_manuel"] is not None,

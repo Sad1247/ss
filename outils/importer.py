@@ -7,8 +7,8 @@ ni supprimée. Un employé sans ordinateur est importé quand même.
 
 Colonnes attendues, telles qu'elles apparaissent dans le tableur :
 
-    Actif, Prénom, Nom, Titre - Poste, Compagnie, Département, Statut,
-    License FM, Nom d'ordinateur, # Série, CPU, Portable, Mini-PC,
+    Actif, Prénom, Nom, Titre - Poste, Compagnie, Département,
+    Nom d'ordinateur, # Série, CPU, Portable, Mini-PC,
     FM22, Upgrade Windows 11
 
 Les colonnes absentes sont simplement ignorées. Attention : dans le tableur,
@@ -65,8 +65,6 @@ def lire(chemin: Path) -> list[dict]:
                 "titre": valeur(ligne, "Titre - Poste", "Titre"),
                 "compagnie": valeur(ligne, "Compagnie"),
                 "service": valeur(ligne, "Département", "Departement", "Service"),
-                "statut": valeur(ligne, "Statut"),
-                "licence_fm": valeur(ligne, "License FM", "Licence FM"),
             },
             "poste": {
                 "nom_ordinateur": valeur(ligne, "Nom d'ordinateur"),

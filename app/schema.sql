@@ -11,8 +11,6 @@ CREATE TABLE IF NOT EXISTS employe (
     courriel       TEXT,
     titre          TEXT,   -- « Directeur, Ventes »
     compagnie      TEXT,
-    statut         TEXT,   -- EMP, AUT…
-    licence_fm     TEXT,   -- Oui / Non / vide si à confirmer
     actif         INTEGER NOT NULL DEFAULT 1,  -- 1 = en poste, 0 = inactif
     -- Présence dans l'onglet « À mettre à jour », décidée à la main :
     -- NULL = laisser la version FileMaker décider, 1 = toujours, 0 = jamais.
@@ -62,8 +60,6 @@ SELECT
     e.courriel,
     e.titre,
     e.compagnie,
-    e.statut,
-    e.licence_fm,
     e.actif,
     e.suivi_manuel,
     o.nom_ordinateur,

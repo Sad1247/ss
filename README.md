@@ -105,9 +105,10 @@ ni supprimée — le script peut donc être rejoué après chaque export. Un
 employé sans ordinateur est importé quand même.
 
 Colonnes reconnues, telles qu'elles apparaissent dans le tableur : `Actif`,
-`Prénom`, `Nom`, `Titre - Poste`, `Compagnie`, `Département`, `Statut`,
-`License FM`, `Nom d'ordinateur`, `# Série`, `CPU`, `Portable`, `Mini-PC`,
-`FM22`, `Upgrade Windows 11`. Les colonnes absentes sont ignorées.
+`Prénom`, `Nom`, `Titre - Poste`, `Compagnie`, `Département`,
+`Nom d'ordinateur`, `# Série`, `CPU`, `Portable`, `Mini-PC`, `FM22`,
+`Upgrade Windows 11`. Les autres colonnes du tableur, `Statut` et
+`License FM` comprises, sont ignorées.
 
 **Piège du tableur** : `FM22` et `Upgrade Windows 11` sont des cases
 *coloriées*. Une couleur ne s'exporte pas en CSV. Il faut écrire « Oui »
@@ -117,7 +118,7 @@ dans ces cases avant l'export, sinon elles arrivent vides et sont lues comme
 ## Modifier une fiche
 
 Avec le compte administrateur, chacun des quatre blocs — **Emploi** (titre,
-compagnie, département, statut, licence FileMaker), **Coordonnées**
+compagnie, département), **Coordonnées**
 (téléphone, poste interne, nom d'utilisateur, courriel), **Poste de travail**
 (dont processeur, type d'appareil et migration Windows 11), **Équipements** —
 porte un bouton « Modifier ». Les

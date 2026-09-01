@@ -95,14 +95,10 @@ function blocEmploi(f) {
   const corps = edition === "emploi"
     ? champSaisie("Titre", "saisie-titre", f.titre) +
       champSaisie("Compagnie", "saisie-compagnie", f.compagnie) +
-      champSaisie("Département", "saisie-service", f.service) +
-      champSaisie("Statut", "saisie-statut", f.statut, "EMP, AUT…") +
-      champSaisie("Licence FileMaker", "saisie-licence", f.licence_fm, "Oui / Non")
+      champSaisie("Département", "saisie-service", f.service)
     : champ("Titre", f.titre) +
       champ("Compagnie", f.compagnie) +
-      champ("Département", f.service) +
-      champ("Statut", f.statut) +
-      champ("Licence FileMaker", f.licence_fm);
+      champ("Département", f.service);
   return `<section class="bloc">
             <h2>Emploi ${actionsBloc("emploi")}</h2>
             <div class="champs">${corps}</div>
@@ -325,8 +321,6 @@ async function enregistrer(f) {
         titre: $("#saisie-titre").value,
         compagnie: $("#saisie-compagnie").value,
         service: $("#saisie-service").value,
-        statut: $("#saisie-statut").value,
-        licence_fm: $("#saisie-licence").value,
       });
       Object.assign(f, v);
     } else if (bloc === "coordonnees") {
