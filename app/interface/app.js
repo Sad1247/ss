@@ -91,6 +91,24 @@ function actionsBloc(cle) {
     : "";
 }
 
+function blocEmploi(f) {
+  const corps = edition === "emploi"
+    ? champSaisie("Titre", "saisie-titre", f.titre) +
+      champSaisie("Compagnie", "saisie-compagnie", f.compagnie) +
+      champSaisie("Département", "saisie-service", f.service) +
+      champSaisie("Statut", "saisie-statut", f.statut, "EMP, AUT…") +
+      champSaisie("Licence FileMaker", "saisie-licence", f.licence_fm, "Oui / Non")
+    : champ("Titre", f.titre) +
+      champ("Compagnie", f.compagnie) +
+      champ("Département", f.service) +
+      champ("Statut", f.statut) +
+      champ("Licence FileMaker", f.licence_fm);
+  return `<section class="bloc">
+            <h2>Emploi ${actionsBloc("emploi")}</h2>
+            <div class="champs">${corps}</div>
+          </section>`;
+}
+
 function blocCoordonnees(f) {
   const corps = edition === "coordonnees"
     ? champSaisie("Téléphone", "saisie-telephone", f.telephone) +
@@ -112,14 +130,28 @@ function blocPoste(f) {
     ? champSaisie("Nom de l'ordinateur", "saisie-ordinateur", f.nom_ordinateur) +
       champSaisie("Modèle", "saisie-modele", f.modele) +
       champSaisie("Numéro de série", "saisie-serie", f.numero_serie) +
+      champSaisie("Processeur", "saisie-cpu", f.cpu) +
+      champSaisie("Type d'appareil", "saisie-type", f.type_appareil, "Portable, Mini-PC…") +
       champSaisie("Mise en service", "saisie-date", f.mise_en_service, "AAAA-MM-JJ") +
       champSaisie("FileMaker", "saisie-filemaker",
                   f.version_filemaker === "Non installé" ? "" : f.version_filemaker,
-                  "vide si non installé")
+                  "vide si non installé") +
+      `<div class="champ">
+         <div class="etiquette">Windows 11</div>
+         <select id="saisie-windows11" class="saisie">
+           <option value=""  ${f.windows11 === null ? "selected" : ""}>Inconnu</option>
+           <option value="1" ${f.windows11 === true ? "selected" : ""}>Migré</option>
+           <option value="0" ${f.windows11 === false ? "selected" : ""}>Non migré</option>
+         </select>
+       </div>`
     : champ("Nom de l'ordinateur", f.nom_ordinateur) +
       champ("Modèle", f.modele) +
       champ("Numéro de série", f.numero_serie) +
+      champ("Processeur", f.cpu) +
+      champ("Type d'appareil", f.type_appareil) +
       champ("Mise en service", f.mise_en_service) +
+      champ("Windows 11", f.windows11 === null ? null
+            : f.windows11 ? "Migré" : "Non migré") +
       `<div class="champ">
          <div class="etiquette">FileMaker</div>
          <div class="valeur">
@@ -197,7 +229,8 @@ function dessinerDetail() {
     <div class="entete-fiche">
       <div>
         <h1>${echapper(f.nom)}</h1>
-        <p class="sous-titre">${valeur(f.service)}</p>
+        <p class="sous-titre">${[f.titre, f.compagnie, f.service]
+          .filter(Boolean).map(echapper).join(" · ") || "—"}</p>
       </div>
       <div class="controle-etat">
         <span class="etat-emploi ${f.actif ? "oui" : "non"}">${f.actif ? "Actif" : "Inactif"}</span>
@@ -208,6 +241,7 @@ function dessinerDetail() {
           : ""}
       </div>
     </div>
+    ${blocEmploi(f)}
     ${blocCoordonnees(f)}
     ${blocPoste(f)}
     ${blocEquipements(f)}`;
@@ -286,7 +320,16 @@ async function enregistrer(f) {
   bouton.disabled = true;
   const bloc = edition;
   try {
-    if (bloc === "coordonnees") {
+    if (bloc === "emploi") {
+      const v = await pywebview.api.definir_emploi(f.id, {
+        titre: $("#saisie-titre").value,
+        compagnie: $("#saisie-compagnie").value,
+        service: $("#saisie-service").value,
+        statut: $("#saisie-statut").value,
+        licence_fm: $("#saisie-licence").value,
+      });
+      Object.assign(f, v);
+    } else if (bloc === "coordonnees") {
       const v = await pywebview.api.definir_coordonnees(f.id, {
         telephone: $("#saisie-telephone").value,
         poste_interne: $("#saisie-poste").value,
@@ -299,8 +342,11 @@ async function enregistrer(f) {
         nom_ordinateur: $("#saisie-ordinateur").value,
         modele: $("#saisie-modele").value,
         numero_serie: $("#saisie-serie").value,
+        cpu: $("#saisie-cpu").value,
+        type_appareil: $("#saisie-type").value,
         mise_en_service: $("#saisie-date").value,
         version_filemaker: $("#saisie-filemaker").value,
+        windows11: $("#saisie-windows11").value,
       });
       Object.assign(f, v);
       // le libellé et l'état FileMaker sont recalculés par Python

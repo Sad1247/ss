@@ -130,6 +130,11 @@ class Api:
         self._exiger_administrateur()
         return donnees.definir_coordonnees(int(employe_id), coordonnees)
 
+    def definir_emploi(self, employe_id, emploi):
+        """Enregistre le bloc Emploi. Réservé à l'administrateur."""
+        self._exiger_administrateur()
+        return donnees.definir_emploi(int(employe_id), emploi)
+
     def definir_poste(self, employe_id, poste):
         """Enregistre le poste de travail. Réservé à l'administrateur."""
         self._exiger_administrateur()

@@ -348,6 +348,7 @@ main { flex: 1; display: flex; min-height: 0; }
   border: 1px solid var(--bleu);
   border-radius: 5px;
 }
+select.saisie { padding: 6px 7px; }
 .saisie:focus { outline: none; box-shadow: 0 0 0 3px rgba(29, 110, 240, .18); }
 
 .champs { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 13px 20px; }

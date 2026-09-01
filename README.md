@@ -86,14 +86,41 @@ SANTINEL_DB=\\serveur\ti\parc.db
 | `app/interface/santinel.png` | logo (blanc, sur le bandeau marine) |
 | `ressources/santinel.ico` | icône de l'exécutable, dérivée du logo |
 | `outils/exemples.py` | jeu de données de démonstration |
+| `outils/importer.py` | import d'employés depuis un CSV du tableur |
+| `donnees/employes.csv` | fiches importées depuis le tableur du parc |
 | `outils/icone.py` | régénère l'icône à partir du logo |
 | `construire.py` | empaquetage PyInstaller |
 
+## Importer depuis le tableur
+
+Le parc est tenu dans un tableur. `outils/importer.py` en reprend un export
+CSV :
+
+```bash
+python outils/importer.py donnees/employes.csv
+```
+
+Une fiche déjà présente (même nom complet) est mise à jour, jamais dupliquée
+ni supprimée — le script peut donc être rejoué après chaque export. Un
+employé sans ordinateur est importé quand même.
+
+Colonnes reconnues, telles qu'elles apparaissent dans le tableur : `Actif`,
+`Prénom`, `Nom`, `Titre - Poste`, `Compagnie`, `Département`, `Statut`,
+`License FM`, `Nom d'ordinateur`, `# Série`, `CPU`, `Portable`, `Mini-PC`,
+`FM22`, `Upgrade Windows 11`. Les colonnes absentes sont ignorées.
+
+**Piège du tableur** : `FM22` et `Upgrade Windows 11` sont des cases
+*coloriées*. Une couleur ne s'exporte pas en CSV. Il faut écrire « Oui »
+dans ces cases avant l'export, sinon elles arrivent vides et sont lues comme
+« pas encore fait ».
+
 ## Modifier une fiche
 
-Avec le compte administrateur, chacun des trois blocs — **Coordonnées**
-(téléphone, poste interne, nom d'utilisateur, courriel), **Poste de
-travail**, **Équipements** — porte un bouton « Modifier ». Les
+Avec le compte administrateur, chacun des quatre blocs — **Emploi** (titre,
+compagnie, département, statut, licence FileMaker), **Coordonnées**
+(téléphone, poste interne, nom d'utilisateur, courriel), **Poste de travail**
+(dont processeur, type d'appareil et migration Windows 11), **Équipements** —
+porte un bouton « Modifier ». Les
 champs deviennent saisissables, `Entrée` enregistre, `Échap` ou « Annuler »
 abandonne. Un seul bloc est modifiable à la fois, pour qu'on sache toujours
 ce qui sera enregistré.

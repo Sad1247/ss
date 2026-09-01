@@ -50,9 +50,17 @@ def _migrer(cx: sqlite3.Connection) -> None:
     colonnes = {ligne["name"] for ligne in cx.execute("PRAGMA table_info(employe)")}
     if "actif" not in colonnes:
         cx.execute("ALTER TABLE employe ADD COLUMN actif INTEGER NOT NULL DEFAULT 1")
-    for colonne in ("nom_utilisateur", "courriel"):
+    for colonne in ("nom_utilisateur", "courriel", "titre",
+                    "compagnie", "statut", "licence_fm"):
         if colonne not in colonnes:
             cx.execute(f"ALTER TABLE employe ADD COLUMN {colonne} TEXT")
+
+    if "ordinateur" in tables:
+        colonnes_poste = {l["name"] for l in cx.execute("PRAGMA table_info(ordinateur)")}
+        for colonne, type_ in (("cpu", "TEXT"), ("type_appareil", "TEXT"),
+                               ("windows11", "INTEGER")):
+            if colonne not in colonnes_poste:
+                cx.execute(f"ALTER TABLE ordinateur ADD COLUMN {colonne} {type_}")
     if "suivi_manuel" not in colonnes:
         cx.execute("ALTER TABLE employe ADD COLUMN suivi_manuel INTEGER")
         if "suivi_filemaker" in colonnes:      # choix faits avant le passage
@@ -82,9 +90,10 @@ def chercher(terme: str) -> list[dict]:
             WHERE nom LIKE ? OR nom_ordinateur LIKE ?
                OR numero_serie LIKE ? OR service LIKE ?
                OR nom_utilisateur LIKE ? OR courriel LIKE ?
+               OR titre LIKE ? OR compagnie LIKE ?
             ORDER BY nom
             """,
-            (motif,) * 6,
+            (motif,) * 8,
         ).fetchall()
         return [_fiche(cx, l) for l in lignes]
 
@@ -157,13 +166,42 @@ def definir_coordonnees(employe_id: int, coordonnees: dict) -> dict:
 
 CHAMPS_COORDONNEES = ("telephone", "poste_interne", "nom_utilisateur", "courriel")
 
-CHAMPS_POSTE = ("nom_ordinateur", "modele", "numero_serie",
-                "mise_en_service", "version_filemaker")
+CHAMPS_EMPLOI = ("titre", "compagnie", "service", "statut", "licence_fm")
+
+CHAMPS_POSTE = ("nom_ordinateur", "modele", "numero_serie", "mise_en_service",
+                "version_filemaker", "cpu", "type_appareil")
+
+
+def _oui_non(brut) -> bool | None:
+    """Lit un oui/non venant du formulaire ou d'un import. None = inconnu."""
+    if brut is None:
+        return None
+    if isinstance(brut, str):
+        texte = brut.strip().lower()
+        if not texte:
+            return None
+        return texte not in ("0", "non", "no", "false", "n")
+    return bool(brut)
+
+
+def definir_emploi(employe_id: int, emploi: dict) -> dict:
+    """Enregistre le titre, la compagnie, le département, le statut, la licence."""
+    valeurs = {c: ((emploi or {}).get(c) or "").strip() or None
+               for c in CHAMPS_EMPLOI}
+    with connexion() as cx:
+        _exiger_employe(cx, employe_id)
+        cx.execute(
+            f"UPDATE employe SET {', '.join(c + ' = ?' for c in CHAMPS_EMPLOI)} "
+            "WHERE id = ?",
+            (*(valeurs[c] for c in CHAMPS_EMPLOI), employe_id),
+        )
+    return valeurs
 
 
 def definir_poste(employe_id: int, poste: dict) -> dict:
     """Enregistre le poste de travail d'un employé, en le créant au besoin."""
     valeurs = {c: ((poste or {}).get(c) or "").strip() or None for c in CHAMPS_POSTE}
+    valeurs["windows11"] = _oui_non((poste or {}).get("windows11"))
 
     if valeurs["mise_en_service"]:
         try:
@@ -179,16 +217,21 @@ def definir_poste(employe_id: int, poste: dict) -> dict:
             """
             INSERT INTO ordinateur
                 (employe_id, nom_ordinateur, modele, numero_serie,
-                 mise_en_service, version_filemaker)
-            VALUES (?, ?, ?, ?, ?, ?)
+                 mise_en_service, version_filemaker, cpu, type_appareil,
+                 windows11)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(employe_id) DO UPDATE SET
                 nom_ordinateur    = excluded.nom_ordinateur,
                 modele            = excluded.modele,
                 numero_serie      = excluded.numero_serie,
                 mise_en_service   = excluded.mise_en_service,
-                version_filemaker = excluded.version_filemaker
+                version_filemaker = excluded.version_filemaker,
+                cpu               = excluded.cpu,
+                type_appareil     = excluded.type_appareil,
+                windows11         = excluded.windows11
             """,
-            (employe_id, *(valeurs[c] for c in CHAMPS_POSTE)),
+            (employe_id, *(valeurs[c] for c in CHAMPS_POSTE),
+             None if valeurs["windows11"] is None else int(valeurs["windows11"])),
         )
     return valeurs
 
@@ -250,6 +293,10 @@ def _fiche(cx: sqlite3.Connection, ligne: sqlite3.Row) -> dict:
         "poste_interne": ligne["poste_interne"],
         "nom_utilisateur": ligne["nom_utilisateur"],
         "courriel": ligne["courriel"],
+        "titre": ligne["titre"],
+        "compagnie": ligne["compagnie"],
+        "statut": ligne["statut"],
+        "licence_fm": ligne["licence_fm"],
         "actif": bool(ligne["actif"]),
         "suivi": _suivi(ligne),
         "suivi_choisi": ligne["suivi_manuel"] is not None,
@@ -257,6 +304,9 @@ def _fiche(cx: sqlite3.Connection, ligne: sqlite3.Row) -> dict:
         "modele": ligne["modele"],
         "numero_serie": ligne["numero_serie"],
         "mise_en_service": ligne["mise_en_service"],
+        "cpu": ligne["cpu"],
+        "type_appareil": ligne["type_appareil"],
+        "windows11": None if ligne["windows11"] is None else bool(ligne["windows11"]),
         "version_filemaker": ligne["version_filemaker"] or "Non installé",
         "filemaker_ok": a_jour(ligne["version_filemaker"]),
         "equipements": [dict(e) for e in equipements],

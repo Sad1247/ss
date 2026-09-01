@@ -9,6 +9,10 @@ CREATE TABLE IF NOT EXISTS employe (
     poste_interne  TEXT,
     nom_utilisateur TEXT,
     courriel       TEXT,
+    titre          TEXT,   -- « Directeur, Ventes »
+    compagnie      TEXT,
+    statut         TEXT,   -- EMP, AUT…
+    licence_fm     TEXT,   -- Oui / Non / vide si à confirmer
     actif         INTEGER NOT NULL DEFAULT 1,  -- 1 = en poste, 0 = inactif
     -- Présence dans l'onglet « À mettre à jour », décidée à la main :
     -- NULL = laisser la version FileMaker décider, 1 = toujours, 0 = jamais.
@@ -24,7 +28,10 @@ CREATE TABLE IF NOT EXISTS ordinateur (
     modele           TEXT,
     numero_serie     TEXT,
     mise_en_service  TEXT,   -- AAAA-MM-JJ
-    version_filemaker TEXT   -- NULL = FileMaker non installé
+    version_filemaker TEXT,  -- NULL = FileMaker non installé
+    cpu              TEXT,
+    type_appareil    TEXT,   -- Portable, Mini-PC…
+    windows11        INTEGER -- 1 = migré, 0 = non, NULL = inconnu
 );
 
 -- Écrans, imprimantes, docks, téléphones IP…
@@ -53,12 +60,19 @@ SELECT
     e.poste_interne,
     e.nom_utilisateur,
     e.courriel,
+    e.titre,
+    e.compagnie,
+    e.statut,
+    e.licence_fm,
     e.actif,
     e.suivi_manuel,
     o.nom_ordinateur,
     o.modele,
     o.numero_serie,
     o.mise_en_service,
-    o.version_filemaker
+    o.version_filemaker,
+    o.cpu,
+    o.type_appareil,
+    o.windows11
 FROM employe e
 LEFT JOIN ordinateur o ON o.employe_id = e.id;
