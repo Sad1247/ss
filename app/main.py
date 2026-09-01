@@ -119,6 +119,16 @@ class Api:
         self._exiger_administrateur()
         return donnees.definir_coordonnees(int(employe_id), telephone, poste_interne)
 
+    def definir_poste(self, employe_id, poste):
+        """Enregistre le poste de travail. Réservé à l'administrateur."""
+        self._exiger_administrateur()
+        return donnees.definir_poste(int(employe_id), poste)
+
+    def definir_equipements(self, employe_id, equipements):
+        """Remplace les équipements d'une fiche. Réservé à l'administrateur."""
+        self._exiger_administrateur()
+        return donnees.definir_equipements(int(employe_id), equipements)
+
 
 def main():
     donnees.initialiser()

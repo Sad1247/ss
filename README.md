@@ -91,13 +91,23 @@ SANTINEL_DB=\\serveur\ti\parc.db
 
 ## Modifier une fiche
 
-Avec le compte administrateur, le bloc **Coordonnées** porte un bouton
-« Modifier » : les deux champs deviennent saisissables, `Entrée` enregistre,
-`Échap` ou « Annuler » abandonne. Un champ laissé vide est enregistré comme
-absent et la fiche affiche « — ».
+Avec le compte administrateur, chacun des trois blocs — **Coordonnées**,
+**Poste de travail**, **Équipements** — porte un bouton « Modifier ». Les
+champs deviennent saisissables, `Entrée` enregistre, `Échap` ou « Annuler »
+abandonne. Un seul bloc est modifiable à la fois, pour qu'on sache toujours
+ce qui sera enregistré.
 
-Le compte en lecture seule n'a pas ce bouton, et `definir_coordonnees` le
-refuserait de toute façon.
+Un champ laissé vide est enregistré comme absent et la fiche affiche « — ».
+Deux règles refusent une saisie incohérente : la mise en service doit être
+une date `AAAA-MM-JJ`, et un équipement doit avoir un type. Les lignes
+d'équipement entièrement vides sont simplement ignorées, et le bouton `×`
+retire une ligne.
+
+Une fiche sans poste de travail en reçoit un au premier enregistrement, sans
+manipulation particulière.
+
+Le compte en lecture seule n'a aucun de ces boutons, et `definir_coordonnees`,
+`definir_poste` et `definir_equipements` le refuseraient de toute façon.
 
 ## Employés actifs et inactifs
 

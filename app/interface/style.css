@@ -356,6 +356,26 @@ main { flex: 1; display: flex; min-height: 0; }
 .etat-fm.retard { color: var(--retard); background: var(--retard-fond); }
 
 table { width: 100%; border-collapse: collapse; }
+
+#tableau-equipements td { padding: 5px 6px; vertical-align: middle; }
+#tableau-equipements td:last-child { width: 34px; text-align: center; }
+#ajouter-equipement { margin-top: 12px; }
+
+.bouton-supprimer {
+  width: 26px;
+  height: 26px;
+  font: 17px/1 "Segoe UI", system-ui, sans-serif;
+  color: var(--doux);
+  background: none;
+  border: 1px solid var(--trait);
+  border-radius: 5px;
+  cursor: pointer;
+}
+.bouton-supprimer:hover {
+  color: var(--retard);
+  border-color: var(--retard);
+  background: var(--retard-fond);
+}
 th, td { padding: 8px; text-align: left; border-bottom: 1px solid var(--trait); }
 th {
   font-size: 11px;

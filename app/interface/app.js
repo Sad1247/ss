@@ -2,11 +2,12 @@
 
 const $ = (sel) => document.querySelector(sel);
 
-let session = null;    // {utilisateur, role} une fois connecté
-let editionCoordonnees = false;
-let vue = "tous";      // "tous" | "retardataires"
+let session = null;      // {utilisateur, role} une fois connecté
+let vue = "tous";        // "tous" | "retardataires"
 let fiches = [];
 let choisie = null;
+let edition = null;      // null | "coordonnees" | "poste" | "equipements"
+let brouillon = [];      // équipements en cours de saisie
 
 function echapper(v) {
   return String(v ?? "").replace(/[&<>"]/g, (c) =>
@@ -21,7 +22,11 @@ function etat(message) {
   $("#etat").textContent = message;
 }
 
-/* ---------- rendu ---------- */
+function peutModifier() {
+  return session !== null && session.role === "administrateur";
+}
+
+/* ---------- liste ---------- */
 
 function dessinerListe() {
   const liste = $("#liste");
@@ -42,12 +47,118 @@ function dessinerListe() {
 
   liste.querySelectorAll(".entree").forEach((el) => {
     el.onclick = () => {
-      editionCoordonnees = false;
+      edition = null;
       choisie = Number(el.dataset.id);
       dessinerListe();
       dessinerDetail();
     };
   });
+}
+
+/* ---------- fiche ---------- */
+
+function champ(etiquette, v) {
+  return `<div class="champ">
+            <div class="etiquette">${echapper(etiquette)}</div>
+            <div class="valeur">${valeur(v)}</div>
+          </div>`;
+}
+
+function champSaisie(etiquette, id, v, indication = "") {
+  return `<div class="champ">
+            <div class="etiquette">${echapper(etiquette)}</div>
+            <input id="${id}" class="saisie" value="${echapper(v ?? "")}"
+                   placeholder="${echapper(indication)}">
+          </div>`;
+}
+
+/** Boutons Modifier, ou Annuler / Enregistrer, dans l'en-tête d'un bloc. */
+function actionsBloc(cle) {
+  if (!peutModifier()) return "";
+  if (edition === cle) {
+    return `<span class="actions-bloc">
+              <button type="button" class="lien-action" data-annuler="${cle}">Annuler</button>
+              <button type="button" class="lien-action fort" data-enregistrer="${cle}">Enregistrer</button>
+            </span>`;
+  }
+  return edition === null
+    ? `<button type="button" class="lien-action" data-modifier="${cle}">Modifier</button>`
+    : "";
+}
+
+function blocCoordonnees(f) {
+  const corps = edition === "coordonnees"
+    ? champSaisie("Téléphone", "saisie-telephone", f.telephone) +
+      champSaisie("Poste interne", "saisie-poste", f.poste_interne)
+    : champ("Téléphone", f.telephone) + champ("Poste interne", f.poste_interne);
+  return `<section class="bloc">
+            <h2>Coordonnées ${actionsBloc("coordonnees")}</h2>
+            <div class="champs">${corps}</div>
+          </section>`;
+}
+
+function blocPoste(f) {
+  const corps = edition === "poste"
+    ? champSaisie("Nom de l'ordinateur", "saisie-ordinateur", f.nom_ordinateur) +
+      champSaisie("Modèle", "saisie-modele", f.modele) +
+      champSaisie("Numéro de série", "saisie-serie", f.numero_serie) +
+      champSaisie("Mise en service", "saisie-date", f.mise_en_service, "AAAA-MM-JJ") +
+      champSaisie("FileMaker", "saisie-filemaker",
+                  f.version_filemaker === "Non installé" ? "" : f.version_filemaker,
+                  "vide si non installé")
+    : champ("Nom de l'ordinateur", f.nom_ordinateur) +
+      champ("Modèle", f.modele) +
+      champ("Numéro de série", f.numero_serie) +
+      champ("Mise en service", f.mise_en_service) +
+      `<div class="champ">
+         <div class="etiquette">FileMaker</div>
+         <div class="valeur">
+           <span class="etat-fm ${f.filemaker_ok ? "ok" : "retard"}">
+             ${echapper(f.version_filemaker)}${f.filemaker_ok ? "" : " — à mettre à jour"}
+           </span>
+         </div>
+       </div>`;
+  return `<section class="bloc">
+            <h2>Poste de travail ${actionsBloc("poste")}</h2>
+            <div class="champs">${corps}</div>
+          </section>`;
+}
+
+function blocEquipements(f) {
+  let corps;
+  if (edition === "equipements") {
+    corps = `
+      <table id="tableau-equipements">
+        <thead>
+          <tr><th>Type</th><th>Description</th><th>Numéro de série</th><th></th></tr>
+        </thead>
+        <tbody>
+          ${brouillon.map((e, i) => `
+            <tr>
+              <td><input class="saisie eq-type" value="${echapper(e.type ?? "")}"></td>
+              <td><input class="saisie eq-description" value="${echapper(e.description ?? "")}"></td>
+              <td><input class="saisie eq-serie" value="${echapper(e.numero_serie ?? "")}"></td>
+              <td><button type="button" class="bouton-supprimer" data-ligne="${i}"
+                          title="Retirer cet équipement">×</button></td>
+            </tr>`).join("")}
+        </tbody>
+      </table>
+      <button type="button" id="ajouter-equipement" class="lien-action">+ Ajouter un équipement</button>`;
+  } else if (f.equipements.length) {
+    corps = `
+      <table>
+        <tr><th>Type</th><th>Description</th><th>Numéro de série</th></tr>
+        ${f.equipements.map((e) => `
+          <tr><td>${valeur(e.type)}</td><td>${valeur(e.description)}</td>
+              <td>${valeur(e.numero_serie)}</td></tr>`).join("")}
+      </table>`;
+  } else {
+    corps = '<p class="vide" style="margin:0">Aucun équipement enregistré.</p>';
+  }
+  return `<section class="bloc">
+            <h2>Équipements ${actionsBloc("equipements")}</h2>
+            ${corps}
+          </section>`;
 }
 
 function dessinerDetail() {
@@ -56,14 +167,6 @@ function dessinerDetail() {
     $("#detail").innerHTML = '<p class="vide">Sélectionnez une fiche à gauche.</p>';
     return;
   }
-  const equipements = f.equipements.length
-    ? `<table>
-         <tr><th>Type</th><th>Description</th><th>Numéro de série</th></tr>
-         ${f.equipements.map((e) => `
-           <tr><td>${valeur(e.type)}</td><td>${valeur(e.description)}</td>
-               <td>${valeur(e.numero_serie)}</td></tr>`).join("")}
-       </table>`
-    : '<p class="vide" style="margin:0">Aucun équipement enregistré.</p>';
 
   $("#detail").innerHTML = `
     <div class="entete-fiche">
@@ -73,105 +176,113 @@ function dessinerDetail() {
       </div>
       <div class="controle-etat">
         <span class="etat-emploi ${f.actif ? "oui" : "non"}">${f.actif ? "Actif" : "Inactif"}</span>
-        ${peutModifier()
+        ${peutModifier() && edition === null
           ? `<button type="button" id="basculer-etat" class="bouton-etat">
                ${f.actif ? "Marquer inactif" : "Réactiver"}
              </button>`
           : ""}
       </div>
     </div>
+    ${blocCoordonnees(f)}
+    ${blocPoste(f)}
+    ${blocEquipements(f)}`;
 
-    <section class="bloc">
-      <h2>
-        Coordonnées
-        ${peutModifier() ? (editionCoordonnees
-          ? `<span class="actions-bloc">
-               <button type="button" id="annuler-coordonnees" class="lien-action">Annuler</button>
-               <button type="button" id="enregistrer-coordonnees" class="lien-action fort">Enregistrer</button>
-             </span>`
-          : `<button type="button" id="modifier-coordonnees" class="lien-action">Modifier</button>`) : ""}
-      </h2>
-      <div class="champs">
-        ${editionCoordonnees
-          ? champSaisie("Téléphone", "saisie-telephone", f.telephone) +
-            champSaisie("Poste interne", "saisie-poste", f.poste_interne)
-          : champ("Téléphone", f.telephone) + champ("Poste interne", f.poste_interne)}
-      </div>
-    </section>
+  brancherFiche(f);
+}
 
-    <section class="bloc">
-      <h2>Poste de travail</h2>
-      <div class="champs">
-        ${champ("Nom de l'ordinateur", f.nom_ordinateur)}
-        ${champ("Modèle", f.modele)}
-        ${champ("Numéro de série", f.numero_serie)}
-        ${champ("Mise en service", f.mise_en_service)}
-        <div class="champ">
-          <div class="etiquette">FileMaker</div>
-          <div class="valeur">
-            <span class="etat-fm ${f.filemaker_ok ? "ok" : "retard"}">
-              ${echapper(f.version_filemaker)}${f.filemaker_ok ? "" : " — à mettre à jour"}
-            </span>
-          </div>
-        </div>
-      </div>
-    </section>
+function brancherFiche(f) {
+  if (!peutModifier()) return;
 
-    <section class="bloc">
-      <h2>Équipements</h2>
-      ${equipements}
-    </section>`;
+  const basculer = $("#basculer-etat");
+  if (basculer) basculer.onclick = () => basculerEtat(f);
 
-  if (peutModifier()) {
-    $("#basculer-etat").onclick = () => basculerEtat(f);
-    if (editionCoordonnees) {
-      $("#annuler-coordonnees").onclick = () => {
-        editionCoordonnees = false;
-        dessinerDetail();
-      };
-      $("#enregistrer-coordonnees").onclick = () => enregistrerCoordonnees(f);
-      $(".champs input").focus();
-      document.querySelectorAll(".champs input").forEach((entree) => {
-        entree.onkeydown = (evt) => {
-          if (evt.key === "Enter") enregistrerCoordonnees(f);
-          if (evt.key === "Escape") { editionCoordonnees = false; dessinerDetail(); }
-        };
-      });
-    } else {
-      $("#modifier-coordonnees").onclick = () => {
-        editionCoordonnees = true;
-        dessinerDetail();
-      };
-    }
+  document.querySelectorAll("[data-modifier]").forEach((b) => {
+    b.onclick = () => {
+      edition = b.dataset.modifier;
+      if (edition === "equipements") {
+        brouillon = f.equipements.map((e) => ({ ...e }));
+        if (!brouillon.length) brouillon.push({ type: "", description: "", numero_serie: "" });
+      }
+      dessinerDetail();
+    };
+  });
+
+  if (edition === null) return;
+
+  document.querySelectorAll("[data-annuler]").forEach((b) => {
+    b.onclick = () => { edition = null; dessinerDetail(); };
+  });
+  document.querySelectorAll("[data-enregistrer]").forEach((b) => {
+    b.onclick = () => enregistrer(f);
+  });
+
+  const ajouter = $("#ajouter-equipement");
+  if (ajouter) {
+    ajouter.onclick = () => {
+      brouillon = lireEquipements();
+      brouillon.push({ type: "", description: "", numero_serie: "" });
+      dessinerDetail();
+    };
   }
+  document.querySelectorAll("[data-ligne]").forEach((b) => {
+    b.onclick = () => {
+      brouillon = lireEquipements();
+      brouillon.splice(Number(b.dataset.ligne), 1);
+      dessinerDetail();
+    };
+  });
+
+  const saisies = document.querySelectorAll(".bloc .saisie");
+  if (saisies.length) saisies[0].focus();
+  saisies.forEach((entree) => {
+    entree.onkeydown = (evt) => {
+      if (evt.key === "Enter") enregistrer(f);
+      if (evt.key === "Escape") { edition = null; dessinerDetail(); }
+    };
+  });
 }
 
-function champSaisie(etiquette, id, v) {
-  return `<div class="champ">
-            <div class="etiquette">${echapper(etiquette)}</div>
-            <input id="${id}" class="saisie" value="${echapper(v ?? "")}">
-          </div>`;
+function lireEquipements() {
+  return [...document.querySelectorAll("#tableau-equipements tbody tr")].map((tr) => ({
+    type: tr.querySelector(".eq-type").value,
+    description: tr.querySelector(".eq-description").value,
+    numero_serie: tr.querySelector(".eq-serie").value,
+  }));
 }
 
-async function enregistrerCoordonnees(f) {
-  const bouton = $("#enregistrer-coordonnees");
+async function enregistrer(f) {
+  const bouton = document.querySelector("[data-enregistrer]");
   bouton.disabled = true;
+  const bloc = edition;
   try {
-    const valeurs = await pywebview.api.definir_coordonnees(
-      f.id, $("#saisie-telephone").value, $("#saisie-poste").value);
-    f.telephone = valeurs.telephone;
-    f.poste_interne = valeurs.poste_interne;
-    editionCoordonnees = false;
+    if (bloc === "coordonnees") {
+      const v = await pywebview.api.definir_coordonnees(
+        f.id, $("#saisie-telephone").value, $("#saisie-poste").value);
+      Object.assign(f, v);
+    } else if (bloc === "poste") {
+      const v = await pywebview.api.definir_poste(f.id, {
+        nom_ordinateur: $("#saisie-ordinateur").value,
+        modele: $("#saisie-modele").value,
+        numero_serie: $("#saisie-serie").value,
+        mise_en_service: $("#saisie-date").value,
+        version_filemaker: $("#saisie-filemaker").value,
+      });
+      Object.assign(f, v);
+      // le libellé et l'état FileMaker sont recalculés par Python
+      const frais = (await pywebview.api.chercher(f.nom)).find((x) => x.id === f.id);
+      if (frais) Object.assign(f, frais);
+    } else {
+      f.equipements = await pywebview.api.definir_equipements(f.id, lireEquipements());
+    }
+    edition = null;
+    dessinerListe();
     dessinerDetail();
-    etat(`Coordonnées de ${f.nom} enregistrées.`);
+    await majCompteur();
+    etat(`Fiche de ${f.nom} enregistrée.`);
   } catch (err) {
     bouton.disabled = false;
     etat("Enregistrement refusé : " + err);
   }
-}
-
-function peutModifier() {
-  return session !== null && session.role === "administrateur";
 }
 
 async function basculerEtat(f) {
@@ -188,17 +299,10 @@ async function basculerEtat(f) {
   }
 }
 
-function champ(etiquette, v) {
-  return `<div class="champ">
-            <div class="etiquette">${echapper(etiquette)}</div>
-            <div class="valeur">${valeur(v)}</div>
-          </div>`;
-}
-
 /* ---------- données ---------- */
 
 async function charger() {
-  editionCoordonnees = false;
+  edition = null;
   const terme = $("#terme").value.trim();
   try {
     if (terme) {
@@ -311,7 +415,7 @@ $("#fenetre-compte").onclick = (evt) => {
 $("#deconnexion").onclick = async () => {
   await pywebview.api.deconnexion();
   session = null;
-  editionCoordonnees = false;
+  edition = null;
   ouvrirMenu(false);
   $("#fenetre-compte").hidden = true;
   fiches = [];

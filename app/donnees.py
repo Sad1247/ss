@@ -2,6 +2,7 @@
 
 import os
 import sqlite3
+from datetime import date
 from pathlib import Path
 
 # Version de FileMaker considérée à jour. À ajuster lors des montées de version.
@@ -115,6 +116,78 @@ def definir_coordonnees(employe_id: int, telephone: str, poste_interne: str) -> 
         if curseur.rowcount == 0:
             raise ValueError(f"Aucun employé avec l'identifiant {employe_id}.")
     return valeurs
+
+
+CHAMPS_POSTE = ("nom_ordinateur", "modele", "numero_serie",
+                "mise_en_service", "version_filemaker")
+
+
+def definir_poste(employe_id: int, poste: dict) -> dict:
+    """Enregistre le poste de travail d'un employé, en le créant au besoin."""
+    valeurs = {c: ((poste or {}).get(c) or "").strip() or None for c in CHAMPS_POSTE}
+
+    if valeurs["mise_en_service"]:
+        try:
+            date.fromisoformat(valeurs["mise_en_service"])
+        except ValueError:
+            raise ValueError(
+                "La mise en service doit être une date au format AAAA-MM-JJ."
+            ) from None
+
+    with connexion() as cx:
+        _exiger_employe(cx, employe_id)
+        cx.execute(
+            """
+            INSERT INTO ordinateur
+                (employe_id, nom_ordinateur, modele, numero_serie,
+                 mise_en_service, version_filemaker)
+            VALUES (?, ?, ?, ?, ?, ?)
+            ON CONFLICT(employe_id) DO UPDATE SET
+                nom_ordinateur    = excluded.nom_ordinateur,
+                modele            = excluded.modele,
+                numero_serie      = excluded.numero_serie,
+                mise_en_service   = excluded.mise_en_service,
+                version_filemaker = excluded.version_filemaker
+            """,
+            (employe_id, *(valeurs[c] for c in CHAMPS_POSTE)),
+        )
+    return valeurs
+
+
+def definir_equipements(employe_id: int, equipements: list) -> list:
+    """Remplace la liste des équipements d'un employé.
+
+    Les lignes entièrement vides sont ignorées ; le type est obligatoire dès
+    qu'une ligne porte quelque chose.
+    """
+    propres = []
+    for equipement in equipements or []:
+        type_ = (equipement.get("type") or "").strip()
+        description = (equipement.get("description") or "").strip() or None
+        serie = (equipement.get("numero_serie") or "").strip() or None
+        if not type_ and description is None and serie is None:
+            continue
+        if not type_:
+            raise ValueError("Chaque équipement doit avoir un type.")
+        propres.append({"type": type_, "description": description,
+                        "numero_serie": serie})
+    propres.sort(key=lambda e: e["type"])
+
+    with connexion() as cx:
+        _exiger_employe(cx, employe_id)
+        cx.execute("DELETE FROM equipement WHERE employe_id = ?", (employe_id,))
+        cx.executemany(
+            "INSERT INTO equipement (employe_id, type, description, numero_serie) "
+            "VALUES (?, ?, ?, ?)",
+            [(employe_id, e["type"], e["description"], e["numero_serie"])
+             for e in propres],
+        )
+    return propres
+
+
+def _exiger_employe(cx: sqlite3.Connection, employe_id: int) -> None:
+    if cx.execute("SELECT 1 FROM employe WHERE id = ?", (employe_id,)).fetchone() is None:
+        raise ValueError(f"Aucun employé avec l'identifiant {employe_id}.")
 
 
 def _fiche(cx: sqlite3.Connection, ligne: sqlite3.Row) -> dict:
