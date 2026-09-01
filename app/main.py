@@ -125,10 +125,10 @@ class Api:
         donnees.suivi_automatique(int(employe_id))
         return True
 
-    def definir_coordonnees(self, employe_id, telephone, poste_interne):
+    def definir_coordonnees(self, employe_id, coordonnees):
         """Enregistre les coordonnées d'une fiche. Réservé à l'administrateur."""
         self._exiger_administrateur()
-        return donnees.definir_coordonnees(int(employe_id), telephone, poste_interne)
+        return donnees.definir_coordonnees(int(employe_id), coordonnees)
 
     def definir_poste(self, employe_id, poste):
         """Enregistre le poste de travail. Réservé à l'administrateur."""

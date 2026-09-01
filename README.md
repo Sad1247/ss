@@ -80,7 +80,7 @@ SANTINEL_DB=\\serveur\ti\parc.db
 | Chemin | Rôle |
 | --- | --- |
 | `app/main.py` | fenêtre pywebview, expose l'API Python au JavaScript |
-| `app/donnees.py` | accès SQLite : `chercher`, `tous`, `retardataires` |
+| `app/donnees.py` | accès SQLite : `chercher`, `tous`, `retardataires` et les écritures |
 | `app/schema.sql` | tables `employe`, `ordinateur`, `equipement` + vue `v_fiche` |
 | `app/interface/` | écran de connexion et interface HTML / CSS / JS |
 | `app/interface/santinel.png` | logo (blanc, sur le bandeau marine) |
@@ -91,15 +91,17 @@ SANTINEL_DB=\\serveur\ti\parc.db
 
 ## Modifier une fiche
 
-Avec le compte administrateur, chacun des trois blocs — **Coordonnées**,
-**Poste de travail**, **Équipements** — porte un bouton « Modifier ». Les
+Avec le compte administrateur, chacun des trois blocs — **Coordonnées**
+(téléphone, poste interne, nom d'utilisateur, courriel), **Poste de
+travail**, **Équipements** — porte un bouton « Modifier ». Les
 champs deviennent saisissables, `Entrée` enregistre, `Échap` ou « Annuler »
 abandonne. Un seul bloc est modifiable à la fois, pour qu'on sache toujours
 ce qui sera enregistré.
 
 Un champ laissé vide est enregistré comme absent et la fiche affiche « — ».
-Deux règles refusent une saisie incohérente : la mise en service doit être
-une date `AAAA-MM-JJ`, et un équipement doit avoir un type. Les lignes
+Trois règles refusent une saisie incohérente : le courriel doit contenir une
+arobase, la mise en service doit être une date `AAAA-MM-JJ`, et un
+équipement doit avoir un type. Les lignes
 d'équipement entièrement vides sont simplement ignorées, et le bouton `×`
 retire une ligne.
 

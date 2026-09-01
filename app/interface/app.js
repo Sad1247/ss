@@ -94,8 +94,13 @@ function actionsBloc(cle) {
 function blocCoordonnees(f) {
   const corps = edition === "coordonnees"
     ? champSaisie("Téléphone", "saisie-telephone", f.telephone) +
-      champSaisie("Poste interne", "saisie-poste", f.poste_interne)
-    : champ("Téléphone", f.telephone) + champ("Poste interne", f.poste_interne);
+      champSaisie("Poste interne", "saisie-poste", f.poste_interne) +
+      champSaisie("Nom d'utilisateur", "saisie-utilisateur", f.nom_utilisateur) +
+      champSaisie("Courriel", "saisie-courriel", f.courriel, "nom@santinel.ca")
+    : champ("Téléphone", f.telephone) +
+      champ("Poste interne", f.poste_interne) +
+      champ("Nom d'utilisateur", f.nom_utilisateur) +
+      champ("Courriel", f.courriel);
   return `<section class="bloc">
             <h2>Coordonnées ${actionsBloc("coordonnees")}</h2>
             <div class="champs">${corps}</div>
@@ -282,8 +287,12 @@ async function enregistrer(f) {
   const bloc = edition;
   try {
     if (bloc === "coordonnees") {
-      const v = await pywebview.api.definir_coordonnees(
-        f.id, $("#saisie-telephone").value, $("#saisie-poste").value);
+      const v = await pywebview.api.definir_coordonnees(f.id, {
+        telephone: $("#saisie-telephone").value,
+        poste_interne: $("#saisie-poste").value,
+        nom_utilisateur: $("#saisie-utilisateur").value,
+        courriel: $("#saisie-courriel").value,
+      });
       Object.assign(f, v);
     } else if (bloc === "poste") {
       const v = await pywebview.api.definir_poste(f.id, {

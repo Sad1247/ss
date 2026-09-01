@@ -3,8 +3,8 @@
     python outils/exemples.py          # base par défaut
     SANTINEL_DB=/tmp/essai.db python outils/exemples.py
 
-Le script est re-jouable : il n'ajoute que les fiches absentes, et ne
-touche pas à celles qui existent déjà.
+Le script est re-jouable : il ajoute les fiches absentes et met à jour les
+champs de démonstration de celles qui existent déjà, sans rien supprimer.
 """
 
 import sys
@@ -14,43 +14,69 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "app"))
 
 import donnees  # noqa: E402
 
-EMPLOYES = [
-    # nom, service, téléphone, poste, ordinateur, modèle, série,
-    # mise en service, FileMaker, actif
-    ("Marie Tremblay", "Comptabilité", "418 555-0142", "221",
-     "COMPTA-01", "Dell OptiPlex 7010", "5KJ9L2Q", "2023-04-11", "22.0.1", 1),
-    ("Jean Bourgeois", "Direction", "418 555-0118", "201",
-     "DIR-PORT-03", "Lenovo ThinkPad T14", "PF3H8821", "2024-09-02", "21.1.3", 1),
-    ("Sophie Lavoie", "Ressources humaines", "418 555-0177", "245",
-     "RH-02", "HP EliteDesk 800", "CZC2410XYZ", "2022-01-20", None, 0),
-    ("Alain Gagné", "Entrepôt", "418 555-0190", "310",
-     "ENTREPOT-01", "Dell OptiPlex 3000", "9WQ4T1B", "2025-02-17", "22.0.1", 1),
-    ("Saad", "Informatique", "418 555-0101", "200",
-     "TI-PORT-01", "Dell Latitude 5450", "H7X2M9P", "2025-06-09", "22.0.1", 1),
-    ("Karine Doucet", "Marketing", "418 555-0163", "228",
-     "MARKET-04", "Lenovo ThinkCentre M70q", "MJ0AB1CD", "2023-11-06", "20.3.1", 1),
-    ("Luc Marchand", "Expédition", "418 555-0184", "305",
-     "EXPED-02", "HP ProDesk 400 G9", "8CG3120FGH", "2024-03-25", None, 0),
-]
-
 # Fiches renommées après coup : appliqué aux bases déjà remplies.
 RENOMMAGES = {"Saad Anjar": "Saad"}
 
-EQUIPEMENTS = {
-    "Marie Tremblay": [("Écran", "Dell P2422H 24 pouces", "CN0X1Y2Z"),
-                       ("Imprimante", "Brother HL-L2350DW", "U64312J0N")],
-    "Jean Bourgeois": [("Station d'accueil", "Lenovo ThinkPad Dock Gen 2", "1S40AS0090")],
-    "Sophie Lavoie": [("Écran", "HP E243 24 pouces", "6CM8241QRS"),
-                      ("Téléphone IP", "Yealink T46S", "80AB12CD34")],
-    "Alain Gagné": [("Lecteur code-barres", "Zebra DS2208", "18240522500123")],
-    "Saad": [("Écran", "Dell U2723QE 27 pouces", "CN0P4R5T"),
-             ("Écran", "Dell U2723QE 27 pouces", "CN0P4R5U"),
-             ("Station d'accueil", "Dell WD19S", "5J8K2L1M")],
-    "Karine Doucet": [("Écran", "Lenovo ThinkVision T24i", "V906C2XY"),
-                      ("Casque", "Jabra Evolve2 40", "JB4471002")],
-    "Luc Marchand": [("Imprimante étiquettes", "Zebra ZD421", "D4J213900456"),
-                     ("Téléphone IP", "Yealink T43U", "80CD34EF56")],
-}
+EMPLOYES = [
+    {
+        "nom": "Marie Tremblay", "service": "Comptabilité", "actif": 1,
+        "telephone": "418 555-0142", "poste_interne": "221",
+        "nom_utilisateur": "mtremblay", "courriel": "mtremblay@santinel.ca",
+        "poste": ("COMPTA-01", "Dell OptiPlex 7010", "5KJ9L2Q", "2023-04-11", "22.0.1"),
+        "equipements": [("Écran", "Dell P2422H 24 pouces", "CN0X1Y2Z"),
+                        ("Imprimante", "Brother HL-L2350DW", "U64312J0N")],
+    },
+    {
+        "nom": "Jean Bourgeois", "service": "Direction", "actif": 1,
+        "telephone": "418 555-0118", "poste_interne": "201",
+        "nom_utilisateur": "jbourgeois", "courriel": "jbourgeois@santinel.ca",
+        "poste": ("DIR-PORT-03", "Lenovo ThinkPad T14", "PF3H8821", "2024-09-02", "21.1.3"),
+        "equipements": [("Station d'accueil", "Lenovo ThinkPad Dock Gen 2", "1S40AS0090")],
+    },
+    {
+        "nom": "Sophie Lavoie", "service": "Ressources humaines", "actif": 0,
+        "telephone": "418 555-0177", "poste_interne": "245",
+        "nom_utilisateur": "slavoie", "courriel": "slavoie@santinel.ca",
+        "poste": ("RH-02", "HP EliteDesk 800", "CZC2410XYZ", "2022-01-20", None),
+        "equipements": [("Écran", "HP E243 24 pouces", "6CM8241QRS"),
+                        ("Téléphone IP", "Yealink T46S", "80AB12CD34")],
+    },
+    {
+        "nom": "Alain Gagné", "service": "Entrepôt", "actif": 1,
+        "telephone": "418 555-0190", "poste_interne": "310",
+        "nom_utilisateur": "againe", "courriel": "againe@santinel.ca",
+        "poste": ("ENTREPOT-01", "Dell OptiPlex 3000", "9WQ4T1B", "2025-02-17", "22.0.1"),
+        "equipements": [("Lecteur code-barres", "Zebra DS2208", "18240522500123")],
+    },
+    {
+        "nom": "Saad", "service": "Informatique", "actif": 1,
+        "telephone": "418 555-0101", "poste_interne": "200",
+        "nom_utilisateur": "saad", "courriel": "saad@santinel.ca",
+        "poste": ("TI-PORT-01", "Dell Latitude 5450", "H7X2M9P", "2025-06-09", "22.0.1"),
+        "equipements": [("Écran", "Dell U2723QE 27 pouces", "CN0P4R5T"),
+                        ("Écran", "Dell U2723QE 27 pouces", "CN0P4R5U"),
+                        ("Station d'accueil", "Dell WD19S", "5J8K2L1M")],
+    },
+    {
+        "nom": "Karine Doucet", "service": "Marketing", "actif": 1,
+        "telephone": "418 555-0163", "poste_interne": "228",
+        "nom_utilisateur": "kdoucet", "courriel": "kdoucet@santinel.ca",
+        "poste": ("MARKET-04", "Lenovo ThinkCentre M70q", "MJ0AB1CD", "2023-11-06", "20.3.1"),
+        "equipements": [("Écran", "Lenovo ThinkVision T24i", "V906C2XY"),
+                        ("Casque", "Jabra Evolve2 40", "JB4471002")],
+    },
+    {
+        "nom": "Luc Marchand", "service": "Expédition", "actif": 0,
+        "telephone": "418 555-0184", "poste_interne": "305",
+        "nom_utilisateur": "lmarchand", "courriel": "lmarchand@santinel.ca",
+        "poste": ("EXPED-02", "HP ProDesk 400 G9", "8CG3120FGH", "2024-03-25", None),
+        "equipements": [("Imprimante étiquettes", "Zebra ZD421", "D4J213900456"),
+                        ("Téléphone IP", "Yealink T43U", "80CD34EF56")],
+    },
+]
+
+CHAMPS = ("service", "telephone", "poste_interne",
+          "nom_utilisateur", "courriel", "actif")
 
 
 def main() -> int:
@@ -60,37 +86,44 @@ def main() -> int:
         for ancien, nouveau in RENOMMAGES.items():
             cx.execute("UPDATE employe SET nom = ? WHERE nom = ?", (nouveau, ancien))
 
-        deja = {ligne[0] for ligne in cx.execute("SELECT nom FROM employe")}
+        deja = {ligne["nom"]: ligne["id"] for ligne in
+                cx.execute("SELECT id, nom FROM employe")}
 
-        for nom, service, tel, poste, ordi, modele, serie, date, fm, actif in EMPLOYES:
-            # les fiches d'exemple déjà en base reçoivent quand même leur état
-            cx.execute("UPDATE employe SET actif = ? WHERE nom = ?", (actif, nom))
-            if nom in deja:
+        for e in EMPLOYES:
+            valeurs = tuple(e[c] for c in CHAMPS)
+            if e["nom"] in deja:
+                # met à jour les champs de démonstration, y compris les
+                # colonnes apparues après la création de la fiche
+                cx.execute(
+                    f"UPDATE employe SET {', '.join(c + ' = ?' for c in CHAMPS)} "
+                    "WHERE id = ?",
+                    (*valeurs, deja[e["nom"]]),
+                )
                 continue
-            cur = cx.execute(
-                "INSERT INTO employe (nom, service, telephone, poste_interne, actif) "
-                "VALUES (?, ?, ?, ?, ?)",
-                (nom, service, tel, poste, actif),
+
+            curseur = cx.execute(
+                f"INSERT INTO employe (nom, {', '.join(CHAMPS)}) "
+                f"VALUES ({', '.join('?' * (len(CHAMPS) + 1))})",
+                (e["nom"], *valeurs),
             )
-            employe_id = cur.lastrowid
+            employe_id = curseur.lastrowid
             cx.execute(
                 "INSERT INTO ordinateur (employe_id, nom_ordinateur, modele, "
                 "numero_serie, mise_en_service, version_filemaker) "
                 "VALUES (?, ?, ?, ?, ?, ?)",
-                (employe_id, ordi, modele, serie, date, fm),
+                (employe_id, *e["poste"]),
             )
-            for type_, description, serie_eq in EQUIPEMENTS.get(nom, []):
-                cx.execute(
-                    "INSERT INTO equipement (employe_id, type, description, numero_serie) "
-                    "VALUES (?, ?, ?, ?)",
-                    (employe_id, type_, description, serie_eq),
-                )
+            cx.executemany(
+                "INSERT INTO equipement (employe_id, type, description, numero_serie) "
+                "VALUES (?, ?, ?, ?)",
+                [(employe_id, *equipement) for equipement in e["equipements"]],
+            )
             ajoutes += 1
 
     if ajoutes:
         print(f"{ajoutes} fiche(s) ajoutée(s) dans {donnees.chemin_base()}")
     else:
-        print("Toutes les fiches d'exemple sont déjà présentes.")
+        print(f"Fiches d'exemple mises à jour dans {donnees.chemin_base()}")
     return 0
 
 

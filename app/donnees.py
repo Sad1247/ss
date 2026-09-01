@@ -50,6 +50,9 @@ def _migrer(cx: sqlite3.Connection) -> None:
     colonnes = {ligne["name"] for ligne in cx.execute("PRAGMA table_info(employe)")}
     if "actif" not in colonnes:
         cx.execute("ALTER TABLE employe ADD COLUMN actif INTEGER NOT NULL DEFAULT 1")
+    for colonne in ("nom_utilisateur", "courriel"):
+        if colonne not in colonnes:
+            cx.execute(f"ALTER TABLE employe ADD COLUMN {colonne} TEXT")
     if "suivi_manuel" not in colonnes:
         cx.execute("ALTER TABLE employe ADD COLUMN suivi_manuel INTEGER")
         if "suivi_filemaker" in colonnes:      # choix faits avant le passage
@@ -66,7 +69,8 @@ def a_jour(version: str | None) -> bool:
 
 
 def chercher(terme: str) -> list[dict]:
-    """Recherche sur le nom, le poste, le numéro de série ou le service."""
+    """Recherche sur le nom, le poste, la série, le service, l'utilisateur
+    ou le courriel."""
     terme = (terme or "").strip()
     if not terme:
         return []
@@ -77,9 +81,10 @@ def chercher(terme: str) -> list[dict]:
             SELECT * FROM v_fiche
             WHERE nom LIKE ? OR nom_ordinateur LIKE ?
                OR numero_serie LIKE ? OR service LIKE ?
+               OR nom_utilisateur LIKE ? OR courriel LIKE ?
             ORDER BY nom
             """,
-            (motif, motif, motif, motif),
+            (motif,) * 6,
         ).fetchall()
         return [_fiche(cx, l) for l in lignes]
 
@@ -128,25 +133,29 @@ def suivi_automatique(employe_id: int) -> None:
                    (employe_id,))
 
 
-def definir_coordonnees(employe_id: int, telephone: str, poste_interne: str) -> dict:
-    """Met à jour le téléphone et le poste interne. Renvoie les valeurs gardées.
+def definir_coordonnees(employe_id: int, coordonnees: dict) -> dict:
+    """Met à jour les coordonnées. Renvoie les valeurs gardées.
 
     Un champ laissé vide est enregistré comme absent (NULL) plutôt que comme
     une chaîne vide, pour que la fiche affiche « — » comme ailleurs.
     """
-    valeurs = {
-        "telephone": (telephone or "").strip() or None,
-        "poste_interne": (poste_interne or "").strip() or None,
-    }
+    valeurs = {c: ((coordonnees or {}).get(c) or "").strip() or None
+               for c in CHAMPS_COORDONNEES}
+
+    if valeurs["courriel"] and "@" not in valeurs["courriel"]:
+        raise ValueError("Le courriel doit contenir une arobase.")
+
     with connexion() as cx:
-        curseur = cx.execute(
-            "UPDATE employe SET telephone = ?, poste_interne = ? WHERE id = ?",
-            (valeurs["telephone"], valeurs["poste_interne"], employe_id),
+        _exiger_employe(cx, employe_id)
+        cx.execute(
+            "UPDATE employe SET telephone = ?, poste_interne = ?, "
+            "nom_utilisateur = ?, courriel = ? WHERE id = ?",
+            (*(valeurs[c] for c in CHAMPS_COORDONNEES), employe_id),
         )
-        if curseur.rowcount == 0:
-            raise ValueError(f"Aucun employé avec l'identifiant {employe_id}.")
     return valeurs
 
+
+CHAMPS_COORDONNEES = ("telephone", "poste_interne", "nom_utilisateur", "courriel")
 
 CHAMPS_POSTE = ("nom_ordinateur", "modele", "numero_serie",
                 "mise_en_service", "version_filemaker")
@@ -239,6 +248,8 @@ def _fiche(cx: sqlite3.Connection, ligne: sqlite3.Row) -> dict:
         "service": ligne["service"],
         "telephone": ligne["telephone"],
         "poste_interne": ligne["poste_interne"],
+        "nom_utilisateur": ligne["nom_utilisateur"],
+        "courriel": ligne["courriel"],
         "actif": bool(ligne["actif"]),
         "suivi": _suivi(ligne),
         "suivi_choisi": ligne["suivi_manuel"] is not None,

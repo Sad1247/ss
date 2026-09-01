@@ -3,10 +3,12 @@
 
 CREATE TABLE IF NOT EXISTS employe (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
-    nom           TEXT NOT NULL,
-    service       TEXT,
-    telephone     TEXT,
-    poste_interne TEXT,
+    nom            TEXT NOT NULL,
+    service        TEXT,
+    telephone      TEXT,
+    poste_interne  TEXT,
+    nom_utilisateur TEXT,
+    courriel       TEXT,
     actif         INTEGER NOT NULL DEFAULT 1,  -- 1 = en poste, 0 = inactif
     -- Présence dans l'onglet « À mettre à jour », décidée à la main :
     -- NULL = laisser la version FileMaker décider, 1 = toujours, 0 = jamais.
@@ -49,6 +51,8 @@ SELECT
     e.service,
     e.telephone,
     e.poste_interne,
+    e.nom_utilisateur,
+    e.courriel,
     e.actif,
     e.suivi_manuel,
     o.nom_ordinateur,
