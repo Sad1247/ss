@@ -75,7 +75,7 @@ function dessinerDetail() {
           ? `<button type="button" id="basculer-etat" class="bouton-etat">
                ${f.actif ? "Marquer inactif" : "Réactiver"}
              </button>`
-          : `<span class="mention-lecture" title="Ce compte ne peut pas modifier les fiches">Lecture seule</span>`}
+          : ""}
       </div>
     </div>
 

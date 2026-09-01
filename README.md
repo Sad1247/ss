@@ -57,8 +57,8 @@ droits, et permet de se déconnecter.
 
 Les droits sont appliqués côté Python, pas en masquant des boutons :
 `_exiger_session` protège la lecture, `_exiger_administrateur` protège
-l'écriture. Un compte en lecture seule voit la mention « Lecture seule » à
-la place du bouton d'état, et `definir_actif` le rejetterait de toute façon.
+l'écriture. Un compte en lecture seule n'a tout simplement pas le bouton d'état, et
+`definir_actif` le rejetterait de toute façon.
 
 Ce n'est pas pour autant un rempart sérieux — le fichier `parc.db` reste
 lisible par quiconque a accès au poste ou au partage réseau. C'est une
