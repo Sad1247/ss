@@ -65,6 +65,16 @@ lisible par quiconque a accès au poste ou au partage réseau. C'est une
 barrière contre la consultation de passage, pas contre quelqu'un de
 déterminé.
 
+## Thème clair ou sombre
+
+Le bouton en croissant de lune, à gauche du menu Compte, bascule entre les
+deux thèmes ; il devient un soleil une fois en sombre. **L'application
+s'ouvre en mode sombre**, et le choix est retenu d'un lancement à l'autre.
+
+Toutes les couleurs sont des variables CSS définies sur `:root` : le mode
+sombre ne redéfinit que ces jetons dans `:root.sombre`, sans dupliquer une
+seule règle de mise en page.
+
 ## Emplacement des données
 
 Par défaut `%LOCALAPPDATA%\Santinel\parc.db`. Pour partager la même base entre

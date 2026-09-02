@@ -588,6 +588,43 @@ $("#deconnexion").onclick = async () => {
   $("#utilisateur").focus();
 };
 
+/* ---------- thème ---------- */
+
+const CROISSANT = `<svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"
+  aria-hidden="true"><path d="M12.3 3a9 9 0 1 0 8.7 11.3A7.2 7.2 0 0 1 12.3 3Z"/></svg>`;
+
+const SOLEIL = `<svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"
+  aria-hidden="true"><path d="M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10Zm0-6 1.6 3.2h-3.2L12 1Zm0
+  22-1.6-3.2h3.2L12 23ZM1 12l3.2-1.6v3.2L1 12Zm22 0-3.2 1.6v-3.2L23 12ZM4.2 4.2l3.5.6-1.8
+  1.8-1.7-2.4Zm15.6 15.6-3.5-.6 1.8-1.8 1.7 2.4ZM19.8 4.2l-1.7 2.4-1.8-1.8 3.5-.6ZM4.2
+  19.8l1.7-2.4 1.8 1.8-3.5.6Z"/></svg>`;
+
+const boutonTheme = $("#theme");
+
+function appliquerTheme(sombre) {
+  document.documentElement.classList.toggle("sombre", sombre);
+  boutonTheme.innerHTML = sombre ? SOLEIL : CROISSANT;
+  boutonTheme.title = sombre ? "Repasser en mode clair" : "Mode sombre";
+  try {
+    localStorage.setItem("santinel-theme", sombre ? "sombre" : "clair");
+  } catch (err) {
+    /* stockage indisponible : le choix vaut pour la session en cours */
+  }
+}
+
+function themeAuDemarrage() {
+  try {
+    return localStorage.getItem("santinel-theme") !== "clair";   // sombre par défaut
+  } catch (err) {
+    return true;
+  }
+}
+
+boutonTheme.onclick = () =>
+  appliquerTheme(!document.documentElement.classList.contains("sombre"));
+
+appliquerTheme(themeAuDemarrage());
+
 /* ---------- évènements ---------- */
 
 let minuterie;

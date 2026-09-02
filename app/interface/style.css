@@ -12,6 +12,33 @@
   --ok-fond: #e3f5eb;
   --retard: #c02b1d;
   --retard-fond: #fdecea;
+  --retard-trait: #f3c3bd;
+  --liste-fond: #e6ecf5;
+  --entete-tableau: #f5f8fc;
+  --survol: #9fc0f5;
+  --titre: #0b2f5c;           /* noms et titres, sur fond de carte */
+}
+
+/* Mode sombre : seuls les jetons changent, aucune règle n'est dupliquée. */
+:root.sombre {
+  --marine: #0a1728;
+  --marine-fonce: #060f1c;
+  --bleu: #4d9bff;
+  --bleu-pale: #16304f;
+  --fond: #0e1726;
+  --carte: #172436;
+  --trait: #2b3a52;
+  --texte: #e6edf7;
+  --doux: #93a5bd;
+  --ok: #46d18a;
+  --ok-fond: #10301f;
+  --retard: #ff8b7c;
+  --retard-fond: #3a1c19;
+  --retard-trait: #63302a;
+  --liste-fond: #0b1320;
+  --entete-tableau: #1c2b42;
+  --survol: #3d6ea8;
+  --titre: #dbe8ff;
 }
 
 * { box-sizing: border-box; }
@@ -66,6 +93,8 @@ header {
   white-space: nowrap;
 }
 .bouton-deconnexion svg { color: #8dc2ff; }
+.bouton-deconnexion.icone-seule { padding: 8px 10px; }
+
 .bouton-deconnexion .chevron { margin-left: 1px; transition: transform .15s; }
 .bouton-deconnexion[aria-expanded="true"] .chevron { transform: rotate(180deg); }
 
@@ -100,7 +129,7 @@ header {
   cursor: pointer;
 }
 .element-menu svg { color: var(--doux); }
-.element-menu:hover { background: var(--bleu-pale); color: var(--marine); }
+.element-menu:hover { background: var(--bleu-pale); color: var(--titre); }
 .element-menu:hover svg { color: var(--bleu); }
 
 /* fenêtre « Compte » */
@@ -122,7 +151,7 @@ header {
   border-radius: 10px;
   box-shadow: 0 18px 44px rgba(8, 26, 56, .4);
 }
-.boite h2 { margin: 0 0 18px; font-size: 18px; color: var(--marine); }
+.boite h2 { margin: 0 0 18px; font-size: 18px; color: var(--titre); }
 
 .infos-compte {
   display: grid;
@@ -208,7 +237,7 @@ main { flex: 1; display: flex; min-height: 0; }
   flex: none;
   overflow-y: auto;
   padding: 12px 10px;
-  background: #e6ecf5;
+  background: var(--liste-fond);
   border-right: 1px solid var(--trait);
 }
 
@@ -225,7 +254,7 @@ main { flex: 1; display: flex; min-height: 0; }
   border-radius: 6px;
   cursor: pointer;
 }
-.entree:hover { border-color: #9fc0f5; border-left-color: var(--bleu); }
+.entree:hover { border-color: var(--survol); border-left-color: var(--bleu); }
 .entree.choisie {
   background: var(--bleu-pale);
   border-color: var(--bleu);
@@ -234,7 +263,7 @@ main { flex: 1; display: flex; min-height: 0; }
 }
 .entree.retard { border-left-color: var(--retard); }
 .entree-texte { min-width: 0; }
-.entree .nom { font-weight: 600; color: var(--marine); }
+.entree .nom { font-weight: 600; color: var(--titre); }
 .entree .meta {
   font-size: 12px;
   color: var(--doux);
@@ -276,7 +305,7 @@ main { flex: 1; display: flex; min-height: 0; }
 .bouton-etat {
   padding: 7px 13px;
   font: inherit;
-  color: var(--marine);
+  color: var(--titre);
   background: var(--carte);
   border: 1px solid var(--trait);
   border-radius: 6px;
@@ -300,7 +329,7 @@ main { flex: 1; display: flex; min-height: 0; }
   margin-bottom: 16px;
   padding: 14px 18px;
   background: var(--retard-fond);
-  border: 1px solid #f3c3bd;
+  border: 1px solid var(--retard-trait);
   border-left: 3px solid var(--retard);
   border-radius: 8px;
 }
@@ -314,7 +343,7 @@ main { flex: 1; display: flex; min-height: 0; }
 }
 .lien-action.danger:hover:not(:disabled) { background: #9e2418; }
 
-.detail h1 { margin: 0 0 2px; font-size: 23px; color: var(--marine); }
+.detail h1 { margin: 0 0 2px; font-size: 23px; color: var(--titre); }
 .detail .sous-titre { margin: 0; color: var(--doux); }
 
 .bloc {
@@ -421,7 +450,7 @@ th {
   text-transform: uppercase;
   letter-spacing: .05em;
   color: var(--doux);
-  background: #f5f8fc;
+  background: var(--entete-tableau);
 }
 tr:last-child td { border-bottom: none; }
 
