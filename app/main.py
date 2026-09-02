@@ -130,6 +130,11 @@ class Api:
         self._exiger_administrateur()
         return donnees.definir_coordonnees(int(employe_id), coordonnees)
 
+    def supprimer(self, employe_id):
+        """Supprime une fiche. Réservé à l'administrateur."""
+        self._exiger_administrateur()
+        return donnees.supprimer(int(employe_id))
+
     def definir_emploi(self, employe_id, emploi):
         """Enregistre le bloc Emploi. Réservé à l'administrateur."""
         self._exiger_administrateur()

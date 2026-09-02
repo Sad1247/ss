@@ -8,6 +8,7 @@ let fiches = [];
 let choisie = null;
 let edition = null;      // null | "coordonnees" | "poste" | "equipements"
 let brouillon = [];      // équipements en cours de saisie
+let confirmation = false;  // suppression en attente de confirmation
 
 function echapper(v) {
   return String(v ?? "").replace(/[&<>"]/g, (c) =>
@@ -53,6 +54,7 @@ function dessinerListe() {
   liste.querySelectorAll(".entree").forEach((el) => {
     el.onclick = () => {
       edition = null;
+      confirmation = false;
       choisie = Number(el.dataset.id);
       dessinerListe();
       dessinerDetail();
@@ -233,10 +235,26 @@ function dessinerDetail() {
         ${peutModifier() && edition === null
           ? `<button type="button" id="basculer-etat" class="bouton-etat">
                ${f.actif ? "Marquer inactif" : "Réactiver"}
-             </button>`
+             </button>
+             <button type="button" id="supprimer" class="bouton-etat danger">Supprimer</button>`
           : ""}
       </div>
     </div>
+    ${confirmation ? `
+      <div class="confirmation">
+        <div>
+          <strong>Supprimer définitivement la fiche de ${echapper(f.nom)} ?</strong>
+          <p>Son poste de travail et ses équipements partent avec. C'est
+             irréversible. Pour un départ, « Marquer inactif » conserve
+             l'historique.</p>
+        </div>
+        <div class="actions-bloc">
+          <button type="button" id="annuler-suppression" class="lien-action">Annuler</button>
+          <button type="button" id="confirmer-suppression" class="lien-action danger">
+            Supprimer
+          </button>
+        </div>
+      </div>` : ""}
     ${blocEmploi(f)}
     ${blocCoordonnees(f)}
     ${blocPoste(f)}
@@ -250,6 +268,15 @@ function brancherFiche(f) {
 
   const basculer = $("#basculer-etat");
   if (basculer) basculer.onclick = () => basculerEtat(f);
+
+  const supprimer = $("#supprimer");
+  if (supprimer) supprimer.onclick = () => { confirmation = true; dessinerDetail(); };
+
+  const annuler = $("#annuler-suppression");
+  if (annuler) annuler.onclick = () => { confirmation = false; dessinerDetail(); };
+
+  const confirmer = $("#confirmer-suppression");
+  if (confirmer) confirmer.onclick = () => supprimerFiche(f);
 
   const suivi = $("#basculer-suivi");
   if (suivi) suivi.onclick = () => basculerSuivi(f);
@@ -360,6 +387,21 @@ async function enregistrer(f) {
   }
 }
 
+async function supprimerFiche(f) {
+  const bouton = $("#confirmer-suppression");
+  bouton.disabled = true;
+  try {
+    const nom = await pywebview.api.supprimer(f.id);
+    confirmation = false;
+    choisie = null;
+    await charger();
+    etat(`Fiche de ${nom} supprimée.`);
+  } catch (err) {
+    bouton.disabled = false;
+    etat("Suppression refusée : " + err);
+  }
+}
+
 async function basculerSuivi(f) {
   const bouton = $("#basculer-suivi");
   bouton.disabled = true;
@@ -420,6 +462,7 @@ async function basculerEtat(f) {
 
 async function charger() {
   edition = null;
+  confirmation = false;
   const terme = $("#terme").value.trim();
   try {
     if (terme) {
@@ -533,6 +576,7 @@ $("#deconnexion").onclick = async () => {
   await pywebview.api.deconnexion();
   session = null;
   edition = null;
+  confirmation = false;
   ouvrirMenu(false);
   $("#fenetre-compte").hidden = true;
   fiches = [];

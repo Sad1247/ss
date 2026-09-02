@@ -183,6 +183,21 @@ def _oui_non(brut) -> bool | None:
     return bool(brut)
 
 
+def supprimer(employe_id: int) -> str:
+    """Supprime une fiche et tout ce qui s'y rattache. Renvoie le nom effacé.
+
+    Le poste de travail et les équipements partent avec, par les clés
+    étrangères ON DELETE CASCADE.
+    """
+    with connexion() as cx:
+        ligne = cx.execute("SELECT nom FROM employe WHERE id = ?",
+                           (employe_id,)).fetchone()
+        if ligne is None:
+            raise ValueError(f"Aucun employé avec l'identifiant {employe_id}.")
+        cx.execute("DELETE FROM employe WHERE id = ?", (employe_id,))
+    return ligne["nom"]
+
+
 def definir_emploi(employe_id: int, emploi: dict) -> dict:
     """Enregistre le titre, la compagnie et le département."""
     valeurs = {c: ((emploi or {}).get(c) or "").strip() or None

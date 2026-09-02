@@ -139,6 +139,16 @@ manipulation particulière.
 Le compte en lecture seule n'a aucun de ces boutons, et `definir_coordonnees`,
 `definir_poste` et `definir_equipements` le refuseraient de toute façon.
 
+## Supprimer une fiche
+
+Le bouton **Supprimer**, en haut à droite de la fiche et réservé à
+l'administrateur, demande d'abord confirmation : la suppression emporte le
+poste de travail et les équipements (clés étrangères `ON DELETE CASCADE`) et
+ne se défait pas.
+
+Pour un simple départ, préférer « Marquer inactif » : la fiche reste
+consultable et le matériel reste rattaché à quelqu'un.
+
 ## Employés actifs et inactifs
 
 Chaque fiche porte un état affiché à droite dans la liste : vert « Actif »,
