@@ -45,11 +45,20 @@ class Api:
         if self.session is None:
             raise PermissionError("Session non authentifiée.")
 
+    def _exiger_ecriture(self):
+        """Modifier les fiches : administrateur ou compte de modification."""
+        self._exiger_session()
+        if self.session["role"] not in comptes.ROLES_ECRITURE:
+            raise PermissionError(
+                "Ce compte est en lecture seule : modification refusée."
+            )
+
     def _exiger_administrateur(self):
+        """Gérer les comptes d'accès : administrateur seulement."""
         self._exiger_session()
         if self.session["role"] != "administrateur":
             raise PermissionError(
-                "Ce compte est en lecture seule : modification refusée."
+                "Seul un administrateur gère les comptes d'accès."
             )
 
     # ----- parc -----
@@ -106,44 +115,44 @@ class Api:
             raise PermissionError(f"Impossible de {geste}.")
 
     def definir_actif(self, employe_id, actif):
-        """Bascule l'état d'emploi d'une fiche. Réservé à l'administrateur."""
-        self._exiger_administrateur()
+        """Bascule l'état d'emploi d'une fiche. Réservé aux comptes qui peuvent modifier."""
+        self._exiger_ecriture()
         return donnees.definir_actif(int(employe_id), bool(actif))
 
     def definir_suivi(self, employe_id, suivi):
-        """Inclut ou retire une fiche du suivi FileMaker. Administrateur."""
-        self._exiger_administrateur()
+        """Inclut ou retire une fiche du suivi FileMaker."""
+        self._exiger_ecriture()
         return donnees.definir_suivi(int(employe_id), bool(suivi))
 
     def suivi_automatique(self, employe_id):
-        """Rend la fiche au calcul automatique. Administrateur."""
-        self._exiger_administrateur()
+        """Rend la fiche au calcul automatique."""
+        self._exiger_ecriture()
         donnees.suivi_automatique(int(employe_id))
         return True
 
     def definir_coordonnees(self, employe_id, coordonnees):
-        """Enregistre les coordonnées d'une fiche. Réservé à l'administrateur."""
-        self._exiger_administrateur()
+        """Enregistre les coordonnées d'une fiche. Réservé aux comptes qui peuvent modifier."""
+        self._exiger_ecriture()
         return donnees.definir_coordonnees(int(employe_id), coordonnees)
 
     def supprimer(self, employe_id):
-        """Supprime une fiche. Réservé à l'administrateur."""
-        self._exiger_administrateur()
+        """Supprime une fiche. Réservé aux comptes qui peuvent modifier."""
+        self._exiger_ecriture()
         return donnees.supprimer(int(employe_id))
 
     def definir_emploi(self, employe_id, emploi):
-        """Enregistre le bloc Emploi. Réservé à l'administrateur."""
-        self._exiger_administrateur()
+        """Enregistre le bloc Emploi. Réservé aux comptes qui peuvent modifier."""
+        self._exiger_ecriture()
         return donnees.definir_emploi(int(employe_id), emploi)
 
     def definir_poste(self, employe_id, poste):
-        """Enregistre le poste de travail. Réservé à l'administrateur."""
-        self._exiger_administrateur()
+        """Enregistre le poste de travail. Réservé aux comptes qui peuvent modifier."""
+        self._exiger_ecriture()
         return donnees.definir_poste(int(employe_id), poste)
 
     def definir_equipements(self, employe_id, equipements):
-        """Remplace les équipements d'une fiche. Réservé à l'administrateur."""
-        self._exiger_administrateur()
+        """Remplace les équipements d'une fiche. Réservé aux comptes qui peuvent modifier."""
+        self._exiger_ecriture()
         return donnees.definir_equipements(int(employe_id), equipements)
 
 

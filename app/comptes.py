@@ -12,7 +12,15 @@ import unicodedata
 
 import donnees
 
-ROLES = {"administrateur": "Administrateur", "lecture": "Lecture seule"}
+# Du plus large au plus étroit. « modification » touche aux fiches mais
+# pas aux comptes d'accès.
+ROLES = {
+    "administrateur": "Administrateur",
+    "modification": "Modification",
+    "lecture": "Lecture seule",
+}
+
+ROLES_ECRITURE = ("administrateur", "modification")
 
 ITERATIONS = 200_000
 LONGUEUR_MINIMALE = 4
@@ -58,9 +66,10 @@ def verifier(utilisateur: str, motdepasse: str) -> dict | None:
 
 
 def lister() -> list[dict]:
+    ordre = {role: rang for rang, role in enumerate(ROLES)}
     with donnees.connexion() as cx:
-        lignes = cx.execute(
-            "SELECT nom, role FROM compte ORDER BY role, nom").fetchall()
+        lignes = cx.execute("SELECT nom, role FROM compte").fetchall()
+    lignes = sorted(lignes, key=lambda l: (ordre[l["role"]], l["nom"]))
     return [{"utilisateur": l["nom"], "role": l["role"],
              "role_libelle": ROLES[l["role"]]} for l in lignes]
 

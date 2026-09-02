@@ -39,10 +39,18 @@ ouverte, à utiliser si l'exe se ferme sans message.
 L'application s'ouvre sur un écran de connexion. Deux comptes sont créés au
 tout premier lancement :
 
-| Compte | Mot de passe | Droits |
+| Compte | Mot de passe | Rôle |
 | --- | --- | --- |
-| `Admin` | `Admin` | consultation **et** modification |
-| `Invité` | `1234` | consultation seule |
+| `Admin` | `Admin` | Administrateur |
+| `Invité` | `1234` | Lecture seule |
+
+Trois rôles :
+
+| Rôle | Consulter | Modifier les fiches | Gérer les comptes |
+| --- | :-: | :-: | :-: |
+| Administrateur | ✓ | ✓ | ✓ |
+| Modification | ✓ | ✓ | — |
+| Lecture seule | ✓ | — | — |
 
 Le nom d'utilisateur ignore la casse et les accents (`Invité`, `invite` et
 `INVITE` sont le même compte) ; le mot de passe, non.
@@ -64,8 +72,8 @@ mot de passe. Les variables `SANTINEL_UTILISATEUR`, `SANTINEL_MOTDEPASSE`,
 choisir les identifiants créés au premier démarrage.
 
 Les droits sont appliqués côté Python, pas en masquant des boutons :
-`_exiger_session` protège la lecture, `_exiger_administrateur` protège
-l'écriture et la gestion des comptes.
+`_exiger_session` protège la lecture, `_exiger_ecriture` protège les fiches
+et `_exiger_administrateur` protège les comptes d'accès.
 
 Cela dit, le fichier `parc.db` reste lisible par quiconque a accès au poste
 ou au partage réseau. C'est une barrière contre la consultation de passage,

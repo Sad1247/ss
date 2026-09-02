@@ -60,6 +60,7 @@ def _migrer(cx: sqlite3.Connection) -> None:
                                ("windows11", "INTEGER")):
             if colonne not in colonnes_poste:
                 cx.execute(f"ALTER TABLE ordinateur ADD COLUMN {colonne} {type_}")
+    _migrer_roles(cx, tables)
     if "suivi_manuel" not in colonnes:
         cx.execute("ALTER TABLE employe ADD COLUMN suivi_manuel INTEGER")
         if "suivi_filemaker" in colonnes:      # choix faits avant le passage
@@ -279,6 +280,35 @@ def definir_equipements(employe_id: int, equipements: list) -> list:
              for e in propres],
         )
     return propres
+
+
+def _migrer_roles(cx: sqlite3.Connection, tables: set) -> None:
+    """Élargit la contrainte de rôle des bases créées avant « modification ».
+
+    Une contrainte CHECK ne se modifie pas : il faut refaire la table.
+    """
+    if "compte" not in tables:
+        return
+    definition = cx.execute(
+        "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'compte'"
+    ).fetchone()[0]
+    if "modification" in definition:
+        return
+    cx.executescript("""
+        CREATE TABLE compte_nouveau (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            identifiant TEXT NOT NULL UNIQUE,
+            nom         TEXT NOT NULL,
+            sel         TEXT NOT NULL,
+            empreinte   TEXT NOT NULL,
+            role        TEXT NOT NULL
+                        CHECK (role IN ('administrateur', 'modification', 'lecture'))
+        );
+        INSERT INTO compte_nouveau
+            SELECT id, identifiant, nom, sel, empreinte, role FROM compte;
+        DROP TABLE compte;
+        ALTER TABLE compte_nouveau RENAME TO compte;
+    """)
 
 
 def _suivi(ligne: sqlite3.Row) -> bool:

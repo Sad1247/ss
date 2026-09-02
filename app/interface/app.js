@@ -28,7 +28,13 @@ function aRelancer(f) {
   return f.suivi;
 }
 
+/** Peut modifier les fiches : administrateur ou compte de modification. */
 function peutModifier() {
+  return session !== null && session.role !== "lecture";
+}
+
+/** Peut gérer les comptes d'accès : administrateur seulement. */
+function peutGererComptes() {
   return session !== null && session.role === "administrateur";
 }
 
@@ -561,9 +567,9 @@ $("#voir-compte").onclick = async () => {
     $("#compte-utilisateur").textContent = infos.utilisateur;
     $("#compte-role").textContent = infos.role_libelle;
     $("#compte-base").textContent = infos.base;
-    $("#gestion-comptes").hidden = !peutModifier();
+    $("#gestion-comptes").hidden = !peutGererComptes();
     messageComptes("");
-    if (peutModifier()) await dessinerComptes();
+    if (peutGererComptes()) await dessinerComptes();
     $("#fenetre-compte").hidden = false;
   } catch (err) {
     etat("Compte indisponible : " + err);
@@ -591,6 +597,7 @@ async function dessinerComptes() {
         <td>
           <select class="saisie role" ${soi ? "disabled" : ""}>
             <option value="lecture" ${c.role === "lecture" ? "selected" : ""}>Lecture seule</option>
+            <option value="modification" ${c.role === "modification" ? "selected" : ""}>Modification</option>
             <option value="administrateur" ${c.role === "administrateur" ? "selected" : ""}>Administrateur</option>
           </select>
         </td>

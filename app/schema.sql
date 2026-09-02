@@ -40,7 +40,8 @@ CREATE TABLE IF NOT EXISTS compte (
     nom         TEXT NOT NULL,          -- tel qu'il s'affiche
     sel         TEXT NOT NULL,
     empreinte   TEXT NOT NULL,
-    role        TEXT NOT NULL CHECK (role IN ('administrateur', 'lecture'))
+    role        TEXT NOT NULL
+                CHECK (role IN ('administrateur', 'modification', 'lecture'))
 );
 
 -- Écrans, imprimantes, docks, téléphones IP…
