@@ -34,9 +34,10 @@ le logo et `schema.sql` sont embarqués dans l'exécutable, qui prend l'icône
 `python construire.py --console` produit une variante qui garde la console
 ouverte, à utiliser si l'exe se ferme sans message.
 
-## Connexion
+## Connexion et comptes
 
-L'application s'ouvre sur un écran de connexion. Deux comptes :
+L'application s'ouvre sur un écran de connexion. Deux comptes sont créés au
+tout premier lancement :
 
 | Compte | Mot de passe | Droits |
 | --- | --- | --- |
@@ -44,26 +45,31 @@ L'application s'ouvre sur un écran de connexion. Deux comptes :
 | `Invité` | `1234` | consultation seule |
 
 Le nom d'utilisateur ignore la casse et les accents (`Invité`, `invite` et
-`INVITE` sont le même compte) ; le mot de passe, non. Pour changer ces
-identifiants sans recompiler :
+`INVITE` sont le même compte) ; le mot de passe, non.
 
-```
-SANTINEL_UTILISATEUR / SANTINEL_MOTDEPASSE          (compte administrateur)
-SANTINEL_INVITE      / SANTINEL_INVITE_MOTDEPASSE   (compte en lecture)
-```
+Ensuite, tout se gère depuis l'application : menu **Compte** → **Compte**.
+L'administrateur y voit la liste des comptes et peut en créer, changer un
+rôle, changer un mot de passe (saisir le nouveau puis `Entrée`) ou supprimer
+un compte avec le `×`. Un compte en lecture seule n'y voit que sa propre
+fiche de session.
 
-Le menu **Compte**, à droite du bandeau, indique le compte connecté et ses
-droits, et permet de se déconnecter.
+Deux garde-fous évitent de s'enfermer dehors : on ne peut ni changer son
+propre rôle, ni supprimer le compte avec lequel on est connecté, et le
+dernier administrateur ne peut pas être rétrogradé ni effacé.
+
+Les mots de passe ne sont **jamais** conservés en clair : la table `compte`
+garde un sel par compte et l'empreinte PBKDF2-SHA256 (200 000 itérations) du
+mot de passe. Les variables `SANTINEL_UTILISATEUR`, `SANTINEL_MOTDEPASSE`,
+`SANTINEL_INVITE` et `SANTINEL_INVITE_MOTDEPASSE` ne servent plus qu'à
+choisir les identifiants créés au premier démarrage.
 
 Les droits sont appliqués côté Python, pas en masquant des boutons :
 `_exiger_session` protège la lecture, `_exiger_administrateur` protège
-l'écriture. Un compte en lecture seule n'a tout simplement pas le bouton d'état, et
-`definir_actif` le rejetterait de toute façon.
+l'écriture et la gestion des comptes.
 
-Ce n'est pas pour autant un rempart sérieux — le fichier `parc.db` reste
-lisible par quiconque a accès au poste ou au partage réseau. C'est une
-barrière contre la consultation de passage, pas contre quelqu'un de
-déterminé.
+Cela dit, le fichier `parc.db` reste lisible par quiconque a accès au poste
+ou au partage réseau. C'est une barrière contre la consultation de passage,
+pas contre quelqu'un de déterminé.
 
 ## Thème clair ou sombre
 
@@ -91,6 +97,7 @@ SANTINEL_DB=\\serveur\ti\parc.db
 | --- | --- |
 | `app/main.py` | fenêtre pywebview, expose l'API Python au JavaScript |
 | `app/donnees.py` | accès SQLite : `chercher`, `tous`, `retardataires` et les écritures |
+| `app/comptes.py` | comptes d'accès : empreintes, rôles, garde-fous |
 | `app/schema.sql` | tables `employe`, `ordinateur`, `equipement` + vue `v_fiche` |
 | `app/interface/` | écran de connexion et interface HTML / CSS / JS |
 | `app/interface/santinel.png` | logo (blanc, sur le bandeau marine) |

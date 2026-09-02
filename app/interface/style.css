@@ -170,6 +170,53 @@ header {
   margin: 0;
   word-break: break-all;
 }
+
+/* gestion des comptes, dans la fenêtre Compte */
+.boite:has(.gestion:not([hidden])) { width: 640px; }
+
+.gestion {
+  margin: 0 0 20px;
+  padding-top: 18px;
+  border-top: 1px solid var(--trait);
+}
+.gestion[hidden] { display: none; }
+.gestion h3 {
+  margin: 0 0 12px;
+  font-size: 11px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--bleu);
+}
+
+#tableau-comptes td { padding: 6px 6px 6px 0; vertical-align: middle; }
+#tableau-comptes td:first-child { font-weight: 600; color: var(--titre); }
+#tableau-comptes td:last-child { width: 32px; text-align: right; }
+#tableau-comptes select.saisie { min-width: 130px; }
+#tableau-comptes input.saisie { width: 155px; }
+#tableau-comptes small { font-weight: 400; color: var(--doux); }
+
+.nouveau-compte {
+  display: flex;
+  gap: 7px;
+  margin-top: 14px;
+}
+.nouveau-compte .saisie { flex: 1; min-width: 0; }
+
+.message-comptes {
+  margin: 12px 0 0;
+  padding: 8px 11px;
+  font-size: 13px;
+  color: var(--retard);
+  background: var(--retard-fond);
+  border-left: 3px solid var(--retard);
+  border-radius: 4px;
+}
+.message-comptes[hidden] { display: none; }
+.message-comptes.ok {
+  color: var(--ok);
+  background: var(--ok-fond);
+  border-left-color: var(--ok);
+}
 .bouton-deconnexion:hover {
   color: #fff;
   background: rgba(255, 255, 255, .14);
@@ -405,7 +452,23 @@ main { flex: 1; display: flex; min-height: 0; }
   border: 1px solid var(--bleu);
   border-radius: 5px;
 }
-select.saisie { padding: 6px 7px; }
+/* Le thème du système repeint les listes déroulantes et ignore nos couleurs :
+   on désactive son rendu pour garder un contraste correct dans les deux thèmes. */
+select.saisie {
+  appearance: none;
+  padding: 6px 26px 6px 9px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%237b8ca6' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  background-size: 15px;
+}
+.saisie option { color: var(--texte); background: var(--carte); }
+.saisie:disabled {
+  color: var(--doux);
+  background: var(--fond);
+  opacity: 1;
+  cursor: default;
+}
 .saisie:focus { outline: none; box-shadow: 0 0 0 3px rgba(29, 110, 240, .18); }
 
 .champs { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 13px 20px; }

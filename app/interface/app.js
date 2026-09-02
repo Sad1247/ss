@@ -561,11 +561,90 @@ $("#voir-compte").onclick = async () => {
     $("#compte-utilisateur").textContent = infos.utilisateur;
     $("#compte-role").textContent = infos.role_libelle;
     $("#compte-base").textContent = infos.base;
+    $("#gestion-comptes").hidden = !peutModifier();
+    messageComptes("");
+    if (peutModifier()) await dessinerComptes();
     $("#fenetre-compte").hidden = false;
   } catch (err) {
     etat("Compte indisponible : " + err);
   }
 };
+
+/* ---------- gestion des comptes ---------- */
+
+function messageComptes(texte, reussite = false) {
+  const message = $("#message-comptes");
+  message.textContent = texte;
+  message.hidden = !texte;
+  message.classList.toggle("ok", reussite);
+}
+
+async function dessinerComptes() {
+  const comptes = await pywebview.api.lister_comptes();
+  const moi = $("#compte-utilisateur").textContent;
+
+  $("#tableau-comptes").innerHTML = comptes.map((c) => {
+    const soi = c.utilisateur === moi;
+    return `
+      <tr data-compte="${echapper(c.utilisateur)}">
+        <td>${echapper(c.utilisateur)}${soi ? " <small>(vous)</small>" : ""}</td>
+        <td>
+          <select class="saisie role" ${soi ? "disabled" : ""}>
+            <option value="lecture" ${c.role === "lecture" ? "selected" : ""}>Lecture seule</option>
+            <option value="administrateur" ${c.role === "administrateur" ? "selected" : ""}>Administrateur</option>
+          </select>
+        </td>
+        <td><input class="saisie mdp" type="password" placeholder="Mot de passe"
+                   autocomplete="new-password"></td>
+        <td>${soi ? "" : `<button type="button" class="bouton-supprimer" title="Supprimer ce compte">×</button>`}</td>
+      </tr>`;
+  }).join("");
+
+  $("#tableau-comptes").querySelectorAll("tr").forEach((tr) => {
+    const nom = tr.dataset.compte;
+
+    const role = tr.querySelector(".role");
+    role.onchange = () => agir(
+      () => pywebview.api.definir_role_compte(nom, role.value),
+      `Rôle de ${nom} modifié.`);
+
+    const mdp = tr.querySelector(".mdp");
+    mdp.onkeydown = (evt) => {
+      if (evt.key !== "Enter") return;
+      evt.preventDefault();
+      agir(() => pywebview.api.definir_motdepasse_compte(nom, mdp.value),
+           `Mot de passe de ${nom} changé.`);
+    };
+
+    const supprimer = tr.querySelector(".bouton-supprimer");
+    if (supprimer) {
+      supprimer.onclick = () => agir(
+        () => pywebview.api.supprimer_compte(nom), `Compte ${nom} supprimé.`);
+    }
+  });
+}
+
+/** Exécute une action sur les comptes, puis redessine la liste. */
+async function agir(action, reussite) {
+  try {
+    await action();
+    await dessinerComptes();
+    messageComptes(reussite, true);
+  } catch (err) {
+    await dessinerComptes();
+    messageComptes(String(err).replace(/^Error:\s*/, ""));
+  }
+}
+
+$("#nouveau-compte").addEventListener("submit", async (evt) => {
+  evt.preventDefault();
+  const nom = $("#nouveau-nom").value;
+  await agir(
+    () => pywebview.api.creer_compte(nom, $("#nouveau-mdp").value, $("#nouveau-role").value),
+    `Compte ${nom.trim()} créé.`);
+  if (!$("#message-comptes").classList.contains("ok")) return;
+  $("#nouveau-compte").reset();
+});
 
 $("#fermer-compte").onclick = () => { $("#fenetre-compte").hidden = true; };
 $("#fenetre-compte").onclick = (evt) => {

@@ -32,6 +32,17 @@ CREATE TABLE IF NOT EXISTS ordinateur (
     windows11        INTEGER -- 1 = migré, 0 = non, NULL = inconnu
 );
 
+-- Comptes d'accès à l'application. Les mots de passe ne sont jamais
+-- stockés en clair : seule leur empreinte PBKDF2, avec un sel par compte.
+CREATE TABLE IF NOT EXISTS compte (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    identifiant TEXT NOT NULL UNIQUE,   -- sans casse ni accents, sert aux recherches
+    nom         TEXT NOT NULL,          -- tel qu'il s'affiche
+    sel         TEXT NOT NULL,
+    empreinte   TEXT NOT NULL,
+    role        TEXT NOT NULL CHECK (role IN ('administrateur', 'lecture'))
+);
+
 -- Écrans, imprimantes, docks, téléphones IP…
 CREATE TABLE IF NOT EXISTS equipement (
     id           INTEGER PRIMARY KEY AUTOINCREMENT,

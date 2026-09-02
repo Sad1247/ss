@@ -4,43 +4,13 @@ Lancement en développement :  python app/main.py
 Empaquetage :                 voir construire.py
 """
 
-import os
-import secrets
 import sys
-import unicodedata
 from pathlib import Path
 
 import webview
 
+import comptes
 import donnees
-
-# Comptes d'accès, chacun avec son rôle :
-#   administrateur — consultation et modification
-#   lecture        — consultation seule
-# Modifiables sans recompiler par variables d'environnement.
-COMPTES = {
-    "admin": {
-        "nom": os.environ.get("SANTINEL_UTILISATEUR", "Admin"),
-        "motdepasse": os.environ.get("SANTINEL_MOTDEPASSE", "Admin"),
-        "role": "administrateur",
-    },
-    "invite": {
-        "nom": os.environ.get("SANTINEL_INVITE", "Invité"),
-        "motdepasse": os.environ.get("SANTINEL_INVITE_MOTDEPASSE", "1234"),
-        "role": "lecture",
-    },
-}
-
-ROLES = {"administrateur": "Administrateur", "lecture": "Lecture seule"}
-
-
-def cle_compte(nom: str) -> str:
-    """Clé de recherche d'un compte : sans casse ni accents.
-
-    « Invité », « invite » ou « INVITE » désignent donc le même compte.
-    """
-    decompose = unicodedata.normalize("NFD", (nom or "").strip().lower())
-    return "".join(c for c in decompose if not unicodedata.combining(c))
 
 
 def dossier_ressources() -> Path:
@@ -64,10 +34,7 @@ class Api:
 
     def connexion(self, utilisateur, motdepasse):
         """Ouvre la session. Renvoie le compte, ou None si le couple est faux."""
-        self.session = None
-        compte = COMPTES.get(cle_compte(utilisateur))
-        if compte and secrets.compare_digest(motdepasse or "", compte["motdepasse"]):
-            self.session = {"utilisateur": compte["nom"], "role": compte["role"]}
+        self.session = comptes.verifier(utilisateur, motdepasse)
         return self.session
 
     def deconnexion(self):
@@ -105,9 +72,38 @@ class Api:
         return {
             "utilisateur": self.session["utilisateur"],
             "role": self.session["role"],
-            "role_libelle": ROLES[self.session["role"]],
+            "role_libelle": comptes.ROLES[self.session["role"]],
             "base": str(donnees.chemin_base()),
         }
+
+    # ----- gestion des comptes, administrateur seulement -----
+
+    def lister_comptes(self):
+        self._exiger_administrateur()
+        return comptes.lister()
+
+    def creer_compte(self, utilisateur, motdepasse, role):
+        self._exiger_administrateur()
+        return comptes.creer(utilisateur, motdepasse, role)
+
+    def definir_role_compte(self, utilisateur, role):
+        self._exiger_administrateur()
+        self._exiger_pas_soi_meme(utilisateur, "changer son propre rôle")
+        return comptes.definir_role(utilisateur, role)
+
+    def definir_motdepasse_compte(self, utilisateur, motdepasse):
+        self._exiger_administrateur()
+        return comptes.definir_motdepasse(utilisateur, motdepasse)
+
+    def supprimer_compte(self, utilisateur):
+        self._exiger_administrateur()
+        self._exiger_pas_soi_meme(utilisateur, "supprimer le compte ouvert")
+        return comptes.supprimer(utilisateur)
+
+    def _exiger_pas_soi_meme(self, utilisateur, geste):
+        """Se retirer soi-même les droits laisserait une session incohérente."""
+        if comptes.cle(utilisateur) == comptes.cle(self.session["utilisateur"]):
+            raise PermissionError(f"Impossible de {geste}.")
 
     def definir_actif(self, employe_id, actif):
         """Bascule l'état d'emploi d'une fiche. Réservé à l'administrateur."""
@@ -153,6 +149,7 @@ class Api:
 
 def main():
     donnees.initialiser()
+    comptes.initialiser()
     index = dossier_ressources() / "interface" / "index.html"
     webview.create_window(
         "Santinel — Parc informatique",

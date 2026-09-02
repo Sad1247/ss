@@ -110,6 +110,25 @@
         <dt>Droits</dt><dd id="compte-role">—</dd>
         <dt>Fichier de données</dt><dd id="compte-base">—</dd>
       </dl>
+      <section id="gestion-comptes" class="gestion" hidden>
+        <h3>Comptes autorisés</h3>
+        <table id="tableau-comptes"></table>
+
+        <form id="nouveau-compte" class="nouveau-compte" autocomplete="off">
+          <input id="nouveau-nom" class="saisie" placeholder="Nom d'utilisateur"
+                 autocomplete="off">
+          <input id="nouveau-mdp" class="saisie" type="password"
+                 placeholder="Mot de passe" autocomplete="new-password">
+          <select id="nouveau-role" class="saisie">
+            <option value="lecture">Lecture seule</option>
+            <option value="administrateur">Administrateur</option>
+          </select>
+          <button type="submit" class="lien-action fort">Ajouter</button>
+        </form>
+
+        <p id="message-comptes" class="message-comptes" hidden></p>
+      </section>
+
       <button id="fermer-compte" type="button" class="bouton-etat">Fermer</button>
     </div>
   </div>
