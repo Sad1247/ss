@@ -501,6 +501,7 @@ async function majCompteur() {
 /* ---------- connexion ---------- */
 
 async function ouvrirSession() {
+  $("#nom-compte").textContent = session.utilisateur;
   $("#connexion").hidden = true;
   $("#appli").hidden = false;
   await charger();
@@ -663,6 +664,7 @@ $("#deconnexion").onclick = async () => {
   session = null;
   edition = null;
   confirmation = false;
+  $("#nom-compte").textContent = "Compte";
   ouvrirMenu(false);
   $("#fenetre-compte").hidden = true;
   fiches = [];
