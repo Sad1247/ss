@@ -6,50 +6,64 @@ namespace BellaNotte.Unity
     /// <summary>
     /// Pont entre le moteur de jeu (C# pur) et Unity : fait avancer le temps,
     /// route les entrees, relaie les evenements. Aucune regle de jeu ici.
-    /// Pose ce composant sur un GameObject vide nomme "Game".
     /// </summary>
     public sealed class GameRunner : MonoBehaviour
     {
-        [Tooltip("Graine fixe pour rejouer la meme partie. 0 = aleatoire.")]
+        [Tooltip("Graine fixe pour rejouer exactement la meme partie. 0 = aleatoire.")]
         [SerializeField] int graine = 0;
 
-        [Tooltip("Branche ici le composant qui dessine l'interface.")]
-        [SerializeField] MonoBehaviour vue; // doit implementer IGameView
+        [Tooltip("Optionnel : un composant qui implemente IGameView. Sinon la vue se branche seule.")]
+        [SerializeField] MonoBehaviour vue;
 
-        public PizzeriaGame Game { get; private set; }
-        IGameView _vue;
+        PizzeriaGame _game;
+        IGameView _branchee;
+        bool _demarree;
+
+        /// <summary>Cree le moteur au premier acces : l'ordre des Awake n'a plus d'importance.</summary>
+        public PizzeriaGame Game
+        {
+            get
+            {
+                if (_game == null) _game = graine != 0 ? new PizzeriaGame(graine) : new PizzeriaGame();
+                return _game;
+            }
+        }
 
         void Awake()
         {
-            _vue = vue as IGameView;
-            if (vue != null && _vue == null)
-                Debug.LogError("Le champ 'vue' doit referencer un composant qui implemente IGameView.");
-
-            Game = graine != 0 ? new PizzeriaGame(graine) : new PizzeriaGame();
-            Brancher();
+            if (vue is IGameView v) Brancher(v);
+            else if (vue != null) Debug.LogError("Le champ 'vue' doit implementer IGameView.");
         }
 
-        void Start() => Game.Demarrer();
-
-        void Update()
+        void Start()
         {
-            Game.Tick(Time.deltaTime);
+            if (_demarree) return;
+            _demarree = true;
+            Game.Demarrer();
         }
 
-        void Brancher()
+        void Update() => Game.Tick(Time.deltaTime);
+
+        /// <summary>Abonne un affichage aux evenements du moteur. Un seul a la fois.</summary>
+        public void Brancher(IGameView v)
         {
-            if (_vue == null) return;
-            Game.CommandeArrivee      += _vue.OnCommandesChangees;
-            Game.CommandePartie       += o => { _vue.OnClientParti(o); _vue.OnCommandesChangees(o); };
-            Game.CommandeSelectionnee += _vue.OnCommandesChangees;
-            Game.PizzaChangee         += _vue.OnPizzaChangee;
-            Game.PizzaServie          += _vue.OnPizzaServie;
-            Game.NiveauMonte          += _vue.OnNiveauMonte;
-            Game.Message              += _vue.OnMessage;
-            Game.PartieTerminee       += _vue.OnPartieTerminee;
+            if (v == null || _branchee != null) return;
+            _branchee = v;
+
+            Game.CommandeArrivee      += v.OnCommandesChangees;
+            Game.CommandeSelectionnee += v.OnCommandesChangees;
+            Game.CommandePartie       += o => { v.OnClientParti(o); v.OnCommandesChangees(o); };
+            Game.PizzaChangee         += v.OnPizzaChangee;
+            Game.PizzaServie          += v.OnPizzaServie;
+            Game.NiveauMonte          += v.OnNiveauMonte;
+            Game.Message              += v.OnMessage;
+            Game.PartieTerminee       += v.OnPartieTerminee;
         }
 
-        // --- a brancher sur les boutons de l'UI ---
+        /// <summary>Rejoue une partie depuis zero avec le meme affichage.</summary>
+        public void Rejouer() => Game.Demarrer();
+
+        // --- a brancher sur les boutons ---
         public void UiSelectionner(int commandeId) => Game.Selectionner(commandeId);
         public void UiBasculer(int ingredientIndex) => Game.Basculer((IngredientId)ingredientIndex);
         public void UiEnfourner() => Game.Enfourner();
@@ -58,7 +72,7 @@ namespace BellaNotte.Unity
         public void UiJeter() => Game.Jeter();
     }
 
-    /// <summary>Ce que l'affichage doit savoir faire. Implemente-le sur ton script d'UI.</summary>
+    /// <summary>Ce que l'affichage doit savoir faire.</summary>
     public interface IGameView
     {
         void OnCommandesChangees(Order commande);

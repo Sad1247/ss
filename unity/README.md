@@ -1,7 +1,8 @@
 # Portage Unity — Bella Notte
 
-Le coeur du jeu est deja ecrit, teste, et **independant d'Unity**. Il ne reste
-que la partie visuelle a construire dans l'editeur.
+Le jeu complet est ecrit : la logique (independante d'Unity, testee) **et**
+l'interface (construite par code, sans scene a assembler). Tu copies les
+scripts, tu appuies sur Play.
 
 ## Ce qu'il y a ici
 
@@ -16,8 +17,10 @@ Scripts/Core/     logique pure, aucun using UnityEngine
   PizzeriaGame.cs orchestration : Tick(dt), intentions du joueur, evenements
 
 Scripts/Unity/
-  GameRunner.cs   MonoBehaviour qui fait avancer le temps et route les entrees
-                  + interface IGameView a implementer par ton script d'UI
+  Bootstrap.cs      monte le jeu au lancement : rien a poser dans la scene
+  GameRunner.cs     fait avancer le temps, route les entrees, relaie les evenements
+  GameView.cs       construit toute l'UI par code et la tient a jour
+  PizzaRenderer.cs  dessine la pizza dans une texture generee (aucun sprite a importer)
 
 Tests/
   CoreTests.cs    9 tests de non-regression (voir plus bas)
@@ -25,16 +28,35 @@ Tests/
 
 ## Installation dans le projet Unity
 
-1. Copie `Scripts/` dans `Assets/Scripts/` de ton projet.
-2. Cree un GameObject vide nomme `Game`, ajoute-lui le composant `GameRunner`.
-3. Ecris ton script d'UI, fais-lui implementer `BellaNotte.Unity.IGameView`,
-   et glisse-le dans le champ `vue` du `GameRunner`.
-4. Branche tes boutons sur `UiEnfourner`, `UiSortirDuFour`, `UiServir`,
-   `UiJeter`, `UiBasculer(int)` (l'index correspond a `IngredientId`).
+1. Cree un projet **2D (URP)**.
+2. Copie `Scripts/` dans `Assets/Scripts/`.
+3. Appuie sur **Play**.
+
+C'est tout. `Bootstrap.cs` cree le Canvas, l'EventSystem et le jeu au lancement :
+il n'y a aucune scene a assembler, aucun prefab a cabler, aucun sprite a importer
+(la pizza est dessinee dans une texture generee a la volee).
+
+Pour reprendre la main sur la mise en scene, supprime `Bootstrap.cs` et pose
+`GameRunner` + `GameView` sur un GameObject vide. Pour ecrire ta propre interface,
+supprime `GameView.cs`, implemente `BellaNotte.Unity.IGameView` sur ton script et
+glisse-le dans le champ `vue` du `GameRunner`.
+
+Boutons disponibles cote moteur : `UiEnfourner`, `UiSortirDuFour`, `UiServir`,
+`UiJeter`, `UiSelectionner(int)`, `UiBasculer(int)` (l'index correspond a `IngredientId`).
 
 Ne copie **pas** `Tests/CoreTests.cs` dans `Assets/` tel quel : il contient un
 `Main()`. Pour tester dans Unity, recree ces assertions en NUnit via le
 Test Runner (Window > General > Test Runner).
+
+## Ce qui est verifie, et ce qui ne l'est pas
+
+- `Scripts/Core/` : compile et passe 9 tests sous mono, hors Unity.
+- `Scripts/Unity/` : type-checke contre des stubs de l'API Unity, donc sans
+  erreur de syntaxe ni de signature — mais **jamais execute dans un vrai
+  editeur**. Les reglages visuels (tailles, marges, lisibilite sur telephone)
+  sont a ajuster a l'oeil au premier lancement.
+- Sous Unity 6, `FindObjectOfType` peut lever un avertissement de depreciation :
+  remplace par `FindFirstObjectByType` si tu veux une console propre.
 
 ## La regle a tenir
 
