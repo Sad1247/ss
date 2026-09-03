@@ -369,9 +369,12 @@ namespace BellaNotte.Unity
             int composition = p.Base.HasValue ? ((int)p.Base.Value + 1) : 0;
             for (int i = 0; i < p.Garnitures.Count; i++) composition = composition * 31 + (int)p.Garnitures[i] + 1;
 
-            // on ne regenere la texture que si l'image change vraiment
+            // On ne regenere la texture que si l'image change vraiment. Le pas
+            // de 0,04 espace les redessins d'environ 170 ms pendant la cuisson :
+            // assez fin pour que le brunissage paraisse continu, assez large
+            // pour que le cout du rendu ne se voie pas.
             if (composition == _derniereCompositionDessinee &&
-                Mathf.Abs(p.Cuisson - _derniereCuissonDessinee) < 0.02f) return;
+                Mathf.Abs(p.Cuisson - _derniereCuissonDessinee) < 0.04f) return;
 
             _derniereCompositionDessinee = composition;
             _derniereCuissonDessinee = p.Cuisson;

@@ -20,7 +20,9 @@ Scripts/Unity/
   Bootstrap.cs      monte le jeu au lancement : rien a poser dans la scene
   GameRunner.cs     fait avancer le temps, route les entrees, relaie les evenements
   GameView.cs       construit toute l'UI par code et la tient a jour
-  PizzaRenderer.cs  dessine la pizza dans une texture generee (aucun sprite a importer)
+  PizzaRenderer.cs  dessine la pizza dans une texture generee (aucun sprite a importer) :
+                    pate au bruit fractal, croute bombee, sauce a bords irreguliers,
+                    mozzarella fondue et gratinee, garnitures aux formes propres
 
 Tests/
   CoreTests.cs    9 tests de non-regression (voir plus bas)
@@ -56,6 +58,13 @@ Test Runner (Window > General > Test Runner).
   les clics de boutons. 33 tests couvrent une partie complete : montage sans
   scene, garnissage par les boutons, verrouillage pendant la cuisson, service
   paye, ecran de fin, relance.
+- Rendu de la pizza : mesure a **32 ms** par redessin sous mono pour une pizza
+  a 5 garnitures, apres avoir fige le bruit fractal et la geometrie (le premier
+  jet en coutait 900). Le precalcul du chargement prend 180 ms. IL2CPP est
+  nettement plus rapide que mono sur ce genre de boucle, mais si la cuisson
+  saccade sur un vieux telephone, deux leviers : elargir le pas de redessin
+  dans `GameView.RedessinerSiBesoin`, ou calculer les pixels sur un thread de
+  travail et n'appeler `SetPixels32`/`Apply` que sur le thread principal.
 - Ce qui reste non verifie : le rendu reel a l'ecran. La mise en page a ete
   calee pour du portrait 1080x1920 sans jamais etre vue dans un editeur.
   Les tailles, marges et la lisibilite sur telephone sont a ajuster a l'oeil
@@ -88,7 +97,14 @@ mono harness.exe
 
 # exporter le rendu de la pizza a 5 cuissons (fichiers PPM)
 mono harness.exe --dump /tmp
+
+# mesurer le cout du rendu, couche par couche
+mono harness.exe --bench
 ```
+
+Certains fichiers de test utilisent des lambdas typees plutot que des fonctions
+locales : le compilateur mcs de Mono ne les accepte pas. Cette limite ne
+concerne que ce harnais, pas le code du jeu.
 
 `Tests/FakeUnity/` ne doit **jamais** etre copie dans `Assets/` : il redefinit
 les types d'UnityEngine et entrerait en conflit avec le vrai moteur.

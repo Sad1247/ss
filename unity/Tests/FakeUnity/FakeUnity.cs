@@ -145,6 +145,8 @@ namespace UnityEngine
         public Color(float x, float y, float z) { r = x; g = y; b = z; a = 1f; }
         public Color(float x, float y, float z, float w) { r = x; g = y; b = z; a = w; }
         public static Color white => new Color(1, 1, 1);
+        public static Color black => new Color(0, 0, 0);
+        public static Color clear => new Color(0, 0, 0, 0);
         public static Color magenta => new Color(1, 0, 1);
         public static Color Lerp(Color x, Color y, float t)
         {

@@ -55,6 +55,31 @@ static class ViewHarness
 
     static void Main(string[] args)
     {
+        if (args.Length == 1 && args[0] == "--bench")
+        {
+            var t0 = System.Diagnostics.Stopwatch.StartNew();
+            var r = new PizzaRenderer();
+            Console.WriteLine($"precalcul (une fois)   : {t0.ElapsedMilliseconds} ms");
+            Action<string, IngredientId?, IngredientId[]> Mesure = (label, b, g) =>
+            {
+                r.Dessiner(b, g, 0.5f);                            // chauffe
+                var t = System.Diagnostics.Stopwatch.StartNew();
+                const int n = 20;
+                for (int i = 0; i < n; i++) r.Dessiner(b, g, 0.5f + i * 0.05f);
+                Console.WriteLine($"{label,-24}: {t.Elapsed.TotalMilliseconds / n:F1} ms");
+            };
+            var rien = new IngredientId[0];
+            Mesure("pate nue", null, rien);
+            Mesure("+ sauce", IngredientId.Tomate, rien);
+            Mesure("+ fromage", IngredientId.Tomate, new[] { IngredientId.Mozzarella });
+            Mesure("+ jambon", IngredientId.Tomate, new[] { IngredientId.Mozzarella, IngredientId.Jambon });
+            Mesure("+ champignons (complet)", IngredientId.Tomate,
+                   new[] { IngredientId.Mozzarella, IngredientId.Jambon, IngredientId.Champignon });
+            Mesure("pizza chargee (5 garn.)", IngredientId.Tomate, new[] { IngredientId.Mozzarella,
+                   IngredientId.Jambon, IngredientId.Champignon, IngredientId.Olive, IngredientId.Piment });
+            return;
+        }
+
         if (args.Length == 2 && args[0] == "--dump")
         {
             var d = args[1];
