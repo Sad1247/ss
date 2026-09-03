@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pizzeria Bella Notte</title>
+<style>
+  :root{
+    --bg:#1b1210; --panel:#2a1d18; --panel2:#3a2a22; --line:#523a2e;
+    --cream:#f4e7d3; --gold:#e8b44a; --red:#c8452f; --green:#7bab4a;
+    --ok:#6fbf5f; --bad:#e05a45;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:radial-gradient(circle at 50% 0%,#2b1e18,#140e0c 70%);
+    color:var(--cream); font-family:"Trebuchet MS",Verdana,system-ui,sans-serif;
+    min-height:100vh; display:flex; flex-direction:column; align-items:center;
+    padding:16px; gap:14px;
+  }
+  h1{margin:0; font-size:26px; letter-spacing:2px; color:var(--gold);
+     text-shadow:0 2px 0 #6b3b1c}
+  h1 small{display:block; font-size:11px; letter-spacing:4px; color:#a98a6d}
+  .hud{display:flex; gap:10px; flex-wrap:wrap; justify-content:center}
+  .stat{background:var(--panel); border:2px solid var(--line); border-radius:10px;
+        padding:6px 14px; font-size:13px; min-width:92px; text-align:center}
+  .stat b{display:block; font-size:19px; color:var(--gold)}
+  .game{display:grid; grid-template-columns:250px 1fr 210px; gap:14px;
+        width:100%; max-width:960px; align-items:start}
+  .card{background:var(--panel); border:2px solid var(--line); border-radius:14px; padding:12px}
+  .card h2{margin:0 0 8px; font-size:13px; letter-spacing:2px; color:#c9a179;
+           text-transform:uppercase}
+  /* commandes */
+  .ticket{background:#f6f0e2; color:#3a2a22; border-radius:8px; padding:8px 10px;
+          margin-bottom:8px; font-size:13px; box-shadow:0 3px 0 #cbbfa6;
+          border-left:5px solid var(--red)}
+  .ticket.active{border-left-color:var(--green); outline:2px solid var(--gold)}
+  .ticket .who{font-weight:bold; display:flex; justify-content:space-between}
+  .ticket ul{margin:4px 0 6px; padding-left:16px}
+  .bar{height:6px; background:#d8cdb6; border-radius:3px; overflow:hidden}
+  .bar i{display:block; height:100%; background:var(--green); transition:width .2s linear}
+  .bar.warn i{background:var(--gold)} .bar.crit i{background:var(--bad)}
+  /* pizza */
+  .stage{display:flex; flex-direction:column; align-items:center; gap:10px}
+  #pizza{width:280px; height:280px; touch-action:manipulation; cursor:pointer}
+  .ings{display:grid; grid-template-columns:repeat(4,1fr); gap:6px}
+  .ing{background:var(--panel2); border:2px solid var(--line); border-radius:10px;
+       color:var(--cream); font-size:11px; padding:6px 2px; cursor:pointer;
+       display:flex; flex-direction:column; align-items:center; gap:2px}
+  .ing:hover{border-color:var(--gold)}
+  .ing.on{background:#4d3a2a; border-color:var(--gold)}
+  .ing span{font-size:19px; line-height:1}
+  .ing:disabled{opacity:.35; cursor:not-allowed}
+  .actions{display:flex; gap:8px; flex-wrap:wrap; justify-content:center}
+  button.big{font:inherit; font-size:14px; padding:9px 18px; border-radius:10px;
+             border:2px solid #7a4a22; background:linear-gradient(#e8b44a,#c8862a);
+             color:#3a2110; font-weight:bold; cursor:pointer}
+  button.big:disabled{filter:grayscale(.7); opacity:.5; cursor:not-allowed}
+  button.big.red{background:linear-gradient(#e07a5f,#b4402a); border-color:#7a2a1c; color:#fff2ec}
+  /* four */
+  .oven{width:100%; height:22px; background:#241713; border:2px solid var(--line);
+        border-radius:11px; overflow:hidden; position:relative}
+  .oven i{display:block; height:100%; width:0%;
+          background:linear-gradient(90deg,#c8452f,#e8b44a,#7bab4a,#e8b44a,#8b3a1e)}
+  .oven .zone{position:absolute; top:0; bottom:0; left:62%; width:16%;
+              border-left:2px dashed #f4e7d3; border-right:2px dashed #f4e7d3; opacity:.7}
+  .msg{min-height:22px; font-size:14px; text-align:center}
+  .msg.good{color:var(--ok)} .msg.bad{color:var(--bad)}
+  .log{font-size:12px; color:#bda184; line-height:1.5; max-height:230px; overflow:auto}
+  .log div{border-bottom:1px solid #43302699; padding:3px 0}
+  .over{position:fixed; inset:0; background:#0c0808e8; display:flex; z-index:5;
+        flex-direction:column; align-items:center; justify-content:center; gap:14px; text-align:center; padding:20px}
+  .over h2{font-size:30px; color:var(--gold); margin:0}
+  .hide{display:none}
+  kbd{background:#43302f; border:1px solid var(--line); border-radius:4px; padding:1px 5px; font-size:11px}
+  @media(max-width:820px){ .game{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+
+<h1>Pizzeria Bella Notte<small>service du soir</small></h1>
+
+<div class="hud">
+  <div class="stat">Recette<b id="hMoney">0 €</b></div>
+  <div class="stat">Service<b id="hLevel">1</b></div>
+  <div class="stat">Servies<b id="hServed">0</b></div>
+  <div class="stat">Clients perdus<b id="hLives">0 / 3</b></div>
+</div>
+
+<div class="game">
+
+  <div class="card">
+    <h2>Commandes</h2>
+    <div id="tickets"></div>
+  </div>
+
+  <div class="card stage">
+    <h2>Plan de travail</h2>
+    <canvas id="pizza" width="280" height="280"></canvas>
+
+    <div class="oven"><i id="ovenBar"></i><div class="zone"></div></div>
+    <div class="msg" id="msg">Choisis une commande à gauche, garnis, enfourne.</div>
+
+    <div class="ings" id="ings"></div>
+    <div class="actions">
+      <button class="big" id="btnOven">Enfourner</button>
+      <button class="big" id="btnStop" disabled>Sortir du four !</button>
+      <button class="big red" id="btnTrash">Jeter</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Salle</h2>
+    <div class="log" id="log"></div>
+  </div>
+
+</div>
+
+<div class="over hide" id="over">
+  <h2 id="overTitle">Service terminé</h2>
+  <div id="overText"></div>
+  <button class="big" id="btnRestart">Rouvrir la pizzeria</button>
+</div>
+
+<script>
+"use strict";
+
+/* ---------- données ---------- */
+
+const INGREDIENTS = [
+  {id:"tomate",   nom:"Tomate",    emo:"🍅", base:true,  col:"#c8452f"},
+  {id:"creme",    nom:"Crème",     emo:"🥛", base:true,  col:"#f2e6cf"},
+  {id:"mozza",    nom:"Mozzarella",emo:"🧀", col:"#f7e7a8"},
+  {id:"jambon",   nom:"Jambon",    emo:"🥓", col:"#e79a9a"},
+  {id:"champi",   nom:"Champignon",emo:"🍄", col:"#c9b295"},
+  {id:"olive",    nom:"Olives",    emo:"🫒", col:"#3f4a26"},
+  {id:"poivron",  nom:"Poivron",   emo:"🫑", col:"#5f9e42"},
+  {id:"ananas",   nom:"Ananas",    emo:"🍍", col:"#e8c33e"},
+  {id:"piment",   nom:"Piment",    emo:"🌶️", col:"#d0342c"},
+  {id:"basilic",  nom:"Basilic",   emo:"🌿", col:"#4c8b3a"},
+  {id:"anchois",  nom:"Anchois",   emo:"🐟", col:"#9aa8b0"},
+  {id:"oeuf",     nom:"Œuf",       emo:"🥚", col:"#f5f0e0"},
+];
+const ING = Object.fromEntries(INGREDIENTS.map(i=>[i.id,i]));
+const GARNITURES = INGREDIENTS.filter(i=>!i.base).map(i=>i.id);
+
+const RECETTES = [
+  {nom:"Margherita",   base:"tomate", top:["mozza","basilic"]},
+  {nom:"Reine",        base:"tomate", top:["mozza","jambon","champi"]},
+  {nom:"Napolitaine",  base:"tomate", top:["mozza","anchois","olive"]},
+  {nom:"Végétarienne", base:"tomate", top:["mozza","poivron","champi","olive"]},
+  {nom:"Hawaïenne",    base:"tomate", top:["mozza","jambon","ananas"]},
+  {nom:"Diavola",      base:"tomate", top:["mozza","piment","olive"]},
+  {nom:"Bianca",       base:"creme",  top:["mozza","champi"]},
+  {nom:"Savoyarde",    base:"creme",  top:["mozza","jambon","oeuf"]},
+  {nom:"Forestière",   base:"creme",  top:["mozza","champi","basilic"]},
+];
+const PRENOMS = ["Marco","Élodie","Giulia","Karim","Sofia","Théo","Nina","Paolo",
+                 "Lucie","Enzo","Amina","Hugo","Clara","Bruno","Inès","Matteo"];
+
+/* ---------- état ---------- */
+
+const S = {
+  money:0, level:1, served:0, lost:0, maxLost:3,
+  orders:[], activeId:null, nextId:1,
+  pizza:null,           // {base, top:[], cuisson:0, cuite:false}
+  oven:null,            // {t0, raf}
+  spawnTimer:null, tickTimer:null,
+  levelServed:0, running:false,
+};
+
+const $ = s=>document.querySelector(s);
+const el = {
+  tickets:$("#tickets"), ings:$("#ings"), msg:$("#msg"), log:$("#log"),
+  ovenBar:$("#ovenBar"), btnOven:$("#btnOven"), btnStop:$("#btnStop"),
+  btnTrash:$("#btnTrash"), over:$("#over"), overTitle:$("#overTitle"),
+  overText:$("#overText"),
+};
+
+const rnd = a => a[Math.floor(Math.random()*a.length)];
+
+/* ---------- rendu pizza ---------- */
+
+const cvs = $("#pizza"), ctx = cvs.getContext("2d");
+
+function seeded(n, i){ // positions stables par garniture
+  const a = Math.sin(n*127.1 + i*311.7)*43758.5453;
+  const b = Math.sin(n*269.5 + i*183.3)*43758.5453;
+  return [a-Math.floor(a), b-Math.floor(b)];
+}
+
+function drawPizza(){
+  const w=cvs.width, h=cvs.height, cx=w/2, cy=h/2, R=118;
+  ctx.clearRect(0,0,w,h);
+
+  if(!S.pizza){
+    ctx.fillStyle="#3a2a22"; ctx.font="15px Verdana"; ctx.textAlign="center";
+    ctx.fillStyle="#7a6250";
+    ctx.fillText("Sélectionne une commande", cx, cy);
+    return;
+  }
+  const p = S.pizza;
+  const brulure = Math.min(1, Math.max(0, (p.cuisson-1.15)/0.55));
+  const doree   = Math.min(1, p.cuisson/1);
+
+  // pâte
+  const pate = mix("#e8cfa0", "#5a3a22", brulure*0.85);
+  ctx.beginPath(); ctx.arc(cx,cy,R,0,7); ctx.fillStyle=mix("#f0dcb4",pate,doree);
+  ctx.fill(); ctx.lineWidth=10; ctx.strokeStyle=mix("#d8bf8e",pate,doree); ctx.stroke();
+
+  // base
+  if(p.base){
+    ctx.beginPath(); ctx.arc(cx,cy,R-14,0,7);
+    ctx.fillStyle = mix(ING[p.base].col, "#4a2a18", brulure*0.6); ctx.fill();
+  }
+  // garnitures
+  p.top.forEach((id,k)=>{
+    const g = ING[id];
+    const n = id==="mozza" ? 14 : 9;
+    for(let i=0;i<n;i++){
+      const [u,v] = seeded(k*97+i, id.length*13+i);
+      const ang = u*Math.PI*2, rad = Math.sqrt(v)*(R-34);
+      const x = cx+Math.cos(ang)*rad, y = cy+Math.sin(ang)*rad;
+      ctx.beginPath(); ctx.arc(x,y, id==="mozza"?11:8, 0, 7);
+      ctx.fillStyle = mix(g.col,"#3b2414", brulure*0.7); ctx.fill();
+      ctx.strokeStyle="#00000022"; ctx.lineWidth=1; ctx.stroke();
+    }
+  });
+  if(brulure>0.75){
+    ctx.fillStyle="rgba(20,10,5,.35)"; ctx.beginPath(); ctx.arc(cx,cy,R,0,7); ctx.fill();
+  }
+}
+function mix(a,b,t){
+  t=Math.min(1,Math.max(0,t));
+  const p=c=>[1,3,5].map(i=>parseInt(c.substr(i,2),16));
+  const [r1,g1,b1]=p(a),[r2,g2,b2]=p(b);
+  const h=v=>Math.round(v).toString(16).padStart(2,"0");
+  return "#"+h(r1+(r2-r1)*t)+h(g1+(g2-g1)*t)+h(b1+(b2-b1)*t);
+}
+
+/* ---------- ingrédients ---------- */
+
+function buildIngredients(){
+  el.ings.innerHTML = "";
+  INGREDIENTS.forEach(i=>{
+    const b = document.createElement("button");
+    b.className = "ing"; b.dataset.id = i.id;
+    b.innerHTML = `<span>${i.emo}</span>${i.nom}`;
+    b.onclick = ()=>toggleIng(i);
+    el.ings.appendChild(b);
+  });
+  refreshIngredients();
+}
+function refreshIngredients(){
+  const p = S.pizza;
+  el.ings.querySelectorAll(".ing").forEach(b=>{
+    const i = ING[b.dataset.id];
+    const on = p && (i.base ? p.base===i.id : p.top.includes(i.id));
+    b.classList.toggle("on", !!on);
+    b.disabled = !p || p.cuite || !!S.oven;
+  });
+}
+function toggleIng(i){
+  const p = S.pizza; if(!p || p.cuite || S.oven) return;
+  if(i.base){ p.base = p.base===i.id ? null : i.id; }
+  else{
+    if(!p.base){ say("Mets d'abord une base (tomate ou crème).","bad"); return; }
+    const k = p.top.indexOf(i.id);
+    if(k>=0) p.top.splice(k,1);
+    else if(p.top.length>=5) say("Cinq garnitures maximum !","bad");
+    else p.top.push(i.id);
+  }
+  refreshIngredients(); drawPizza(); updateButtons();
+}
+
+/* ---------- commandes ---------- */
+
+function patienceMax(){ return Math.max(22, 52 - S.level*3); }
+
+function spawnOrder(){
+  if(S.orders.length >= 4) return;
+  const r = rnd(RECETTES);
+  const o = {
+    id:S.nextId++, client:rnd(PRENOMS), recette:r,
+    patience:patienceMax(), max:patienceMax(),
+    prix: 6 + r.top.length*2,
+  };
+  S.orders.push(o);
+  if(S.activeId===null) selectOrder(o.id);
+  renderTickets();
+}
+
+function selectOrder(id){
+  if(S.oven){ say("La pizza est au four, ne quitte pas !","bad"); return; }
+  S.activeId = id;
+  S.pizza = {base:null, top:[], cuisson:0, cuite:false};
+  el.ovenBar.style.width = "0%";
+  renderTickets(); refreshIngredients(); drawPizza(); updateButtons();
+  say("Commande prise. Garnis puis enfourne.");
+}
+
+function renderTickets(){
+  el.tickets.innerHTML = "";
+  if(!S.orders.length){
+    el.tickets.innerHTML = '<div style="font-size:12px;color:#a98a6d">Salle calme…</div>';
+  }
+  S.orders.forEach(o=>{
+    const pct = Math.max(0, o.patience/o.max*100);
+    const cls = pct<25 ? "crit" : pct<55 ? "warn" : "";
+    const d = document.createElement("div");
+    d.className = "ticket" + (o.id===S.activeId ? " active":"");
+    d.innerHTML =
+      `<div class="who"><span>${o.client}</span><span>${o.prix} €</span></div>
+       <div><b>${o.recette.nom}</b> — base ${ING[o.recette.base].nom.toLowerCase()}</div>
+       <ul>${o.recette.top.map(t=>`<li>${ING[t].emo} ${ING[t].nom}</li>`).join("")}</ul>
+       <div class="bar ${cls}"><i style="width:${pct}%"></i></div>`;
+    d.onclick = ()=>selectOrder(o.id);
+    el.tickets.appendChild(d);
+  });
+}
+
+/* ---------- four ---------- */
+
+const CUISSON_MS = 4200;          // durée pour atteindre cuisson = 1
+const ZONE = [0.92, 1.14];        // fenêtre « parfaite »
+
+function startOven(){
+  const p = S.pizza;
+  if(!p || S.oven || p.cuite) return;
+  if(!p.base){ say("Une pizza sans base ? Non.","bad"); return; }
+  if(!p.top.length){ say("Ajoute au moins une garniture.","bad"); return; }
+  S.oven = {t0:performance.now()};
+  updateButtons(); refreshIngredients();
+  say("Au four ! Sors-la dans la zone marquée.");
+  const loop = now=>{
+    if(!S.oven) return;
+    const p2 = S.pizza;
+    p2.cuisson = (now - S.oven.t0)/CUISSON_MS;
+    el.ovenBar.style.width = Math.min(100, p2.cuisson/1.6*100) + "%";
+    drawPizza();
+    if(p2.cuisson >= 1.6){ pullOven(true); return; }
+    S.oven.raf = requestAnimationFrame(loop);
+  };
+  S.oven.raf = requestAnimationFrame(loop);
+}
+
+function pullOven(auto){
+  if(!S.oven) return;
+  cancelAnimationFrame(S.oven.raf); S.oven = null;
+  const p = S.pizza; p.cuite = true;
+  updateButtons(); refreshIngredients(); drawPizza();
+  const c = p.cuisson;
+  if(c < 0.7)      say("Pâte crue… le client va tiquer.","bad");
+  else if(c < ZONE[0]) say("Un peu pâlotte, mais mangeable.");
+  else if(c <= ZONE[1]) say("Cuisson parfaite ! Sers vite.","good");
+  else if(c < 1.45) say("Trop cuite sur les bords.","bad");
+  else { say(auto ? "Carbonisée ! Poubelle." : "Cramée…","bad"); }
+}
+
+function cuissonScore(c){
+  if(c < 0.6) return 0;
+  if(c >= ZONE[0] && c <= ZONE[1]) return 1;
+  if(c < ZONE[0]) return 0.6;
+  if(c < 1.45) return 0.5;
+  return 0;
+}
+
+/* ---------- service ---------- */
+
+function serve(){
+  const o = S.orders.find(x=>x.id===S.activeId);
+  const p = S.pizza;
+  if(!o || !p || !p.cuite) return;
+
+  const want = new Set(o.recette.top), got = new Set(p.top);
+  const manquants = [...want].filter(t=>!got.has(t));
+  const enTrop    = [...got].filter(t=>!want.has(t));
+  const bonneBase = p.base === o.recette.base;
+
+  const cs = cuissonScore(p.cuisson);
+  let ratio = 1;
+  ratio -= manquants.length*0.28;
+  ratio -= enTrop.length*0.18;
+  if(!bonneBase) ratio -= 0.35;
+  ratio *= cs;
+  ratio = Math.max(0, ratio);
+
+  const gain = Math.round(o.prix * ratio);
+  const bonus = (ratio===1) ? Math.round(o.prix*0.5) : 0;
+  S.money += gain + bonus;
+  S.served++; S.levelServed++;
+
+  let txt = `${o.client} — ${o.recette.nom} : `;
+  if(ratio===1) txt += `parfaite ! +${gain+bonus} € (dont ${bonus} € de pourboire)`;
+  else if(gain>0){
+    const pbs = [];
+    if(!bonneBase) pbs.push("mauvaise base");
+    if(manquants.length) pbs.push("manque "+manquants.map(t=>ING[t].nom.toLowerCase()).join(", "));
+    if(enTrop.length) pbs.push("en trop : "+enTrop.map(t=>ING[t].nom.toLowerCase()).join(", "));
+    if(cs<1) pbs.push(p.cuisson<ZONE[0] ? "pas assez cuite" : "trop cuite");
+    txt += `+${gain} € (${pbs.join(" ; ")})`;
+  } else {
+    txt += "refusée, aucun paiement.";
+    S.lost++;
+  }
+  log(txt, ratio===1);
+
+  removeOrder(o.id);
+  maybeLevelUp();
+  checkEnd();
+  updateHud();
+}
+
+function trash(){
+  if(S.oven) pullOven(false);
+  if(!S.pizza) return;
+  S.pizza = {base:null, top:[], cuisson:0, cuite:false};
+  el.ovenBar.style.width="0%";
+  say("Pizza jetée. On recommence.");
+  refreshIngredients(); drawPizza(); updateButtons();
+}
+
+function removeOrder(id){
+  S.orders = S.orders.filter(o=>o.id!==id);
+  if(S.activeId===id){
+    S.activeId = null; S.pizza = null;
+    el.ovenBar.style.width="0%";
+    if(S.orders.length) selectOrder(S.orders[0].id);
+  }
+  renderTickets(); refreshIngredients(); drawPizza(); updateButtons();
+}
+
+function maybeLevelUp(){
+  if(S.levelServed >= 4 + S.level){
+    S.levelServed = 0; S.level++;
+    log(`— Service ${S.level} : ça se remplit, les clients sont plus pressés. —`);
+    scheduleSpawn();
+  }
+}
+
+/* ---------- boucle ---------- */
+
+function tick(){
+  let perdus = [];
+  S.orders.forEach(o=>{
+    o.patience -= 0.5;
+    if(o.patience <= 0) perdus.push(o);
+  });
+  perdus.forEach(o=>{
+    S.lost++;
+    log(`${o.client} est parti sans attendre sa ${o.recette.nom}.`, false);
+    removeOrder(o.id);
+  });
+  renderTickets(); updateHud(); checkEnd();
+}
+
+function scheduleSpawn(){
+  clearInterval(S.spawnTimer);
+  const delai = Math.max(3200, 9000 - S.level*700);
+  S.spawnTimer = setInterval(spawnOrder, delai);
+}
+
+function checkEnd(){
+  if(S.lost >= S.maxLost && S.running) gameOver();
+}
+
+function gameOver(){
+  S.running = false;
+  clearInterval(S.spawnTimer); clearInterval(S.tickTimer);
+  if(S.oven){ cancelAnimationFrame(S.oven.raf); S.oven=null; }
+  el.overTitle.textContent = "Le patron ferme boutique";
+  el.overText.innerHTML =
+    `Trois clients perdus, ça suffit.<br><br>
+     <b>${S.money} €</b> de recette · <b>${S.served}</b> pizzas servies ·
+     service <b>${S.level}</b>`;
+  el.over.classList.remove("hide");
+}
+
+/* ---------- UI ---------- */
+
+function updateButtons(){
+  const p = S.pizza;
+  el.btnOven.disabled = !p || p.cuite || !!S.oven;
+  el.btnStop.disabled = !S.oven;
+  el.btnTrash.disabled = !p;
+  el.btnOven.textContent = (p && p.cuite) ? "Servir" : "Enfourner";
+  el.btnOven.onclick = (p && p.cuite) ? serve : startOven;
+  el.btnOven.disabled = !p || !!S.oven;
+}
+function updateHud(){
+  $("#hMoney").textContent  = S.money + " €";
+  $("#hLevel").textContent  = S.level;
+  $("#hServed").textContent = S.served;
+  $("#hLives").textContent  = S.lost + " / " + S.maxLost;
+}
+function say(t, kind){
+  el.msg.textContent = t;
+  el.msg.className = "msg" + (kind ? " "+kind : "");
+}
+function log(t, good){
+  const d = document.createElement("div");
+  d.textContent = t;
+  if(good===true) d.style.color = "var(--ok)";
+  if(good===false) d.style.color = "var(--bad)";
+  el.log.prepend(d);
+  while(el.log.children.length > 40) el.log.lastChild.remove();
+}
+
+/* ---------- démarrage ---------- */
+
+function start(){
+  Object.assign(S,{money:0,level:1,served:0,lost:0,orders:[],activeId:null,
+                   nextId:1,pizza:null,oven:null,levelServed:0,running:true});
+  el.over.classList.add("hide");
+  el.log.innerHTML = ""; el.ovenBar.style.width="0%";
+  buildIngredients(); renderTickets(); drawPizza(); updateButtons(); updateHud();
+  say("Choisis une commande à gauche, garnis, enfourne.");
+  log("Ouverture du service. Buona sera !");
+  spawnOrder();
+  scheduleSpawn();
+  clearInterval(S.tickTimer);
+  S.tickTimer = setInterval(tick, 500);
+}
+
+el.btnStop.onclick  = ()=>pullOven(false);
+el.btnTrash.onclick = trash;
+$("#btnRestart").onclick = start;
+cvs.onclick = ()=>{ if(S.oven) pullOven(false); };
+document.addEventListener("keydown", e=>{
+  if(e.code === "Space"){ e.preventDefault();
+    if(S.oven) pullOven(false);
+    else if(S.pizza && S.pizza.cuite) serve();
+    else startOven();
+  }
+  const n = parseInt(e.key,10);
+  if(n>=1 && n<=9 && INGREDIENTS[n-1]) toggleIng(INGREDIENTS[n-1]);
+});
+
+start();
+</script>
+</body>
+</html>
