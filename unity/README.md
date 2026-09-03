@@ -51,10 +51,15 @@ Test Runner (Window > General > Test Runner).
 ## Ce qui est verifie, et ce qui ne l'est pas
 
 - `Scripts/Core/` : compile et passe 9 tests sous mono, hors Unity.
-- `Scripts/Unity/` : type-checke contre des stubs de l'API Unity, donc sans
-  erreur de syntaxe ni de signature — mais **jamais execute dans un vrai
-  editeur**. Les reglages visuels (tailles, marges, lisibilite sur telephone)
-  sont a ajuster a l'oeil au premier lancement.
+- `Scripts/Unity/` : **execute** dans un faux runtime Unity (`Tests/FakeUnity/`)
+  qui implemente la hierarchie, AddComponent/GetComponent, le cycle de vie et
+  les clics de boutons. 33 tests couvrent une partie complete : montage sans
+  scene, garnissage par les boutons, verrouillage pendant la cuisson, service
+  paye, ecran de fin, relance.
+- Ce qui reste non verifie : le rendu reel a l'ecran. La mise en page a ete
+  calee pour du portrait 1080x1920 sans jamais etre vue dans un editeur.
+  Les tailles, marges et la lisibilite sur telephone sont a ajuster a l'oeil
+  au premier lancement.
 - Sous Unity 6, `FindObjectOfType` peut lever un avertissement de depreciation :
   remplace par `FindFirstObjectByType` si tu veux une console propre.
 
@@ -72,10 +77,21 @@ pour regler la difficulte.
 
 ```bash
 sudo apt-get install -y mono-mcs        # ou: dotnet
+
+# regles du jeu
 mcs -target:library -out:core.dll unity/Scripts/Core/*.cs
-mcs -out:test.exe -r:core.dll unity/Tests/CoreTests.cs
-mono test.exe
+mcs -out:test.exe -r:core.dll unity/Tests/CoreTests.cs && mono test.exe
+
+# interface, jouee dans le faux runtime
+mcs -out:harness.exe unity/Scripts/Core/*.cs unity/Scripts/Unity/*.cs unity/Tests/FakeUnity/*.cs
+mono harness.exe
+
+# exporter le rendu de la pizza a 5 cuissons (fichiers PPM)
+mono harness.exe --dump /tmp
 ```
+
+`Tests/FakeUnity/` ne doit **jamais** etre copie dans `Assets/` : il redefinit
+les types d'UnityEngine et entrerait en conflit avec le vrai moteur.
 
 Couvert : pizza parfaite (prix + pourboire), garniture manquante (paiement
 partiel), sortie automatique du four a 1.6 et refus de la pizza cramee,

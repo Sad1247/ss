@@ -57,8 +57,10 @@ namespace BellaNotte.Unity
 
         public void Dessiner(IngredientId? basePizza, IReadOnlyList<IngredientId> garnitures, float cuisson)
         {
-            float brulure = Mathf.Clamp01((cuisson - 1.15f) / 0.55f);
-            float doree = Mathf.Clamp01(cuisson);
+            // Le brunissage demarre des la sortie de la zone parfaite : une pizza
+            // trop cuite doit se voir immediatement, c'est un signal de jeu.
+            float brulure = Mathf.Clamp01((cuisson - GameConfig.ZoneParfaiteMax) / 0.30f);
+            float doree = Mathf.Clamp01(cuisson / GameConfig.ZoneParfaiteMin);
 
             var vide = new Color32(0, 0, 0, 0);
             for (int i = 0; i < _pixels.Length; i++) _pixels[i] = vide;
@@ -68,11 +70,13 @@ namespace BellaNotte.Unity
             float bordure = R - 9f;
             float interieur = R - 16f;
 
-            Color pateCuite = Color.Lerp(Hex(0xE8CFA0), Hex(0x5A3A22), brulure * 0.85f);
-            Color pate = Color.Lerp(Hex(0xF0DCB4), pateCuite, doree);
-            Color croute = Color.Lerp(Hex(0xD8BF8E), pateCuite, doree);
+            // L'ecart pale -> dore doit etre franc : c'est le seul indice visuel
+            // qui distingue une pizza crue d'une pizza a point.
+            Color pateCuite = Color.Lerp(Hex(0xD9AF6B), Hex(0x2A1810), brulure);
+            Color pate = Color.Lerp(Hex(0xFBF5E7), pateCuite, doree);
+            Color croute = Color.Lerp(Hex(0xF7EFDC), Color.Lerp(Hex(0xCE9B4F), Hex(0x2A1810), brulure), doree);
             Color? sauce = basePizza.HasValue
-                ? Color.Lerp(CouleurDe(basePizza.Value), Hex(0x4A2A18), brulure * 0.6f)
+                ? Color.Lerp(CouleurDe(basePizza.Value), Hex(0x2E1A10), brulure * 0.9f)
                 : (Color?)null;
 
             // pate + croute + sauce
@@ -108,9 +112,9 @@ namespace BellaNotte.Unity
             }
 
             // voile de brulure
-            if (brulure > 0.75f)
+            if (brulure > 0.35f)
             {
-                var voile = new Color(0.08f, 0.04f, 0.02f, 0.35f);
+                var voile = new Color(0.06f, 0.03f, 0.02f, 0.30f * brulure);
                 for (int y = 0; y < Taille; y++)
                 for (int x = 0; x < Taille; x++)
                 {
