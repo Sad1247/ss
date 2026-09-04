@@ -38,6 +38,6 @@ namespace Pizzeria3D
 
         // --- pile de pizzas ---
         public const float EpaisseurPizza = 0.16f;
-        public const float HauteurTete = 1.75f;
+        public const float HauteurTete = 1.82f;   // juste au-dessus de la casquette
     }
 }

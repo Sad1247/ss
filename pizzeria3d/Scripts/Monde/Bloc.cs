@@ -64,6 +64,15 @@ namespace Pizzeria3D
         public static GameObject Bille(string nom, Transform parent, Vector3 pos, float diametre, Color c)
             => Forme(PrimitiveType.Sphere, nom, parent, pos, new Vector3(diametre, diametre, diametre), c);
 
+        /// <summary>Sphere aplatie ou etiree : la brique des formes arrondies.</summary>
+        public static GameObject Galet(string nom, Transform parent, Vector3 pos, Vector3 taille,
+                                       Color c, float inclinaison = 0f)
+        {
+            var go = Forme(PrimitiveType.Sphere, nom, parent, pos, taille, c);
+            if (inclinaison != 0f) go.transform.localRotation = Quaternion.Euler(inclinaison, 0f, 0f);
+            return go;
+        }
+
         /// <summary>Retire le collider : la plupart des objets sont purement decoratifs.</summary>
         public static GameObject SansCollision(this GameObject go)
         {
@@ -85,10 +94,10 @@ namespace Pizzeria3D
         public static readonly Color Carton     = Couleur(0xF0A93C);
         public static readonly Color Billet     = Couleur(0x5CD65C);
         public static readonly Color Zone       = Couleur(0x4AE04A);
-        public static readonly Color Casquette  = Couleur(0xE8402F);
-        public static readonly Color Tablier    = Couleur(0x3B9BE8);
-        public static readonly Color Pantalon   = Couleur(0x24303A);
-        public static readonly Color Peau       = Couleur(0x2B2B33);
+        public static readonly Color Casquette  = Couleur(0xE23B2E);
+        public static readonly Color Tablier    = Couleur(0x4BA3E3);
+        public static readonly Color Pantalon   = Couleur(0x14161C);
+        public static readonly Color Peau       = Couleur(0x2A2320);
         public static readonly Color Client     = Couleur(0xAFC0CC);
 
         public static Color Couleur(int rgb) => new Color(

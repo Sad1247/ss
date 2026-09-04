@@ -145,15 +145,41 @@ namespace Pizzeria3D
 
             var corps = new GameObject("Corps");
             corps.transform.SetParent(go.transform, false);
-            Bloc.Capsule("Torse", corps.transform, new Vector3(0f, 0.85f, 0f),
-                         new Vector3(0.7f, 0.6f, 0.7f), Bloc.Tablier).SansCollision();
-            Bloc.Boite("Jambes", corps.transform, new Vector3(0f, 0.3f, 0f),
-                       new Vector3(0.5f, 0.6f, 0.45f), Bloc.Pantalon).SansCollision();
-            Bloc.Bille("Tete", corps.transform, new Vector3(0f, 1.5f, 0f), 0.56f, Bloc.Peau).SansCollision();
-            Bloc.Disque("Casquette", corps.transform, new Vector3(0f, 1.68f, 0f), 0.62f, 0.3f, Bloc.Casquette)
-                .SansCollision();
-            Bloc.Boite("Visiere", corps.transform, new Vector3(0f, 1.62f, 0.3f),
-                       new Vector3(0.5f, 0.08f, 0.3f), Bloc.Casquette).SansCollision();
+            var t = corps.transform;
+
+            // Jambes separees plutot qu'un bloc : c'est ce qui donne la
+            // silhouette du personnage, meme immobile.
+            Bloc.Capsule("JambeG", t, new Vector3(-0.15f, 0.42f, 0f),
+                         new Vector3(0.26f, 0.30f, 0.26f), Bloc.Pantalon).SansCollision();
+            Bloc.Capsule("JambeD", t, new Vector3(0.15f, 0.42f, 0f),
+                         new Vector3(0.26f, 0.30f, 0.26f), Bloc.Pantalon).SansCollision();
+            Bloc.Galet("PiedG", t, new Vector3(-0.15f, 0.09f, 0.06f),
+                       new Vector3(0.28f, 0.18f, 0.40f), Bloc.Pantalon).SansCollision();
+            Bloc.Galet("PiedD", t, new Vector3(0.15f, 0.09f, 0.06f),
+                       new Vector3(0.28f, 0.18f, 0.40f), Bloc.Pantalon).SansCollision();
+
+            // T-shirt : un galet large et court, manches courtes marquees
+            Bloc.Galet("Torse", t, new Vector3(0f, 0.95f, 0f),
+                       new Vector3(0.62f, 0.62f, 0.46f), Bloc.Tablier).SansCollision();
+            Bloc.Galet("MancheG", t, new Vector3(-0.28f, 1.02f, 0f),
+                       new Vector3(0.26f, 0.30f, 0.28f), Bloc.Tablier).SansCollision();
+            Bloc.Galet("MancheD", t, new Vector3(0.28f, 1.02f, 0f),
+                       new Vector3(0.26f, 0.30f, 0.28f), Bloc.Tablier).SansCollision();
+
+            // Bras nus, legerement ecartes du corps
+            Bloc.Capsule("BrasG", t, new Vector3(-0.32f, 0.76f, 0f),
+                         new Vector3(0.19f, 0.20f, 0.19f), Bloc.Peau).SansCollision();
+            Bloc.Capsule("BrasD", t, new Vector3(0.32f, 0.76f, 0f),
+                         new Vector3(0.19f, 0.20f, 0.19f), Bloc.Peau).SansCollision();
+
+            Bloc.Bille("Tete", t, new Vector3(0f, 1.42f, 0f), 0.52f, Bloc.Peau).SansCollision();
+
+            // Casquette : une calotte bombee qui coiffe le crane, plus large que
+            // lui, et une visiere inclinee vers l'avant.
+            Bloc.Galet("Calotte", t, new Vector3(0f, 1.52f, -0.01f),
+                       new Vector3(0.60f, 0.44f, 0.60f), Bloc.Casquette).SansCollision();
+            Bloc.Galet("Visiere", t, new Vector3(0f, 1.46f, 0.26f),
+                       new Vector3(0.46f, 0.10f, 0.34f), Bloc.Casquette, -12f).SansCollision();
 
             return go.AddComponent<Joueur>();
         }
