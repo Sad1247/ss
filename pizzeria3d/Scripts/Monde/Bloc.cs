@@ -104,6 +104,10 @@ namespace Pizzeria3D
         public static readonly Color Braise      = Couleur(0xFF6A12);
         public static readonly Color Flamme      = Couleur(0xFFC93C);
         public static readonly Color Foyer       = Couleur(0x2A1712);
+        // caisse enregistreuse
+        public static readonly Color Taupe       = Couleur(0x4A423B);
+        public static readonly Color TaupeClair  = Couleur(0x6B6157);
+        public static readonly Color Ecran       = Couleur(0x24282D);
         public static readonly Color MachineBis = Couleur(0x1B49B5);
         public static readonly Color Metal      = Couleur(0xB9C2CC);
         public static readonly Color Pate       = Couleur(0xF5B942);

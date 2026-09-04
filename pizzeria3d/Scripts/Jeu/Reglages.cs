@@ -13,14 +13,16 @@ namespace Pizzeria3D
         public const float DelaiTransfert = 0.09f;  // secondes entre deux pizzas
 
         // --- four ---
-        public const float DureeCuisson = 1.8f;     // une pizza toutes les N secondes
+        public const float DureeCuisson = 7f;       // une pizza toutes les N secondes
         public const int StockFourMax = 12;
 
         // --- comptoir ---
         public const int StockComptoirMax = 16;
 
         // --- clients ---
-        public const float DelaiClient = 3.2f;
+// Une pizza toutes les 7 secondes, c'est lent : sans espacer les arrivees
+        // dans la meme proportion, la file deborde et tous les clients partent.
+        public const float DelaiClient = 9f;
         public const int FileMax = 5;
         public const int PizzasParClientMin = 1;
         public const int PizzasParClientMax = 3;

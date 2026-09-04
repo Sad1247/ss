@@ -85,7 +85,7 @@ static class Harness3D
 
         // --- le four produit ---
         Placer(joueur, new Vector3(0f, 0f, -6f));    // loin, pour laisser le stock monter
-        Secondes(Reglages.DureeCuisson * 3.5f);
+        Secondes(Reglages.DureeCuisson * 3.5f + 1f);
         Check("le four produit des pizzas", four.Sortie.Nombre >= 3);
 
         // --- ramassage ---
@@ -95,7 +95,7 @@ static class Harness3D
         Check("le stock du four baisse d'autant", four.Sortie.Nombre < 3);
 
         int portees = joueur.Portee.Nombre;
-        Secondes(4f);
+        Secondes(Reglages.DureeCuisson * 2f);
         Check("la pile portee plafonne a la capacite",
               joueur.Portee.Nombre <= Reglages.CapacitePortee && joueur.Portee.Nombre >= portees);
 
@@ -111,11 +111,13 @@ static class Harness3D
         // --- un client arrive, patiente, est servi ---
         Check("des clients font la queue", comptoir.TailleFile >= 1 || TousLes<Client>().Count >= 1);
 
+        // Les attentes suivent la cadence du four : en dur, elles cassent des
+        // que l'equilibrage bouge.
         int avantVente = Banque.Solde;
         Placer(joueur, four.Sortie.transform.position);
-        Secondes(6f);                                 // recharge
+        Secondes(Reglages.DureeCuisson * 4f);         // recharge
         Placer(joueur, comptoir.transform.position);
-        Secondes(8f);                                 // sert, encaisse les liasses sur place
+        Secondes(Reglages.DelaiClient + 10f);         // sert, encaisse les liasses sur place
         Check("servir des clients rapporte de l'argent", Banque.Solde > avantVente);
         Check("le prix suit le bareme",
               (Banque.Solde - avantVente) % Reglages.PrixPizza == 0);

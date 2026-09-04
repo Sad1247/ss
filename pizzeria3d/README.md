@@ -70,6 +70,7 @@ Scripts/Jeu/
 Scripts/Monde/
   Bloc.cs       fabrique de primitives colorees + la palette
   Pile.cs       une pile de pizzas (joueur, four, comptoir, sac client)
+  Fumee.cs      les bouffees qui sortent de la cheminee
   Batisseur.cs  monte toute la scene au lancement
 
 Tests~/FakeUnity/            (ignore par Unity : le ~ final)
