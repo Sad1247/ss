@@ -31,8 +31,8 @@ namespace Pizzeria3D
             Camera(racine.transform, joueur.transform);
 
             Comptoir(racine.transform, joueur);
-            Four(racine.transform, joueur, new Vector3(-5.5f, 0f, 3.5f), "Four1", true);
-            var second = Four(racine.transform, joueur, new Vector3(-5.5f, 0f, -1.5f), "Four2", false);
+            Four(racine.transform, joueur, new Vector3(-4.2f, 0f, 3.2f), "Four1", true);
+            var second = Four(racine.transform, joueur, new Vector3(-4.2f, 0f, -1.2f), "Four2", false);
             Zone(racine.transform, joueur, second);
 
             racine.AddComponent<Hud>();
@@ -43,19 +43,37 @@ namespace Pizzeria3D
 
         static void Decor(Transform parent)
         {
-            Bloc.Boite("Herbe", parent, new Vector3(0f, -0.6f, 0f), new Vector3(46f, 0.4f, 46f), Bloc.Herbe)
+            Bloc.Boite("Herbe", parent, new Vector3(0f, -0.6f, 0f), new Vector3(34f, 0.4f, 34f), Bloc.Herbe)
                 .SansCollision();
-            Bloc.Boite("Sol", parent, new Vector3(0f, -0.2f, 0f), new Vector3(24f, 0.4f, 22f), Bloc.Sol)
+            Bloc.Boite("Sol", parent, new Vector3(0f, -0.2f, 0f), new Vector3(17f, 0.4f, 15f), Bloc.Sol)
                 .SansCollision();
-            Bloc.Boite("Trottoir", parent, new Vector3(0f, -0.35f, -12.5f), new Vector3(26f, 0.5f, 4f),
+            Bloc.Boite("Trottoir", parent, new Vector3(0f, -0.35f, -8.8f), new Vector3(19f, 0.5f, 3f),
                        Bloc.SolBordure).SansCollision();
 
             // batiment du fond, purement decoratif
-            Bloc.Boite("Mur", parent, new Vector3(-2f, 1.6f, 10.4f), new Vector3(18f, 3.2f, 0.6f),
+            Bloc.Boite("Mur", parent, new Vector3(-1f, 1.6f, 7.2f), new Vector3(14f, 3.2f, 0.6f),
                        Bloc.MachineBis).SansCollision();
             for (int i = 0; i < 4; i++)
-                Bloc.Boite("Vitre" + i, parent, new Vector3(-7.5f + i * 3.6f, 1.9f, 10.05f),
-                           new Vector3(2.2f, 1.5f, 0.15f), Bloc.Couleur(0xBFE8F2)).SansCollision();
+                Bloc.Boite("Vitre" + i, parent, new Vector3(-5.4f + i * 2.9f, 1.9f, 6.85f),
+                           new Vector3(1.8f, 1.5f, 0.15f), Bloc.Couleur(0xBFE8F2)).SansCollision();
+
+            // De quoi remplir la cour : sans ces caisses et ces arbustes, le sol
+            // parait vide et la scene ne ressemble a rien.
+            for (int i = 0; i < 3; i++)
+                Bloc.Boite("Caisse" + i, parent, new Vector3(6.6f, 0.45f + i * 0.9f, 5.4f - i * 0.15f),
+                           new Vector3(1.5f, 0.9f, 1.5f), Bloc.Carton).SansCollision();
+            Bloc.Boite("Palette", parent, new Vector3(-7f, 0.2f, 5.6f), new Vector3(2.2f, 0.4f, 2.2f),
+                       Bloc.Metal).SansCollision();
+
+            float[] xs = { -12f, -9.5f, 11.5f, 13f, -13.5f };
+            float[] zs = { 9.5f, -6.5f, 8f, -3.5f, 2f };
+            for (int i = 0; i < xs.Length; i++)
+            {
+                Bloc.Boite("Tronc" + i, parent, new Vector3(xs[i], 0.6f, zs[i]),
+                           new Vector3(0.4f, 1.2f, 0.4f), Bloc.Couleur(0x8A5A2B)).SansCollision();
+                Bloc.Bille("Feuillage" + i, parent, new Vector3(xs[i], 1.8f, zs[i]), 2.2f,
+                           Bloc.Couleur(0x4FA83A)).SansCollision();
+            }
         }
 
         /// <summary>
@@ -108,7 +126,7 @@ namespace Pizzeria3D
             else go = cam.gameObject;
 
             cam.orthographic = true;                 // le genre est toujours en vue isometrique
-            cam.orthographicSize = 11f;                   // tout le restaurant tient a l'ecran
+            cam.orthographicSize = 7.6f;                  // assez pres pour que l'action remplisse l'ecran
             cam.backgroundColor = Bloc.Couleur(0x9BDCF0);
             go.transform.rotation = Quaternion.Euler(38f, -45f, 0f);
             go.transform.position = -(go.transform.rotation * Vector3.forward) * 30f;
@@ -144,7 +162,7 @@ namespace Pizzeria3D
         {
             var go = new GameObject("Comptoir");
             go.transform.SetParent(parent, false);
-            go.transform.position = new Vector3(4.5f, 0f, 1f);
+            go.transform.position = new Vector3(3.6f, 0f, 0.6f);
 
             Bloc.Boite("Plan", go.transform, new Vector3(0f, 0.55f, 0f), new Vector3(3.6f, 1.1f, 1.8f),
                        Bloc.Machine).SansCollision();
@@ -206,7 +224,7 @@ namespace Pizzeria3D
         {
             var go = new GameObject("ZoneAchat");
             go.transform.SetParent(parent, false);
-            go.transform.position = new Vector3(-1.5f, 0f, -3.5f);
+            go.transform.position = new Vector3(-1.2f, 0f, -3.2f);
 
             Bloc.Boite("Dalle", go.transform, new Vector3(0f, 0.03f, 0f), new Vector3(2.6f, 0.06f, 2.6f),
                        Bloc.Zone).SansCollision();

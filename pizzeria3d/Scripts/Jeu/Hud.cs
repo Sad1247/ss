@@ -41,11 +41,11 @@ namespace Pizzeria3D
             rt.anchorMin = new Vector2(1f, 1f); rt.anchorMax = new Vector2(1f, 1f);
             rt.pivot = new Vector2(1f, 1f);
             rt.anchoredPosition = new Vector2(-30f, -30f);
-            rt.sizeDelta = new Vector2(340f, 110f);
+            rt.sizeDelta = new Vector2(300f, 100f);
             var fond = carte.AddComponent<Image>();
-            fond.color = Color.white;
+            fond.color = Bloc.Couleur(0x5CD65C);        // la pastille verte du genre
 
-            _argent = Texte(carte.transform, police, "0 EUR", 54, TextAnchor.MiddleCenter, Bloc.Couleur(0x2B3A2B));
+            _argent = Texte(carte.transform, police, "0", 56, TextAnchor.MiddleCenter, Bloc.Couleur(0x18400F));
             Etirer(_argent.GetComponent<RectTransform>());
 
             _indice = Texte(canvasGo.transform, police, "", 40, TextAnchor.LowerCenter, Color.white);
@@ -66,7 +66,7 @@ namespace Pizzeria3D
 
         void OnDestroy() => Banque.Change -= Rafraichir;
 
-        void Rafraichir() => _argent.text = Banque.Solde + " EUR";
+        void Rafraichir() => _argent.text = Banque.Solde.ToString();
 
         void Update()
         {
