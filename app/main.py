@@ -163,6 +163,11 @@ class Api:
         self._exiger_ecriture()
         return donnees.definir_poste(int(employe_id), poste)
 
+    def definir_cellulaire(self, employe_id, cellulaire):
+        """Enregistre le cellulaire. Réservé aux comptes qui peuvent modifier."""
+        self._exiger_ecriture()
+        return donnees.definir_cellulaire(int(employe_id), cellulaire)
+
     def definir_equipements(self, employe_id, equipements):
         """Remplace les équipements d'une fiche. Réservé aux comptes qui peuvent modifier."""
         self._exiger_ecriture()

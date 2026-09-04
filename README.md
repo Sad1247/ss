@@ -182,6 +182,23 @@ manipulation particulière.
 Le compte en lecture seule n'a aucun de ces boutons, et `definir_coordonnees`,
 `definir_poste` et `definir_equipements` le refuseraient de toute façon.
 
+## Cellulaire
+
+Le bloc **Cellulaire** de la fiche porte le numéro, le modèle, l'IMEI, le
+compte iCloud et deux mots de passe (iCloud, déverrouillage). Modifiable
+comme les autres blocs ; le modèle, le numéro et l'IMEI alimentent aussi le
+formulaire « Équipement prêté ».
+
+**Les mots de passe y sont en clair**, dans la table `cellulaire`. C'est
+voulu — ce sont des mots de passe d'appareils que le service doit pouvoir
+relire — mais cela veut dire que quiconque ouvre `parc.db` les lit. Deux
+conséquences à assumer : la base ne doit pas traîner sur un partage ouvert à
+tous, et ces mots de passe ne doivent jamais servir ailleurs.
+
+Dans la fiche, ils s'affichent masqués ; un bouton **Afficher les mots de
+passe** les révèle, et le masque revient dès qu'on change de fiche ou qu'on
+ferme la session.
+
 ## Formulaire « Équipement prêté »
 
 Le bouton **Équipement prêté**, présent sur toutes les fiches et accessible
@@ -197,12 +214,12 @@ Ce qui est repris de la fiche :
 | Colonne PC ou Portable | type d'appareil |
 | Marque / Modèle | premier mot du modèle, puis le reste |
 | # de série, Specs, Nom | numéro de série, processeur, nom de l'ordinateur |
+| Cellulaire (modèle, # de tél., IMEI) | bloc Cellulaire |
 | Cases d'accessoires | équipements reconnus (écrans, souris, clavier, casque…) |
 | Autres équipements | les équipements qui ne correspondent à aucune case |
 | Date | date du jour |
 
-Le cellulaire et la signature restent à remplir à la main : l'application ne
-les connaît pas.
+La signature reste à remplir à la main.
 
 Le rendu est écrit avec `fpdf2`. Les polices intégrées d'un PDF ne
 connaissent que le Latin-1 : `document.texte_pdf` conserve les accents

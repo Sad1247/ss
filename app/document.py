@@ -236,10 +236,13 @@ def generer(fiche: dict, logo: Path | None = None) -> Path:
     for rang, (libelle, _) in enumerate(ACCESSOIRES):
         pdf.case(gauche, haut + rang * 7.5, libelle, coches[libelle])
 
+    cellulaire = fiche.get("cellulaire") or {}
     pdf.set_xy(droite, y + 4)
     pdf.titre("CELLULAIRE PROFESSIONNEL", 10)
-    for rang, etiquette in enumerate(("Modèle :", "# de tél. :", "IMEI :")):
-        pdf.champ(droite, haut + rang * 9, largeur, etiquette, None)
+    for rang, (etiquette, cle) in enumerate((("Modèle :", "modele"),
+                                             ("# de tél. :", "numero"),
+                                             ("IMEI :", "imei"))):
+        pdf.champ(droite, haut + rang * 9, largeur, etiquette, cellulaire.get(cle))
 
     # ----- autres équipements -----
     bas = haut + len(ACCESSOIRES) * 7.5 + 6

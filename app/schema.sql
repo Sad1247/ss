@@ -44,6 +44,21 @@ CREATE TABLE IF NOT EXISTS compte (
                 CHECK (role IN ('administrateur', 'modification', 'lecture'))
 );
 
+-- Cellulaire professionnel. Un employé en a au plus un.
+-- Les mots de passe y sont en clair : c'est un carnet de notes du service,
+-- pas un coffre-fort. Voir la mise en garde du README.
+CREATE TABLE IF NOT EXISTS cellulaire (
+    id                INTEGER PRIMARY KEY AUTOINCREMENT,
+    employe_id        INTEGER NOT NULL UNIQUE
+                      REFERENCES employe(id) ON DELETE CASCADE,
+    numero            TEXT,
+    modele            TEXT,
+    imei              TEXT,
+    compte_icloud     TEXT,
+    motdepasse_icloud TEXT,
+    motdepasse_cell   TEXT
+);
+
 -- Écrans, imprimantes, docks, téléphones IP…
 CREATE TABLE IF NOT EXISTS equipement (
     id           INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -81,6 +96,13 @@ SELECT
     o.version_filemaker,
     o.cpu,
     o.type_appareil,
-    o.windows11
+    o.windows11,
+    c.numero            AS cell_numero,
+    c.modele            AS cell_modele,
+    c.imei              AS cell_imei,
+    c.compte_icloud     AS cell_compte_icloud,
+    c.motdepasse_icloud AS cell_motdepasse_icloud,
+    c.motdepasse_cell   AS cell_motdepasse
 FROM employe e
-LEFT JOIN ordinateur o ON o.employe_id = e.id;
+LEFT JOIN ordinateur o ON o.employe_id = e.id
+LEFT JOIN cellulaire c ON c.employe_id = e.id;

@@ -8,6 +8,7 @@ let fiches = [];
 let choisie = null;
 let edition = null;      // null | "coordonnees" | "poste" | "equipements"
 let brouillon = [];      // équipements en cours de saisie
+let motsDePasseVisibles = false;
 let confirmation = false;  // suppression en attente de confirmation
 
 function echapper(v) {
@@ -62,6 +63,7 @@ function dessinerListe() {
     el.onclick = () => {
       edition = null;
       confirmation = false;
+      motsDePasseVisibles = false;
       choisie = Number(el.dataset.id);
       dessinerListe();
       dessinerDetail();
@@ -186,6 +188,46 @@ function blocPoste(f) {
           </section>`;
 }
 
+function blocCellulaire(f) {
+  const c = f.cellulaire;
+  const secret = (valeur) =>
+    !valeur ? "—"
+    : motsDePasseVisibles ? echapper(valeur)
+    : "•".repeat(Math.min(valeur.length, 12));
+
+  const corps = edition === "cellulaire"
+    ? champSaisie("Numéro", "saisie-cell-numero", c.numero, "418 555-0000") +
+      champSaisie("Modèle", "saisie-cell-modele", c.modele, "iPhone 15") +
+      champSaisie("IMEI", "saisie-cell-imei", c.imei) +
+      champSaisie("Compte iCloud", "saisie-cell-icloud", c.compte_icloud) +
+      champSaisie("Mot de passe iCloud", "saisie-cell-mdp-icloud", c.motdepasse_icloud) +
+      champSaisie("Mot de passe du cellulaire", "saisie-cell-mdp", c.motdepasse_cell)
+    : champ("Numéro", c.numero) +
+      champ("Modèle", c.modele) +
+      champ("IMEI", c.imei) +
+      champ("Compte iCloud", c.compte_icloud) +
+      `<div class="champ">
+         <div class="etiquette">Mot de passe iCloud</div>
+         <div class="valeur secret">${secret(c.motdepasse_icloud)}</div>
+       </div>
+       <div class="champ">
+         <div class="etiquette">Mot de passe du cellulaire</div>
+         <div class="valeur secret">${secret(c.motdepasse_cell)}</div>
+       </div>`;
+
+  const bascule = (c.motdepasse_icloud || c.motdepasse_cell) && edition !== "cellulaire"
+    ? `<button type="button" id="voir-secrets" class="lien-action petit">
+         ${motsDePasseVisibles ? "Masquer" : "Afficher"} les mots de passe
+       </button>`
+    : "";
+
+  return `<section class="bloc">
+            <h2>Cellulaire ${actionsBloc("cellulaire")}</h2>
+            <div class="champs">${corps}</div>
+            ${bascule}
+          </section>`;
+}
+
 function blocEquipements(f) {
   let corps;
   if (edition === "equipements") {
@@ -271,19 +313,30 @@ function dessinerDetail() {
     ${blocEmploi(f)}
     ${blocCoordonnees(f)}
     ${blocPoste(f)}
+    ${blocCellulaire(f)}
     ${blocEquipements(f)}`;
 
   brancherFiche(f);
 }
 
 function brancherFiche(f) {
+  // Ces deux-là ne modifient rien : ils valent pour tous les comptes, et
+  // doivent donc être branchés avant la sortie réservée à la modification.
+  const bouton = $("#document");
+  if (bouton) bouton.onclick = () => genererDocument(f);
+
+  const secrets = $("#voir-secrets");
+  if (secrets) {
+    secrets.onclick = () => {
+      motsDePasseVisibles = !motsDePasseVisibles;
+      dessinerDetail();
+    };
+  }
+
   if (!peutModifier()) return;
 
   const basculer = $("#basculer-etat");
   if (basculer) basculer.onclick = () => basculerEtat(f);
-
-  const bouton = $("#document");
-  if (bouton) bouton.onclick = () => genererDocument(f);
 
   const supprimer = $("#supprimer");
   if (supprimer) supprimer.onclick = () => { confirmation = true; dessinerDetail(); };
@@ -389,6 +442,15 @@ async function enregistrer(f) {
       // le libellé et l'état FileMaker sont recalculés par Python
       const frais = (await pywebview.api.chercher(f.nom)).find((x) => x.id === f.id);
       if (frais) Object.assign(f, frais);
+    } else if (bloc === "cellulaire") {
+      f.cellulaire = await pywebview.api.definir_cellulaire(f.id, {
+        numero: $("#saisie-cell-numero").value,
+        modele: $("#saisie-cell-modele").value,
+        imei: $("#saisie-cell-imei").value,
+        compte_icloud: $("#saisie-cell-icloud").value,
+        motdepasse_icloud: $("#saisie-cell-mdp-icloud").value,
+        motdepasse_cell: $("#saisie-cell-mdp").value,
+      });
     } else {
       f.equipements = await pywebview.api.definir_equipements(f.id, lireEquipements());
     }
@@ -495,6 +557,7 @@ async function basculerEtat(f) {
 async function charger() {
   edition = null;
   confirmation = false;
+  motsDePasseVisibles = false;
   const terme = $("#terme").value.trim();
   try {
     if (terme) {
@@ -752,6 +815,7 @@ $("#deconnexion").onclick = async () => {
   session = null;
   edition = null;
   confirmation = false;
+  motsDePasseVisibles = false;
   $("#nom-compte").textContent = "Compte";
   ouvrirMenu(false);
   $("#fenetre-compte").hidden = true;

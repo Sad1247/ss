@@ -52,6 +52,10 @@ EMPLOYES = [
         "nom": "Saad", "service": "Informatique", "actif": 1,
         "telephone": "418 555-0101", "poste_interne": "200",
         "nom_utilisateur": "saad", "courriel": "saad@santinel.ca",
+        "cellulaire": {"numero": "418 555-0102", "modele": "iPhone 15",
+                       "imei": "356789102345678",
+                       "compte_icloud": "ti.santinel@icloud.com",
+                       "motdepasse_icloud": "Parc-2026!", "motdepasse_cell": "204815"},
         "poste": ("TI-PORT-01", "Dell Latitude 5450", "H7X2M9P", "2025-06-09", "22.0.1"),
         "equipements": [("Écran", "Dell U2723QE 27 pouces", "CN0P4R5T"),
                         ("Écran", "Dell U2723QE 27 pouces", "CN0P4R5U"),
@@ -118,6 +122,8 @@ def main() -> int:
                 "VALUES (?, ?, ?, ?)",
                 [(employe_id, *equipement) for equipement in e["equipements"]],
             )
+            if e.get("cellulaire"):
+                donnees.definir_cellulaire(employe_id, e["cellulaire"])
             ajoutes += 1
 
     if ajoutes:

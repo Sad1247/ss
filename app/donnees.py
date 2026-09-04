@@ -195,6 +195,9 @@ CHAMPS_EMPLOI = ("titre", "compagnie", "service")
 CHAMPS_POSTE = ("nom_ordinateur", "modele", "numero_serie", "mise_en_service",
                 "version_filemaker", "cpu", "type_appareil")
 
+CHAMPS_CELLULAIRE = ("numero", "modele", "imei", "compte_icloud",
+                     "motdepasse_icloud", "motdepasse_cell")
+
 
 def _oui_non(brut) -> bool | None:
     """Lit un oui/non venant du formulaire ou d'un import. None = inconnu."""
@@ -271,6 +274,24 @@ def definir_poste(employe_id: int, poste: dict) -> dict:
             """,
             (employe_id, *(valeurs[c] for c in CHAMPS_POSTE),
              None if valeurs["windows11"] is None else int(valeurs["windows11"])),
+        )
+    return valeurs
+
+
+def definir_cellulaire(employe_id: int, cellulaire: dict) -> dict:
+    """Enregistre le cellulaire professionnel, en le créant au besoin."""
+    valeurs = {c: ((cellulaire or {}).get(c) or "").strip() or None
+               for c in CHAMPS_CELLULAIRE}
+    with connexion() as cx:
+        _exiger_employe(cx, employe_id)
+        cx.execute(
+            f"""
+            INSERT INTO cellulaire (employe_id, {', '.join(CHAMPS_CELLULAIRE)})
+            VALUES ({', '.join('?' * (len(CHAMPS_CELLULAIRE) + 1))})
+            ON CONFLICT(employe_id) DO UPDATE SET
+                {', '.join(f'{c} = excluded.{c}' for c in CHAMPS_CELLULAIRE)}
+            """,
+            (employe_id, *(valeurs[c] for c in CHAMPS_CELLULAIRE)),
         )
     return valeurs
 
@@ -375,5 +396,13 @@ def _fiche(cx: sqlite3.Connection, ligne: sqlite3.Row) -> dict:
         "windows11": None if ligne["windows11"] is None else bool(ligne["windows11"]),
         "version_filemaker": ligne["version_filemaker"] or "Non installé",
         "filemaker_ok": a_jour(ligne["version_filemaker"]),
+        "cellulaire": {
+            "numero": ligne["cell_numero"],
+            "modele": ligne["cell_modele"],
+            "imei": ligne["cell_imei"],
+            "compte_icloud": ligne["cell_compte_icloud"],
+            "motdepasse_icloud": ligne["cell_motdepasse_icloud"],
+            "motdepasse_cell": ligne["cell_motdepasse"],
+        },
         "equipements": [dict(e) for e in equipements],
     }

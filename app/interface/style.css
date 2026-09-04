@@ -485,6 +485,10 @@ select.saisie {
 .champs { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 13px 20px; }
 .champ .etiquette { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--doux); }
 .champ .valeur { font-size: 14px; }
+.champ .valeur.secret {
+  font-family: "Consolas", "Courier New", monospace;
+  letter-spacing: .06em;
+}
 
 .etat-fm {
   display: inline-block;
