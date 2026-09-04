@@ -14,6 +14,10 @@ namespace Pizzeria3D
         {
             if (Object.FindObjectOfType<Joueur>() != null) return;   // deja monte a la main
 
+            // Trace de demarrage : si ce message n'apparait pas dans la Console
+            // au lancement, c'est que les scripts ne sont pas dans le projet.
+            Debug.Log("Pizzeria : construction de la scene...");
+
             Banque.Reinitialiser();
             Hud.Indice = null;
 
@@ -30,6 +34,7 @@ namespace Pizzeria3D
             Zone(racine.transform, joueur, second);
 
             racine.AddComponent<Hud>();
+            Debug.Log("Pizzeria : scene prete. Maintiens le clic et glisse pour te deplacer.");
         }
 
         // ------------------------------------------------------------------
