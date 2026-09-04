@@ -250,7 +250,30 @@ namespace UnityEngine
     public class BoxCollider : Collider { }
 
     public enum LightType { Directional, Point, Spot }
-    public class Light : Behaviour { public LightType type; public Color color; public float intensity; }
+    public enum LightShadows { None, Hard, Soft }
+    public class Light : Behaviour
+    {
+        public LightType type; public Color color; public float intensity;
+        public LightShadows shadows; public float shadowStrength;
+    }
+
+    public enum ShadowQuality { Disable, HardOnly, All }
+    public enum ShadowResolution { Low, Medium, High, VeryHigh }
+
+    public static class QualitySettings
+    {
+        public static int antiAliasing;
+        public static ShadowQuality shadows;
+        public static ShadowResolution shadowResolution;
+    }
+
+    public static class RenderSettings
+    {
+        public static Rendering.AmbientMode ambientMode;
+        public static Color ambientLight;
+    }
+
+    namespace Rendering { public enum AmbientMode { Skybox, Trilight, Flat, Custom } }
 
     public class Camera : Behaviour
     {

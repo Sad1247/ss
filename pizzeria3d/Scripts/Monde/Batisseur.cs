@@ -21,6 +21,8 @@ namespace Pizzeria3D
             Banque.Reinitialiser();
             Hud.Indice = null;
 
+            Qualite();
+
             var racine = new GameObject("Pizzeria");
             Decor(racine.transform);
             Lumiere(racine.transform);
@@ -56,6 +58,22 @@ namespace Pizzeria3D
                            new Vector3(2.2f, 1.5f, 0.15f), Bloc.Couleur(0xBFE8F2)).SansCollision();
         }
 
+        /// <summary>
+        /// Le style repose sur des couleurs franches et des ombres douces. Sans
+        /// ces reglages, l'eclairage par defaut delave tout et les bords crenent.
+        /// </summary>
+        static void Qualite()
+        {
+            QualitySettings.antiAliasing = 4;              // bords nets
+            QualitySettings.shadows = ShadowQuality.All;
+            QualitySettings.shadowResolution = ShadowResolution.High;
+
+            // Lumiere ambiante chaude et uniforme : elle remonte les faces a
+            // l'ombre sans grisailler les couleurs, comme dans la reference.
+            RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
+            RenderSettings.ambientLight = new Color(0.72f, 0.74f, 0.78f);
+        }
+
         static void Lumiere(Transform parent)
         {
             // Une scene neuve contient deja une lumiere directionnelle : en
@@ -68,8 +86,10 @@ namespace Pizzeria3D
                 l = go.AddComponent<Light>();
             }
             l.type = LightType.Directional;
-            l.color = Color.white;
-            l.intensity = 1.1f;
+            l.color = Bloc.Couleur(0xFFF6E2);              // soleil legerement chaud
+            l.intensity = 1.35f;
+            l.shadows = LightShadows.Soft;                 // les ombres portees font le relief
+            l.shadowStrength = 0.45f;
             l.transform.rotation = Quaternion.Euler(52f, -35f, 0f);
         }
 
@@ -88,7 +108,7 @@ namespace Pizzeria3D
             else go = cam.gameObject;
 
             cam.orthographic = true;                 // le genre est toujours en vue isometrique
-            cam.orthographicSize = 8.5f;
+            cam.orthographicSize = 11f;                   // tout le restaurant tient a l'ecran
             cam.backgroundColor = Bloc.Couleur(0x9BDCF0);
             go.transform.rotation = Quaternion.Euler(38f, -45f, 0f);
             go.transform.position = -(go.transform.rotation * Vector3.forward) * 30f;
