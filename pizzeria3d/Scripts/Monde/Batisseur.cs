@@ -217,26 +217,54 @@ namespace Pizzeria3D
             return c;
         }
 
+        /// <summary>
+        /// Four a bois traditionnel : socle en briques, coupole, arche de pierre
+        /// claire, foyer allume et cheminee. La pierre du four, devant, sert de
+        /// plan de sortie : c'est la que les pizzas s'empilent.
+        /// </summary>
         static GameObject Four(Transform parent, Joueur joueur, Vector3 position, string nom, bool actif)
         {
             var go = new GameObject(nom);
             go.transform.SetParent(parent, false);
             go.transform.position = position;
+            var t = go.transform;
 
-            Bloc.Boite("Bloc", go.transform, new Vector3(0f, 1.2f, 0f), new Vector3(2.6f, 2.4f, 2.2f),
-                       Bloc.Machine).SansCollision();
-            Bloc.Boite("Bouche", go.transform, new Vector3(0f, 0.9f, -1.15f), new Vector3(1.6f, 1.1f, 0.2f),
-                       Bloc.Pantalon).SansCollision();
-            Bloc.Boite("Ecran", go.transform, new Vector3(0.9f, 1.9f, -1.15f), new Vector3(0.7f, 0.5f, 0.15f),
-                       Bloc.Couleur(0x9EE8F5)).SansCollision();
-            Bloc.Bille("Bouton", go.transform, new Vector3(-0.7f, 1.9f, -1.15f), 0.22f,
-                       Bloc.Couleur(0xE8402F)).SansCollision();
-            Bloc.Boite("Tapis", go.transform, new Vector3(0f, 0.55f, -1.9f), new Vector3(1.8f, 0.2f, 1.4f),
-                       Bloc.Metal).SansCollision();
+            // socle
+            Bloc.Boite("Socle", t, new Vector3(0f, 0.45f, 0f), new Vector3(2.7f, 0.9f, 2.3f),
+                       Bloc.Brique).SansCollision();
+            Bloc.Boite("Corniche", t, new Vector3(0f, 0.94f, 0f), new Vector3(2.9f, 0.14f, 2.5f),
+                       Bloc.Pierre).SansCollision();
+            Bloc.Bille("Aeration", t, new Vector3(0f, 0.45f, -1.17f), 0.22f, Bloc.Foyer).SansCollision();
+
+            // coupole : une demi-sphere, sa moitie basse disparait dans le socle
+            Bloc.Galet("Coupole", t, new Vector3(0f, 1.0f, 0.1f), new Vector3(2.5f, 2.3f, 2.3f),
+                       Bloc.BriqueClaire).SansCollision();
+
+            // bouche : arche claire, cerne sombre, foyer
+            Bloc.Rondelle("Arche", t, new Vector3(0f, 1.5f, -1.02f), 1.75f, 0.24f, Bloc.Pierre)
+                .SansCollision();
+            Bloc.Rondelle("Cerne", t, new Vector3(0f, 1.47f, -1.10f), 1.35f, 0.18f, Bloc.PierreOmbre)
+                .SansCollision();
+            Bloc.Rondelle("Foyer", t, new Vector3(0f, 1.45f, -1.16f), 1.1f, 0.14f, Bloc.Foyer)
+                .SansCollision();
+            Bloc.Galet("Braises", t, new Vector3(0f, 1.2f, -1.22f), new Vector3(0.7f, 0.42f, 0.28f),
+                       Bloc.Braise).SansCollision();
+            Bloc.Galet("Flamme", t, new Vector3(0f, 1.42f, -1.24f), new Vector3(0.34f, 0.42f, 0.22f),
+                       Bloc.Flamme).SansCollision();
+
+            // cheminee
+            Bloc.Forme(PrimitiveType.Cylinder, "Cheminee", t, new Vector3(0f, 2.35f, 0.5f),
+                       new Vector3(0.5f, 0.5f, 0.5f), Bloc.Brique).SansCollision();
+            Bloc.Disque("Couronne", t, new Vector3(0f, 2.86f, 0.5f), 0.66f, 0.22f, Bloc.Pierre)
+                .SansCollision();
+
+            // pierre du four : le plan ou les pizzas sortent
+            Bloc.Boite("PierreDuFour", t, new Vector3(0f, 1.0f, -1.62f), new Vector3(2.5f, 0.16f, 1.3f),
+                       Bloc.Pierre).SansCollision();
 
             var pile = new GameObject("Sortie");
-            pile.transform.SetParent(go.transform, false);
-            pile.transform.localPosition = new Vector3(0f, 0.65f, -1.9f);
+            pile.transform.SetParent(t, false);
+            pile.transform.localPosition = new Vector3(0f, 1.09f, -1.72f);
 
             var f = go.AddComponent<Four>();
             f.Sortie = pile.AddComponent<Pile>();

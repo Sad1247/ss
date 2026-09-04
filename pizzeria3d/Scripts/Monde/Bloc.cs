@@ -64,6 +64,16 @@ namespace Pizzeria3D
         public static GameObject Bille(string nom, Transform parent, Vector3 pos, float diametre, Color c)
             => Forme(PrimitiveType.Sphere, nom, parent, pos, new Vector3(diametre, diametre, diametre), c);
 
+        /// <summary>Cylindre couche, face tournee vers l'avant : arches et rondelles.</summary>
+        public static GameObject Rondelle(string nom, Transform parent, Vector3 pos,
+                                          float diametre, float epaisseur, Color c)
+        {
+            var go = Forme(PrimitiveType.Cylinder, nom, parent, pos,
+                           new Vector3(diametre, epaisseur * 0.5f, diametre), c);
+            go.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+            return go;
+        }
+
         /// <summary>Sphere aplatie ou etiree : la brique des formes arrondies.</summary>
         public static GameObject Galet(string nom, Transform parent, Vector3 pos, Vector3 taille,
                                        Color c, float inclinaison = 0f)
@@ -86,6 +96,14 @@ namespace Pizzeria3D
         public static readonly Color SolBordure = Couleur(0xE4E7EA);
         public static readonly Color Herbe      = Couleur(0x7DD44F);
         public static readonly Color Machine    = Couleur(0x2C6BE8);
+        // four a bois
+        public static readonly Color Brique      = Couleur(0xC2542F);
+        public static readonly Color BriqueClaire= Couleur(0xD86F44);
+        public static readonly Color Pierre      = Couleur(0xE9DFC6);
+        public static readonly Color PierreOmbre = Couleur(0x8E8674);
+        public static readonly Color Braise      = Couleur(0xFF6A12);
+        public static readonly Color Flamme      = Couleur(0xFFC93C);
+        public static readonly Color Foyer       = Couleur(0x2A1712);
         public static readonly Color MachineBis = Couleur(0x1B49B5);
         public static readonly Color Metal      = Couleur(0xB9C2CC);
         public static readonly Color Pate       = Couleur(0xF5B942);
