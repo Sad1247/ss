@@ -638,6 +638,28 @@ footer {
 }
 .erreur[hidden] { display: none; }
 
+/* Attente pendant la vérification des identifiants */
+.chargement {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  margin-top: 18px;
+  color: #cfe4ff;
+}
+.chargement[hidden] { display: none; }
+
+.trousse {
+  flex: none;
+  color: #38a0ff;                      /* le bleu du bouton de connexion */
+  animation: tourner 1.1s linear infinite;
+  transform-origin: 50% 50%;
+}
+
+@keyframes tourner {
+  to { transform: rotate(360deg); }
+}
+
 .bouton-hud {
   width: 100%;
   margin-top: 20px;

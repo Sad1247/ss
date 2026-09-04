@@ -37,6 +37,19 @@
     </label>
 
     <p id="erreur" class="erreur" hidden></p>
+
+    <div id="chargement" class="chargement" hidden>
+      <svg class="trousse" viewBox="0 0 64 64" width="54" height="54"
+           role="img" aria-label="Vérification en cours">
+        <path d="M23 15a9 9 0 0 1 18 0" fill="none" stroke="currentColor"
+              stroke-width="4" stroke-linecap="round"/>
+        <rect x="7" y="15" width="50" height="35" rx="7" fill="currentColor"/>
+        <circle cx="32" cy="32.5" r="11" fill="#eaf3ff"/>
+        <path d="M29.6 25.5h4.8v14h-4.8zM25 30.1h14v4.8H25z" fill="currentColor"/>
+      </svg>
+      <span>Vérification…</span>
+    </div>
+
     <button type="submit" class="bouton-hud">Accéder au parc</button>
   </form>
 </section>
