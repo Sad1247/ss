@@ -52,7 +52,8 @@ function dessinerListe() {
              data-id="${f.id}">
       <div class="entree-texte">
         <div class="nom">${echapper(f.nom)}</div>
-        <div class="meta">${valeur(f.service)} · ${valeur(f.nom_ordinateur)}</div>
+        <div class="meta">${[f.service, f.nom_ordinateur]
+          .filter(Boolean).map(echapper).join(" · ") || "—"}</div>
       </div>
       <span class="etat-emploi ${f.actif ? "oui" : "non"}">${f.actif ? "Actif" : "Inactif"}</span>
     </article>`).join("");
@@ -527,6 +528,7 @@ async function majCompteur() {
 
 async function ouvrirSession() {
   $("#nom-compte").textContent = session.utilisateur;
+  $("#nouvel-employe").hidden = !peutModifier();
   $("#connexion").hidden = true;
   $("#appli").hidden = false;
   await charger();
@@ -603,6 +605,7 @@ document.addEventListener("keydown", (evt) => {
   if (evt.key === "Escape") {
     ouvrirMenu(false);
     $("#fenetre-compte").hidden = true;
+    fermerNouvelEmploye();
   }
 });
 
@@ -699,6 +702,46 @@ $("#nouveau-compte").addEventListener("submit", async (evt) => {
   $("#nouveau-compte").reset();
 });
 
+/* ---------- nouvelle fiche ---------- */
+
+function fermerNouvelEmploye() {
+  $("#fenetre-employe").hidden = true;
+  $("#formulaire-employe").reset();
+  $("#message-employe").hidden = true;
+}
+
+$("#nouvel-employe").onclick = () => {
+  ouvrirMenu(false);
+  $("#message-employe").hidden = true;
+  $("#fenetre-employe").hidden = false;
+  $("#nom-employe").focus();
+};
+
+$("#annuler-employe").onclick = fermerNouvelEmploye;
+$("#fenetre-employe").onclick = (evt) => {
+  if (evt.target === $("#fenetre-employe")) fermerNouvelEmploye();
+};
+
+$("#formulaire-employe").addEventListener("submit", async (evt) => {
+  evt.preventDefault();
+  const nom = $("#nom-employe").value;
+  try {
+    const id = await pywebview.api.creer_employe(nom);
+    fermerNouvelEmploye();
+    $("#terme").value = "";
+    vue = "tous";
+    document.querySelectorAll(".onglet").forEach((b) =>
+      b.classList.toggle("actif", b.dataset.vue === "tous"));
+    choisie = id;                       // la nouvelle fiche s'ouvre aussitôt
+    await charger();
+    etat(`Fiche de ${nom.trim()} créée. Complétez-la avec « Modifier ».`);
+  } catch (err) {
+    const message = $("#message-employe");
+    message.textContent = String(err).replace(/^Error:\s*/, "");
+    message.hidden = false;
+  }
+});
+
 $("#fermer-compte").onclick = () => { $("#fenetre-compte").hidden = true; };
 $("#fenetre-compte").onclick = (evt) => {
   if (evt.target === $("#fenetre-compte")) $("#fenetre-compte").hidden = true;
@@ -712,6 +755,7 @@ $("#deconnexion").onclick = async () => {
   $("#nom-compte").textContent = "Compte";
   ouvrirMenu(false);
   $("#fenetre-compte").hidden = true;
+  fermerNouvelEmploye();
   fiches = [];
   choisie = null;
   $("#appli").hidden = true;

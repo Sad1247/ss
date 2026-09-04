@@ -122,6 +122,11 @@ class Api:
         if comptes.cle(utilisateur) == comptes.cle(self.session["utilisateur"]):
             raise PermissionError(f"Impossible de {geste}.")
 
+    def creer_employe(self, nom):
+        """Crée une fiche. Réservé aux comptes qui peuvent modifier."""
+        self._exiger_ecriture()
+        return donnees.creer_employe(nom)
+
     def definir_actif(self, employe_id, actif):
         """Bascule l'état d'emploi d'une fiche. Réservé aux comptes qui peuvent modifier."""
         self._exiger_ecriture()

@@ -98,6 +98,12 @@
       </button>
 
       <div id="menu-compte" class="menu" hidden>
+        <button id="nouvel-employe" type="button" class="element-menu" hidden>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+            <path d="M10 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0 2c-4.4 0-8 2.6-8 5.8V22h11v-2.2c0-1.4.5-2.7 1.4-3.8A13 13 0 0 0 10 14Zm9 0v3h3v2h-3v3h-2v-3h-3v-2h3v-3h2Z"/>
+          </svg>
+          Nouvel employé
+        </button>
         <button id="voir-compte" type="button" class="element-menu">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
             <path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0 2c-4.4 0-8 2.6-8 5.8V22h16v-2.2c0-3.2-3.6-5.8-8-5.8Z"/>
@@ -122,6 +128,21 @@
   </main>
 
   <footer><span id="etat">Chargement…</span></footer>
+
+  <div id="fenetre-employe" class="voile" hidden>
+    <form class="boite" id="formulaire-employe" autocomplete="off">
+      <h2>Nouvel employé</h2>
+      <p class="explication">La fiche est créée vide : ses blocs se remplissent
+        ensuite avec « Modifier ».</p>
+      <input id="nom-employe" class="saisie" placeholder="Nom et prénom"
+             autocomplete="off">
+      <p id="message-employe" class="message-comptes" hidden></p>
+      <div class="actions-boite">
+        <button type="button" id="annuler-employe" class="bouton-etat">Annuler</button>
+        <button type="submit" class="lien-action fort">Créer la fiche</button>
+      </div>
+    </form>
+  </div>
 
   <div id="fenetre-compte" class="voile" hidden>
     <div class="boite" role="dialog" aria-labelledby="titre-compte">

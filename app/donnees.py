@@ -131,6 +131,20 @@ def definir_actif(employe_id: int, actif: bool) -> bool:
     return bool(actif)
 
 
+def creer_employe(nom: str) -> int:
+    """Crée une fiche vide et renvoie son identifiant."""
+    nom = (nom or "").strip()
+    if not nom:
+        raise ValueError("Le nom de l'employé est obligatoire.")
+    with connexion() as cx:
+        existant = cx.execute(
+            "SELECT nom FROM employe WHERE nom = ? COLLATE NOCASE", (nom,)
+        ).fetchone()
+        if existant:
+            raise ValueError(f"Une fiche existe déjà au nom de {existant['nom']}.")
+        return cx.execute("INSERT INTO employe (nom) VALUES (?)", (nom,)).lastrowid
+
+
 def definir_suivi(employe_id: int, suivi: bool) -> bool:
     """Inclut ou retire une fiche de l'onglet « À mettre à jour ».
 

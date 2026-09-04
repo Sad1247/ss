@@ -153,6 +153,17 @@ header {
 }
 .boite h2 { margin: 0 0 18px; font-size: 18px; color: var(--titre); }
 
+.explication { margin: -8px 0 16px; font-size: 13px; color: var(--doux); }
+
+.actions-boite {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+#formulaire-employe .saisie { width: 100%; padding: 9px 11px; }
+
 .infos-compte {
   display: grid;
   grid-template-columns: auto 1fr;

@@ -147,6 +147,17 @@ Colonnes reconnues, telles qu'elles apparaissent dans le tableur : `Actif`,
 dans ces cases avant l'export, sinon elles arrivent vides et sont lues comme
 « pas encore fait ».
 
+## Créer une fiche
+
+Menu **Compte** → **Nouvel employé**, visible pour les comptes qui peuvent
+modifier. Seul le nom est demandé : la fiche est créée vide, s'ouvre
+aussitôt, et se complète bloc par bloc avec « Modifier ». Un nom déjà porté
+par une fiche est refusé, sans tenir compte de la casse — deux fiches
+homonymes casseraient l'import CSV, qui reconnaît les employés par leur nom.
+
+Une fiche neuve n'ayant pas FileMaker, elle apparaît d'emblée dans
+« À mettre à jour ».
+
 ## Modifier une fiche
 
 Avec le compte administrateur, chacun des quatre blocs — **Emploi** (titre,
