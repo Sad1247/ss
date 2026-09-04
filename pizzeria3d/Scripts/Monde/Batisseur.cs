@@ -53,27 +53,43 @@ namespace Pizzeria3D
 
         static void Lumiere(Transform parent)
         {
-            var go = new GameObject("Soleil");
-            go.transform.SetParent(parent, false);
-            go.transform.rotation = Quaternion.Euler(52f, -35f, 0f);
-            var l = go.AddComponent<Light>();
+            // Une scene neuve contient deja une lumiere directionnelle : en
+            // ajouter une seconde surexpose tout. On reprend celle qui existe.
+            var l = Object.FindObjectOfType<Light>();
+            if (l == null)
+            {
+                var go = new GameObject("Soleil");
+                go.transform.SetParent(parent, false);
+                l = go.AddComponent<Light>();
+            }
             l.type = LightType.Directional;
             l.color = Color.white;
             l.intensity = 1.1f;
+            l.transform.rotation = Quaternion.Euler(52f, -35f, 0f);
         }
 
         static void Camera(Transform parent, Transform cible)
         {
-            var go = new GameObject("Camera");
-            go.transform.SetParent(parent, false);
-            var cam = go.AddComponent<UnityEngine.Camera>();
+            // Meme chose pour la camera : une scene neuve a deja sa Main Camera.
+            // En creer une deuxieme donne une image superposee et illisible.
+            var cam = Object.FindObjectOfType<UnityEngine.Camera>();
+            GameObject go;
+            if (cam == null)
+            {
+                go = new GameObject("Camera");
+                go.transform.SetParent(parent, false);
+                cam = go.AddComponent<UnityEngine.Camera>();
+            }
+            else go = cam.gameObject;
+
             cam.orthographic = true;                 // le genre est toujours en vue isometrique
             cam.orthographicSize = 8.5f;
             cam.backgroundColor = Bloc.Couleur(0x9BDCF0);
             go.transform.rotation = Quaternion.Euler(38f, -45f, 0f);
             go.transform.position = -(go.transform.rotation * Vector3.forward) * 30f;
 
-            var suivi = go.AddComponent<Suivi>();
+            var suivi = go.GetComponent<Suivi>();
+            if (suivi == null) suivi = go.AddComponent<Suivi>();
             suivi.Cible = cible;
             suivi.Decalage = go.transform.position;
         }

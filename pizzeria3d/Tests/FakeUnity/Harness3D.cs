@@ -39,8 +39,20 @@ static class Harness3D
 
     static void Main()
     {
+        // Une scene Unity neuve arrive avec une Main Camera et une lumiere :
+        // on reproduit ces conditions, c'est ce que le joueur aura.
+        var camScene = new GameObject("Main Camera").AddComponent<UnityEngine.Camera>();
+        new GameObject("Directional Light").AddComponent<Light>();
+
         Batisseur.Monter();
         Frames(2);
+
+        Check("la camera de la scene est reutilisee, pas doublee",
+              TousLes<UnityEngine.Camera>().Count == 1);
+        Check("la lumiere de la scene est reutilisee, pas doublee",
+              TousLes<Light>().Count == 1);
+        Check("c'est bien la camera d'origine qui sert",
+              UnityEngine.Object.FindObjectOfType<UnityEngine.Camera>() == camScene);
 
         var joueur = UnityEngine.Object.FindObjectOfType<Joueur>();
         var four = UnityEngine.Object.FindObjectOfType<Four>();

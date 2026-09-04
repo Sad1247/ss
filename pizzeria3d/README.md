@@ -11,12 +11,13 @@ low-poly du genre.
 
 ## Installation
 
-1. Cree un projet Unity **3D** (URP ou built-in, les deux marchent).
-2. Copie `Scripts/` dans `Assets/Scripts/`.
+1. Cree un projet Unity **3D**. Pas 2D : un projet 2D n'affiche pas la 3D.
+2. Copie **uniquement** `Scripts/` dans `Assets/` (jamais `Tests/`).
 3. Appuie sur **Play**.
 
-`Batisseur` monte le sol, le decor, le four, le comptoir, la zone d'achat, le
-joueur, la camera isometrique et la lumiere au lancement. Il n'y a pas de scene
+`Batisseur` monte le sol, le decor, le four, le comptoir, la zone d'achat et le
+joueur au lancement. Il reutilise la Main Camera et la lumiere deja presentes
+dans la scene plutot que d'en creer d'autres. Il n'y a pas de scene
 a assembler ni de prefab a cabler.
 
 Pour reprendre la main, supprime `Batisseur.cs` et pose les composants toi-meme.
@@ -49,7 +50,7 @@ Scripts/Monde/
 
 Tests/FakeUnity/
   FakeUnity3D.cs  faux runtime Unity (hierarchie, transforms, entrees, cycle de vie)
-  Harness3D.cs    25 verifications qui jouent la boucle complete
+  Harness3D.cs    28 verifications qui jouent la boucle complete
 ```
 
 ## Verifier sans Unity
@@ -78,7 +79,7 @@ les types d'UnityEngine.
 
 ## Ce qui est verifie, et ce qui ne l'est pas
 
-La logique tourne : les 25 verifications ci-dessus s'executent hors editeur.
+La logique tourne : les 28 verifications ci-dessus s'executent hors editeur.
 Le **rendu 3D n'a jamais ete affiche** — positions, echelles, cadrage de la
 camera et couleurs ont ete poses sans jamais etre vus. C'est la premiere chose
 a corriger a l'oeil au lancement.
