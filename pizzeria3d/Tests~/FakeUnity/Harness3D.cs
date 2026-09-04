@@ -58,6 +58,7 @@ static class Harness3D
         var four = UnityEngine.Object.FindObjectOfType<Four>();
         var comptoir = UnityEngine.Object.FindObjectOfType<Comptoir>();
         var zone = UnityEngine.Object.FindObjectOfType<ZoneAchat>();
+        var caisse = UnityEngine.Object.FindObjectOfType<Caisse>();
         var camera = UnityEngine.Object.FindObjectOfType<UnityEngine.Camera>();
 
         Check("la scene se monte sans editeur", joueur != null && four != null && comptoir != null);
@@ -65,6 +66,7 @@ static class Harness3D
         Check("le second four est cache au depart", Trouver("Four2") != null && !Trouver("Four2").activeSelf);
         Check("la caisse demarre a zero", Banque.Solde == 0);
         Check("une zone d'achat attend le joueur", zone != null && zone.Restant == Reglages.PrixSecondFour);
+        Check("le tiroir-caisse est ferme au depart", caisse != null && !caisse.EstOuverte);
 
         // --- manette flottante ---
         var depart = joueur.transform.position;
@@ -111,6 +113,30 @@ static class Harness3D
         // --- un client arrive, patiente, est servi ---
         Check("des clients font la queue", comptoir.TailleFile >= 1 || TousLes<Client>().Count >= 1);
 
+        // --- la commande dure trois secondes, tiroir ouvert ---
+        // On guette un client QUI VIENT de commencer : en attraper un deja
+        // engage fausserait la mesure du delai.
+        Placer(joueur, new Vector3(0f, 0f, -9f));      // le joueur s'ecarte
+        Client client = null;
+        Client dernier = comptoir.Premier;
+        for (int i = 0; i < 60 * 200 && client == null; i++)
+        {
+            Frames(1);
+            var p = comptoir.Premier;
+            if (p == null || p == dernier) continue;
+            // nouveau client au comptoir : on le prend des sa premiere image
+            for (int k = 0; k < 10 && !p.CommandeCommencee; k++) Frames(1);
+            client = p;
+        }
+        Check("un nouveau client entame sa commande", client != null);
+        Check("le tiroir s'ouvre des le debut de la commande", caisse.EstOuverte);
+        Check("la commande n'est pas finie tout de suite", !client.CommandeFinie);
+
+        Secondes(Reglages.DureeCommande - 0.5f);
+        Check("la commande dure bien les secondes prevues", !client.CommandeFinie);
+        Secondes(1f);
+        Check("la commande s'acheve apres le delai", client.CommandeFinie);
+
         // Les attentes suivent la cadence du four : en dur, elles cassent des
         // que l'equilibrage bouge.
         int avantVente = Banque.Solde;
@@ -119,6 +145,12 @@ static class Harness3D
         Placer(joueur, comptoir.transform.position);
         Secondes(Reglages.DelaiClient + 10f);         // sert, encaisse les liasses sur place
         Check("servir des clients rapporte de l'argent", Banque.Solde > avantVente);
+        // le tiroir se referme quand plus personne n'est au comptoir
+        Placer(joueur, new Vector3(0f, 0f, -9f));
+        int garde1 = 0;
+        while (comptoir.Premier != null && garde1++ < 60 * 90) Frames(1);
+        Check("le tiroir se referme quand le client repart",
+              comptoir.Premier != null || !caisse.EstOuverte);
         Check("le prix suit le bareme",
               (Banque.Solde - avantVente) % Reglages.PrixPizza == 0);
 

@@ -194,7 +194,7 @@ namespace Pizzeria3D
                        Bloc.Machine).SansCollision();
             Bloc.Boite("Dessus", go.transform, new Vector3(0f, 1.15f, 0f), new Vector3(3.8f, 0.16f, 2f),
                        Bloc.Metal).SansCollision();
-            Caisse(go.transform, new Vector3(-1.05f, 1.15f, 0f));
+            var caisse = Caisse.Creer(go.transform, new Vector3(-1.05f, 1.15f, 0f));
 
             var pile = new GameObject("Stock");
             pile.transform.SetParent(go.transform, false);
@@ -213,6 +213,7 @@ namespace Pizzeria3D
             c.Joueur = joueur;
             c.PointFile = file.transform;
             c.Sortie = sortie.transform;
+            c.Caisse = caisse;
             return c;
         }
 
@@ -276,67 +277,6 @@ namespace Pizzeria3D
 
             go.SetActive(actif);
             return go;
-        }
-
-        /// <summary>
-        /// Terminal de point de vente : bloc-tiroir, clavier, ecran tactile
-        /// incline avec ses touches colorees, afficheur client au dos et
-        /// imprimante a tickets sur le cote.
-        /// </summary>
-        static void Caisse(Transform parent, Vector3 pos)
-        {
-            var go = new GameObject("Caisse");
-            go.transform.SetParent(parent, false);
-            go.transform.localPosition = pos;
-            var t = go.transform;
-
-            // bloc-tiroir
-            Bloc.Boite("Tiroir", t, new Vector3(0f, 0.12f, 0f), new Vector3(1.15f, 0.24f, 0.72f),
-                       Bloc.Taupe).SansCollision();
-            Bloc.Boite("Facade", t, new Vector3(0f, 0.12f, -0.37f), new Vector3(1.0f, 0.14f, 0.03f),
-                       Bloc.TaupeClair).SansCollision();
-            Bloc.Bille("Serrure", t, new Vector3(0.42f, 0.12f, -0.37f), 0.07f, Bloc.Ecran).SansCollision();
-
-            // clavier
-            Bloc.Boite("Clavier", t, new Vector3(0.16f, 0.26f, -0.14f), new Vector3(0.66f, 0.05f, 0.26f),
-                       Bloc.Ecran).SansCollision();
-            for (int i = 0; i < 3; i++)
-                Bloc.Boite("Rangee" + i, t, new Vector3(0.16f, 0.29f, -0.21f + i * 0.07f),
-                           new Vector3(0.60f, 0.01f, 0.03f), Bloc.Couleur(0x8A939B)).SansCollision();
-
-            // ecran tactile incline
-            Bloc.Boite("Pied", t, new Vector3(-0.12f, 0.30f, 0.10f), new Vector3(0.14f, 0.16f, 0.14f),
-                       Bloc.Taupe).SansCollision();
-            var ecran = Bloc.Boite("Ecran", t, new Vector3(-0.12f, 0.58f, 0.14f),
-                                   new Vector3(0.60f, 0.48f, 0.05f), Bloc.Taupe).SansCollision();
-            ecran.transform.localRotation = Quaternion.Euler(-16f, 0f, 0f);
-
-            var dalle = Bloc.Boite("Dalle", t, new Vector3(-0.12f, 0.58f, 0.11f),
-                                   new Vector3(0.52f, 0.40f, 0.02f), Bloc.Ecran).SansCollision();
-            dalle.transform.localRotation = Quaternion.Euler(-16f, 0f, 0f);
-
-            // les touches colorees du logiciel de caisse
-            int[] teintes = { 0xF2C14E, 0x4BA3E3, 0xE2553B, 0x6FBF5F, 0xF2C14E, 0x9B6FE0 };
-            for (int i = 0; i < teintes.Length; i++)
-            {
-                float x = -0.29f + (i % 3) * 0.11f;
-                float y = 0.66f - (i / 3) * 0.10f;
-                var touche = Bloc.Boite("Touche" + i, t, new Vector3(x, y, 0.095f),
-                                        new Vector3(0.09f, 0.07f, 0.01f), Bloc.Couleur(teintes[i]));
-                touche.SansCollision();
-                touche.transform.localRotation = Quaternion.Euler(-16f, 0f, 0f);
-            }
-
-            // afficheur tourne vers le client
-            var dos = Bloc.Boite("AfficheurClient", t, new Vector3(-0.34f, 0.52f, 0.34f),
-                                 new Vector3(0.34f, 0.26f, 0.04f), Bloc.Taupe).SansCollision();
-            dos.transform.localRotation = Quaternion.Euler(14f, 0f, 0f);
-
-            // imprimante a tickets
-            Bloc.Boite("Imprimante", t, new Vector3(-0.72f, 0.13f, -0.06f),
-                       new Vector3(0.38f, 0.26f, 0.46f), Bloc.Taupe).SansCollision();
-            Bloc.Boite("Ticket", t, new Vector3(-0.72f, 0.27f, -0.10f),
-                       new Vector3(0.22f, 0.03f, 0.20f), Bloc.Couleur(0xF4F1EA)).SansCollision();
         }
 
         static void Zone(Transform parent, Joueur joueur, GameObject achat)

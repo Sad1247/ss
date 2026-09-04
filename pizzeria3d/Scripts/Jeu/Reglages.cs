@@ -28,6 +28,8 @@ namespace Pizzeria3D
         public const int PizzasParClientMax = 3;
         public const int PrixPizza = 6;
         public const float PatienceClient = 30f;
+        /// <summary>Temps que met un client a passer commande, tiroir ouvert.</summary>
+        public const float DureeCommande = 3f;
         public const float VitesseClient = 3.2f;
 
         // --- argent ---

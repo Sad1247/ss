@@ -71,11 +71,12 @@ Scripts/Monde/
   Bloc.cs       fabrique de primitives colorees + la palette
   Pile.cs       une pile de pizzas (joueur, four, comptoir, sac client)
   Fumee.cs      les bouffees qui sortent de la cheminee
+  Caisse.cs     la caisse enregistreuse et son tiroir coulissant
   Batisseur.cs  monte toute la scene au lancement
 
 Tests~/FakeUnity/            (ignore par Unity : le ~ final)
   FakeUnity3D.cs  faux runtime Unity (hierarchie, transforms, entrees, cycle de vie)
-  Harness3D.cs    28 verifications qui jouent la boucle complete
+  Harness3D.cs    35 verifications qui jouent la boucle complete
 ```
 
 ## Verifier sans Unity
@@ -88,8 +89,9 @@ mono h3d.exe
 
 Couvert : montage de la scene sans editeur, camera orthographique, manette
 flottante et axes isometriques, production du four, chargement et plafond de la
-pile portee, dechargement au comptoir, file d'attente, encaissement au bareme,
-liasse qui attend au sol puis se ramasse, dalle verte qui preleve puis livre.
+pile portee, dechargement au comptoir, file d'attente, duree de commande et
+ouverture puis fermeture du tiroir-caisse, encaissement au bareme, liasse qui
+attend au sol puis se ramasse, dalle verte qui preleve puis livre.
 
 `Tests~/FakeUnity/` redefinit les types d'UnityEngine : c'est pour cela que son
 dossier finit par `~`, qui le rend invisible a Unity.
@@ -104,7 +106,7 @@ dossier finit par `~`, qui le rend invisible a Unity.
 
 ## Ce qui est verifie, et ce qui ne l'est pas
 
-La logique tourne : les 28 verifications ci-dessus s'executent hors editeur.
+La logique tourne : les 35 verifications ci-dessus s'executent hors editeur.
 Le **rendu 3D n'a jamais ete affiche** — positions, echelles, cadrage de la
 camera et couleurs ont ete poses sans jamais etre vus. C'est la premiere chose
 a corriger a l'oeil au lancement.

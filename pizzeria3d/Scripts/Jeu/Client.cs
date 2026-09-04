@@ -12,6 +12,10 @@ namespace Pizzeria3D
         public bool EstServi => _recues >= Pizzas;
         public bool EstArrive { get; private set; }
 
+        /// <summary>Le client parle au caissier : rien ne lui est remis avant la fin.</summary>
+        public bool CommandeCommencee { get; private set; }
+        public bool CommandeFinie => CommandeCommencee && _resteCommande <= 0f;
+
         Comptoir _comptoir;
         Pile _sac;
         Vector3 _cible;
@@ -19,6 +23,7 @@ namespace Pizzeria3D
         int _recues;
         float _patience;
         float _compteurRemise;
+        float _resteCommande = Reglages.DureeCommande;
 
         public static Client Creer(Comptoir comptoir, int rang)
         {
@@ -81,6 +86,13 @@ namespace Pizzeria3D
                 return;
             }
             transform.position += delta.normalized * Reglages.VitesseClient * Time.deltaTime;
+        }
+
+        /// <summary>Egrene les secondes de commande une fois le client au comptoir.</summary>
+        public void Commander(float deltaTemps)
+        {
+            CommandeCommencee = true;
+            if (_resteCommande > 0f) _resteCommande -= deltaTemps;
         }
 
         /// <summary>Prend une pizza si le rythme de remise le permet.</summary>

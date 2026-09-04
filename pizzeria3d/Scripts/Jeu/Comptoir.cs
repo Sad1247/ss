@@ -13,12 +13,15 @@ namespace Pizzeria3D
         public Joueur Joueur;
         public Transform PointFile;          // premiere place de la file
         public Transform Sortie;             // ou les clients s'en vont
+        public Caisse Caisse;
 
         readonly List<Client> _file = new List<Client>();
         float _compteurArrivee;
 
         public int PlacesLibres => Reglages.FileMax - _file.Count;
         public int TailleFile => _file.Count;
+        /// <summary>Le client actuellement au comptoir, s'il y en a un.</summary>
+        public Client Premier => _file.Count > 0 ? _file[0] : null;
 
         void Awake()
         {
@@ -61,10 +64,17 @@ namespace Pizzeria3D
 
         void Servir()
         {
-            if (_file.Count == 0 || Stock == null || Stock.EstVide) return;
+            if (_file.Count == 0) return;
             var premier = _file[0];
             if (!premier.EstArrive) return;
 
+            // Le client passe d'abord commande : le tiroir s'ouvre a cet
+            // instant precis, et rien ne lui est remis avant la fin.
+            if (!premier.CommandeCommencee && Caisse != null) Caisse.Ouvrir();
+            premier.Commander(Time.deltaTime);
+            if (!premier.CommandeFinie) return;
+
+            if (Stock == null || Stock.EstVide) return;
             if (!premier.Recevoir()) return;      // pas encore le moment
             Stock.Retirer();
 
@@ -75,6 +85,7 @@ namespace Pizzeria3D
                               premier.Pizzas * Reglages.PrixPizza, Joueur);
                 premier.Partir();
                 _file.RemoveAt(0);
+                if (Caisse != null) Caisse.Fermer();   // commande terminee
             }
         }
 
@@ -87,6 +98,12 @@ namespace Pizzeria3D
         public Vector3 PointDeSortie => Sortie != null ? Sortie.position
                                                        : transform.position + new Vector3(10f, 0f, -6f);
 
-        public void Oublier(Client c) => _file.Remove(c);
+        /// <summary>Un client parti sans etre servi : sa commande s'arrete la.</summary>
+        public void Oublier(Client c)
+        {
+            bool etaitAuComptoir = _file.Count > 0 && _file[0] == c;
+            _file.Remove(c);
+            if (etaitAuComptoir && Caisse != null) Caisse.Fermer();
+        }
     }
 }
