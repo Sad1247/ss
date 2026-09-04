@@ -11,9 +11,33 @@ low-poly du genre.
 
 ## Installation
 
-1. Cree un projet Unity **3D**. Pas 2D : un projet 2D n'affiche pas la 3D.
-2. Copie **uniquement** `Scripts/` dans `Assets/` (jamais `Tests/`).
-3. Appuie sur **Play**.
+Cree un projet Unity **3D** (pas 2D : un projet 2D n'affiche pas la 3D), puis
+clone ce depot **directement dans le dossier `Assets/`** du projet :
+
+```bash
+cd "<ton projet Unity>/Assets"
+git clone -b claude/pizza-game-h9uex7 https://github.com/Sad1247/ss.git Pizzeria
+```
+
+Sans terminal : GitHub Desktop, `File > Clone repository > URL`, et choisis le
+dossier `Assets/Pizzeria` comme destination.
+
+Puis appuie sur **Play**.
+
+### Mettre a jour
+
+```bash
+cd "<ton projet Unity>/Assets/Pizzeria"
+git pull
+```
+
+ou le bouton **Pull origin** dans GitHub Desktop. Unity recompile tout seul en
+reprenant le focus. Il n'y a rien a recopier a la main.
+
+Le depot est range pour supporter ce clonage : Unity ignore tout dossier dont le
+nom finit par `~`, ce qui met hors de portee de la compilation le harnais de
+test (`Tests~`) et l'ancien prototype 2D (`archive-jeu-2d~`). Sans cette regle,
+ces fichiers casseraient le projet.
 
 `Batisseur` monte le sol, le decor, le four, le comptoir, la zone d'achat et le
 joueur au lancement. Il reutilise la Main Camera et la lumiere deja presentes
@@ -48,7 +72,7 @@ Scripts/Monde/
   Pile.cs       une pile de pizzas (joueur, four, comptoir, sac client)
   Batisseur.cs  monte toute la scene au lancement
 
-Tests/FakeUnity/
+Tests~/FakeUnity/            (ignore par Unity : le ~ final)
   FakeUnity3D.cs  faux runtime Unity (hierarchie, transforms, entrees, cycle de vie)
   Harness3D.cs    28 verifications qui jouent la boucle complete
 ```
@@ -57,7 +81,7 @@ Tests/FakeUnity/
 
 ```bash
 sudo apt-get install -y mono-mcs
-mcs -out:h3d.exe pizzeria3d/Scripts/*/*.cs pizzeria3d/Tests/FakeUnity/*.cs
+mcs -out:h3d.exe pizzeria3d/Scripts/*/*.cs 'pizzeria3d/Tests~/FakeUnity/'*.cs
 mono h3d.exe
 ```
 
@@ -66,8 +90,8 @@ flottante et axes isometriques, production du four, chargement et plafond de la
 pile portee, dechargement au comptoir, file d'attente, encaissement au bareme,
 liasse qui attend au sol puis se ramasse, dalle verte qui preleve puis livre.
 
-`Tests/FakeUnity/` ne doit **jamais** etre copie dans `Assets/` : il redefinit
-les types d'UnityEngine.
+`Tests~/FakeUnity/` redefinit les types d'UnityEngine : c'est pour cela que son
+dossier finit par `~`, qui le rend invisible a Unity.
 
 ## Ce qui n'y est pas encore
 

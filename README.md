@@ -1,4 +1,19 @@
-# velvet-cat-jazz
+# ss
+
+Deux projets sans rapport vivent dans ce depot.
+
+## Pizzeria 3D — jeu Unity
+
+Un idle tycoon isometrique : voir [`pizzeria3d/README.md`](pizzeria3d/README.md)
+pour l'installation et les regles. Le depot est concu pour etre clone
+directement dans le dossier `Assets/` d'un projet Unity ; les dossiers dont le
+nom finit par `~` sont ignores par Unity.
+
+- `pizzeria3d/` — le jeu
+- `archive-jeu-2d~/` — un premier prototype 2D, remplace par le jeu ci-dessus
+- `pizzeria.html` — le tout premier prototype, jouable dans un navigateur
+
+## velvet-cat-jazz — generateur de musique
 
 Générateur de jazz lofi « vintage noir » — le genre de nappe qu'on trouve sur les
 streams YouTube 24/7. Tout est **synthétisé** en Python/numpy, aucun échantillon,
