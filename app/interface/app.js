@@ -523,7 +523,7 @@ function refuser(message) {
 
 /* La vérification dure quelques dixièmes de seconde ; ce plancher laisse
    à l'animation le temps d'être vue plutôt que de clignoter. */
-const ATTENTE_MINIMALE = 700;
+const ATTENTE_MINIMALE = 1500;
 
 const pause = (ms) => new Promise((suite) => setTimeout(suite, ms));
 
@@ -532,7 +532,7 @@ $("#formulaire").addEventListener("submit", async (evt) => {
   const bouton = $(".bouton-hud");
   bouton.disabled = true;
   $("#erreur").hidden = true;
-  $("#chargement").hidden = false;
+  montrerAttente(true);
   const debut = Date.now();
   try {
     const [compte] = await Promise.all([
@@ -549,10 +549,16 @@ $("#formulaire").addEventListener("submit", async (evt) => {
     await pause(Math.max(0, ATTENTE_MINIMALE - (Date.now() - debut)));
     refuser("Erreur de connexion : " + err);
   } finally {
-    $("#chargement").hidden = true;
+    montrerAttente(false);
     bouton.disabled = false;
   }
 });
+
+/** Remplace le panneau de connexion par celui de la vérification. */
+function montrerAttente(attente) {
+  $("#formulaire").hidden = attente;
+  $("#attente").hidden = !attente;
+}
 
 const menu = $("#menu-compte");
 const boutonCompte = $("#bouton-compte");
@@ -686,6 +692,7 @@ $("#deconnexion").onclick = async () => {
   $("#appli").hidden = true;
   $("#connexion").hidden = false;
   $("#formulaire").reset();
+  montrerAttente(false);
   $("#erreur").hidden = true;
   $("#utilisateur").focus();
 };

@@ -52,10 +52,11 @@ Trois rôles :
 | Modification | ✓ | ✓ | — |
 | Lecture seule | ✓ | — | — |
 
-Pendant la vérification, une trousse de premiers soins tourne sous les
-champs. Le contrôle du mot de passe dure quelques dixièmes de seconde ; un
-plancher de 700 ms laisse à l'animation le temps d'être vue plutôt que de
-clignoter.
+Pendant la vérification, le panneau de connexion cède la place à un panneau
+du même habillage, avec une trousse de premiers soins qui tourne au centre.
+Le contrôle du mot de passe dure quelques dixièmes de seconde ; un plancher
+de 1,5 s laisse à l'écran le temps d'être vu. En cas d'échec, le formulaire
+revient avec son message.
 
 Le nom d'utilisateur ignore la casse et les accents (`Invité`, `invite` et
 `INVITE` sont le même compte) ; le mot de passe, non.

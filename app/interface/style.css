@@ -638,19 +638,18 @@ footer {
 }
 .erreur[hidden] { display: none; }
 
-/* Attente pendant la vérification des identifiants */
-.chargement {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  width: 100%;
-  margin-top: 18px;
-  color: #cfe4ff;
+/* Panneau d'attente : même habillage que la connexion, trousse au centre. */
+.panneau.attente {
+  justify-content: center;
+  gap: 30px;
+  min-height: 430px;
 }
-.chargement[hidden] { display: none; }
+.panneau[hidden] { display: none; }
+.panneau.attente h1 { margin: 0; }
 
 .trousse {
   flex: none;
+  margin: 6px 0;
   color: #38a0ff;                      /* le bleu du bouton de connexion */
   animation: tourner 1.1s linear infinite;
   transform-origin: 50% 50%;
