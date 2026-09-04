@@ -1,0 +1,92 @@
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace Pizzeria3D
+{
+    /// <summary>
+    /// Le comptoir : recoit les pizzas que le joueur depose, fait patienter les
+    /// clients en file et les sert un par un.
+    /// </summary>
+    public sealed class Comptoir : MonoBehaviour
+    {
+        public Pile Stock;
+        public Joueur Joueur;
+        public Transform PointFile;          // premiere place de la file
+        public Transform Sortie;             // ou les clients s'en vont
+
+        readonly List<Client> _file = new List<Client>();
+        float _compteurArrivee;
+
+        public int PlacesLibres => Reglages.FileMax - _file.Count;
+        public int TailleFile => _file.Count;
+
+        void Awake()
+        {
+            if (Stock != null) Stock.Max = Reglages.StockComptoirMax;
+        }
+
+        void Update()
+        {
+            Recevoir();
+            FaireVenir();
+            Ranger();
+            Servir();
+        }
+
+        /// <summary>Le joueur vide sa pile sur le comptoir, pizza par pizza.</summary>
+        void Recevoir()
+        {
+            if (Joueur == null || Stock == null || Stock.EstPleine) return;
+            if (Joueur.Portee.EstVide || !Joueur.PretPourTransfert) return;
+            if (!Joueur.EstPres(transform.position, Reglages.RayonRamassage + 0.6f)) return;
+
+            Joueur.Portee.Retirer();
+            Stock.Ajouter();
+            Joueur.ArmerTransfert();
+        }
+
+        void FaireVenir()
+        {
+            if (PlacesLibres <= 0) return;
+            _compteurArrivee += Time.deltaTime;
+            if (_compteurArrivee < Reglages.DelaiClient) return;
+            _compteurArrivee = 0f;
+            _file.Add(Client.Creer(this, _file.Count));
+        }
+
+        void Ranger()
+        {
+            for (int i = 0; i < _file.Count; i++) _file[i].RangA(i);
+        }
+
+        void Servir()
+        {
+            if (_file.Count == 0 || Stock == null || Stock.EstVide) return;
+            var premier = _file[0];
+            if (!premier.EstArrive) return;
+
+            if (!premier.Recevoir()) return;      // pas encore le moment
+            Stock.Retirer();
+
+            if (premier.EstServi)
+            {
+                // le client paie en lachant une liasse : au joueur d'aller la prendre
+                Billet.Lacher(transform.position + Vector3.up * 1.2f,
+                              premier.Pizzas * Reglages.PrixPizza, Joueur);
+                premier.Partir();
+                _file.RemoveAt(0);
+            }
+        }
+
+        public Vector3 PlaceDeLaFile(int rang)
+        {
+            var depart = PointFile != null ? PointFile.position : transform.position + Vector3.back * 2f;
+            return depart + new Vector3(0f, 0f, -1.35f * rang);
+        }
+
+        public Vector3 PointDeSortie => Sortie != null ? Sortie.position
+                                                       : transform.position + new Vector3(10f, 0f, -6f);
+
+        public void Oublier(Client c) => _file.Remove(c);
+    }
+}

@@ -1,0 +1,151 @@
+// Joue une partie complete a travers le vrai code du jeu, dans le faux runtime.
+// But : verifier la boucle — produire, porter, deposer, servir, encaisser,
+// debloquer — avant de la lancer dans l'editeur.
+using System;
+using System.Collections.Generic;
+using Pizzeria3D;
+using UnityEngine;
+
+static class Harness3D
+{
+    static int _echecs;
+
+    static void Check(string nom, bool ok)
+    {
+        Console.WriteLine((ok ? "OK    " : "ECHEC ") + nom);
+        if (!ok) _echecs++;
+    }
+
+    static void Frames(int n) { for (int i = 0; i < n; i++) Scene.Frame(1f / 60f); }
+    static void Secondes(float s) => Frames((int)(s * 60f));
+
+    static GameObject Trouver(string nom)
+    {
+        foreach (var o in UnityEngine.Object.Tous)
+            if (o is GameObject go && !go.Detruit && go.name == nom) return go;
+        return null;
+    }
+
+    static List<T> TousLes<T>() where T : Component
+    {
+        var r = new List<T>();
+        foreach (var o in UnityEngine.Object.Tous)
+            if (o is T t && !t.gameObject.Detruit) r.Add(t);
+        return r;
+    }
+
+    /// <summary>Teleporte le joueur : les tests de deplacement sont separes.</summary>
+    static void Placer(Joueur j, Vector3 p) => j.transform.position = p;
+
+    static void Main()
+    {
+        Batisseur.Monter();
+        Frames(2);
+
+        var joueur = UnityEngine.Object.FindObjectOfType<Joueur>();
+        var four = UnityEngine.Object.FindObjectOfType<Four>();
+        var comptoir = UnityEngine.Object.FindObjectOfType<Comptoir>();
+        var zone = UnityEngine.Object.FindObjectOfType<ZoneAchat>();
+        var camera = UnityEngine.Object.FindObjectOfType<UnityEngine.Camera>();
+
+        Check("la scene se monte sans editeur", joueur != null && four != null && comptoir != null);
+        Check("camera isometrique orthographique", camera != null && camera.orthographic);
+        Check("le second four est cache au depart", Trouver("Four2") != null && !Trouver("Four2").activeSelf);
+        Check("la caisse demarre a zero", Banque.Solde == 0);
+        Check("une zone d'achat attend le joueur", zone != null && zone.Restant == Reglages.PrixSecondFour);
+
+        // --- manette flottante ---
+        var depart = joueur.transform.position;
+        Input.mousePosition = new Vector3(500f, 500f, 0f);
+        Input.Boutons[0] = true;
+        Frames(1);                                   // pose du doigt : origine
+        Input.mousePosition = new Vector3(500f, 800f, 0f);   // glisse vers le haut
+        Secondes(0.5f);
+        var apres = joueur.transform.position;
+        Check("le doigt fait avancer le joueur", (apres - depart).magnitude > 1f);
+        Check("le deplacement suit l'axe isometrique",
+              apres.x > depart.x + 0.5f && apres.z > depart.z + 0.5f);
+        Input.Boutons[0] = false;
+        Frames(2);
+        var arret = joueur.transform.position;
+        Secondes(0.3f);
+        Check("le joueur s'arrete quand on lache", (joueur.transform.position - arret).magnitude < 0.01f);
+
+        // --- le four produit ---
+        Placer(joueur, new Vector3(0f, 0f, -6f));    // loin, pour laisser le stock monter
+        Secondes(Reglages.DureeCuisson * 3.5f);
+        Check("le four produit des pizzas", four.Sortie.Nombre >= 3);
+
+        // --- ramassage ---
+        Placer(joueur, four.Sortie.transform.position);
+        Secondes(1.2f);
+        Check("le joueur charge la pile sur sa tete", joueur.Portee.Nombre >= 3);
+        Check("le stock du four baisse d'autant", four.Sortie.Nombre < 3);
+
+        int portees = joueur.Portee.Nombre;
+        Secondes(4f);
+        Check("la pile portee plafonne a la capacite",
+              joueur.Portee.Nombre <= Reglages.CapacitePortee && joueur.Portee.Nombre >= portees);
+
+        // --- depot au comptoir ---
+        // Le stock ne s'accumule pas forcement : les clients deja en file le
+        // vident au fur et a mesure. Ce qui se verifie, c'est que la pile
+        // portee se transfere.
+        int avantDepot = joueur.Portee.Nombre;
+        Placer(joueur, comptoir.transform.position);
+        Secondes(1.5f);
+        Check("le joueur decharge sa pile au comptoir", joueur.Portee.Nombre < avantDepot);
+
+        // --- un client arrive, patiente, est servi ---
+        Check("des clients font la queue", comptoir.TailleFile >= 1 || TousLes<Client>().Count >= 1);
+
+        int avantVente = Banque.Solde;
+        Placer(joueur, four.Sortie.transform.position);
+        Secondes(6f);                                 // recharge
+        Placer(joueur, comptoir.transform.position);
+        Secondes(8f);                                 // sert, encaisse les liasses sur place
+        Check("servir des clients rapporte de l'argent", Banque.Solde > avantVente);
+        Check("le prix suit le bareme",
+              (Banque.Solde - avantVente) % Reglages.PrixPizza == 0);
+
+        // --- ramassage d'une liasse, teste isolement ---
+        // La liasse tombe avec un decalage aleatoire : on se met assez loin
+        // pour qu'aucun tirage ne la mette a portee.
+        Placer(joueur, new Vector3(-9f, 0f, -12f));
+        Secondes(0.2f);
+        int avantLiasse = Banque.Solde;
+        Billet.Lacher(new Vector3(-9f, 1f, -6f), 42, joueur);
+        Secondes(0.5f);
+        Check("la liasse attend au sol tant qu'on ne passe pas dessus",
+              Banque.Solde == avantLiasse && TousLes<Billet>().Count >= 1);
+        Placer(joueur, new Vector3(-9f, 0f, -6.7f));
+        Secondes(1.5f);
+        Check("marcher sur la liasse encaisse", Banque.Solde == avantLiasse + 42);
+        Check("la liasse disparait une fois prise", TousLes<Billet>().Count == 0);
+
+        // --- zone d'achat ---
+        Banque.Encaisser(Reglages.PrixSecondFour);
+        int avant = Banque.Solde;
+        Placer(joueur, zone.transform.position);
+        Secondes(0.5f);
+        Check("l'argent s'ecoule en restant sur la dalle", Banque.Solde < avant);
+        Check("un indice annonce ce qui reste a payer",
+              Hud.Indice != null && Hud.Indice.Contains("reste"));
+
+        Secondes(6f);
+        Check("le second four est livre", Trouver("Four2") != null && Trouver("Four2").activeSelf);
+        Check("la dalle disparait une fois payee", UnityEngine.Object.FindObjectOfType<ZoneAchat>() == null);
+
+        // --- le second four produit a son tour ---
+        var fours = TousLes<Four>();
+        Check("deux fours tournent desormais", fours.Count == 2);
+
+        var erreurs = new List<string>();
+        foreach (var l in Debug.Journal) if (l.StartsWith("ERROR")) erreurs.Add(l);
+        Check("aucune erreur Unity remontee", erreurs.Count == 0);
+        foreach (var e in erreurs) Console.WriteLine("      " + e);
+
+        Console.WriteLine(_echecs == 0 ? "\nTOUTE LA BOUCLE PASSE" : "\n" + _echecs + " ECHEC(S)");
+        Environment.Exit(_echecs == 0 ? 0 : 1);
+    }
+}
