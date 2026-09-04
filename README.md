@@ -112,6 +112,7 @@ SANTINEL_DB=\\serveur\ti\parc.db
 | `app/main.py` | fenêtre pywebview, expose l'API Python au JavaScript |
 | `app/donnees.py` | accès SQLite : `chercher`, `tous`, `retardataires` et les écritures |
 | `app/comptes.py` | comptes d'accès : empreintes, rôles, garde-fous |
+| `app/document.py` | formulaire « Équipement prêté » en PDF |
 | `app/schema.sql` | tables `employe`, `ordinateur`, `equipement` + vue `v_fiche` |
 | `app/interface/` | écran de connexion et interface HTML / CSS / JS |
 | `app/interface/santinel.png` | logo (blanc, sur le bandeau marine) |
@@ -169,6 +170,33 @@ manipulation particulière.
 
 Le compte en lecture seule n'a aucun de ces boutons, et `definir_coordonnees`,
 `definir_poste` et `definir_equipements` le refuseraient de toute façon.
+
+## Formulaire « Équipement prêté »
+
+Le bouton **Équipement prêté**, présent sur toutes les fiches et accessible
+à tous les comptes, produit le formulaire de prêt en PDF, déjà rempli, et
+l'ouvre dans le lecteur du poste. Le fichier est déposé dans
+`Documents\Santinel` sous le nom `Equipement_prete_<Nom>_<date>.pdf`.
+
+Ce qui est repris de la fiche :
+
+| Formulaire | Fiche |
+| --- | --- |
+| Employé | nom |
+| Colonne PC ou Portable | type d'appareil |
+| Marque / Modèle | premier mot du modèle, puis le reste |
+| # de série, Specs, Nom | numéro de série, processeur, nom de l'ordinateur |
+| Cases d'accessoires | équipements reconnus (écrans, souris, clavier, casque…) |
+| Autres équipements | les équipements qui ne correspondent à aucune case |
+| Date | date du jour |
+
+Le cellulaire et la signature restent à remplir à la main : l'application ne
+les connaît pas.
+
+Le rendu est écrit avec `fpdf2`. Les polices intégrées d'un PDF ne
+connaissent que le Latin-1 : `document.texte_pdf` conserve les accents
+français et remplace le reste (tirets longs, œ, guillemets courbes) plutôt
+que de laisser une saisie inattendue faire échouer la génération.
 
 ## Supprimer une fiche
 

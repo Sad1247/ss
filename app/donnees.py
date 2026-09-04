@@ -104,6 +104,16 @@ def tous() -> list[dict]:
         return [_fiche(cx, l) for l in lignes]
 
 
+def fiche(employe_id: int) -> dict:
+    """Une fiche complète par son identifiant."""
+    with connexion() as cx:
+        ligne = cx.execute("SELECT * FROM v_fiche WHERE id = ?",
+                           (employe_id,)).fetchone()
+        if ligne is None:
+            raise ValueError(f"Aucun employé avec l'identifiant {employe_id}.")
+        return _fiche(cx, ligne)
+
+
 def retardataires() -> list[dict]:
     """Contenu de l'onglet « À mettre à jour »."""
     return [f for f in tous() if f["suivi"]]

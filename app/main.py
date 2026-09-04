@@ -10,6 +10,7 @@ from pathlib import Path
 import webview
 
 import comptes
+import document
 import donnees
 
 
@@ -74,6 +75,13 @@ class Api:
     def retardataires(self):
         self._exiger_session()
         return donnees.retardataires()
+
+    def generer_document(self, employe_id):
+        """Écrit le formulaire « Équipement prêté » de la fiche, et l'ouvre."""
+        self._exiger_session()
+        fiche = donnees.fiche(int(employe_id))
+        chemin = document.generer(fiche, dossier_ressources() / "logo_bleu.png")
+        return {"chemin": str(chemin), "ouvert": document.ouvrir(chemin)}
 
     def compte(self):
         """Renseignements sur la session en cours."""

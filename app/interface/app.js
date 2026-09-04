@@ -238,6 +238,12 @@ function dessinerDetail() {
       </div>
       <div class="controle-etat">
         <span class="etat-emploi ${f.actif ? "oui" : "non"}">${f.actif ? "Actif" : "Inactif"}</span>
+        ${edition === null
+          ? `<button type="button" id="document" class="bouton-etat"
+                     title="Formulaire d'équipement prêté, rempli, en PDF">
+               Équipement prêté
+             </button>`
+          : ""}
         ${peutModifier() && edition === null
           ? `<button type="button" id="basculer-etat" class="bouton-etat">
                ${f.actif ? "Marquer inactif" : "Réactiver"}
@@ -274,6 +280,9 @@ function brancherFiche(f) {
 
   const basculer = $("#basculer-etat");
   if (basculer) basculer.onclick = () => basculerEtat(f);
+
+  const bouton = $("#document");
+  if (bouton) bouton.onclick = () => genererDocument(f);
 
   const supprimer = $("#supprimer");
   if (supprimer) supprimer.onclick = () => { confirmation = true; dessinerDetail(); };
@@ -390,6 +399,22 @@ async function enregistrer(f) {
   } catch (err) {
     bouton.disabled = false;
     etat("Enregistrement refusé : " + err);
+  }
+}
+
+async function genererDocument(f) {
+  const bouton = $("#document");
+  bouton.disabled = true;
+  etat(`Préparation du formulaire de ${f.nom}…`);
+  try {
+    const resultat = await pywebview.api.generer_document(f.id);
+    etat(resultat.ouvert
+      ? `Formulaire ouvert : ${resultat.chemin}`
+      : `Formulaire enregistré : ${resultat.chemin}`);
+  } catch (err) {
+    etat("Formulaire impossible : " + err);
+  } finally {
+    bouton.disabled = false;
   }
 }
 

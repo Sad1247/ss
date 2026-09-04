@@ -40,6 +40,7 @@ def construire(console: bool = False) -> int:
         "--paths", str(APP),                # main.py fait « import donnees »
         "--add-data", f"{APP / 'interface'}{s}interface",
         "--add-data", f"{APP / 'schema.sql'}{s}.",
+        "--add-data", f"{APP / 'logo_bleu.png'}{s}.",
         str(APP / "main.py"),
     ]
 
