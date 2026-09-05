@@ -41,8 +41,8 @@ namespace Pizzeria3D
 
             var dessus = new GameObject("Garniture", typeof(MeshFilter), typeof(MeshRenderer));
             dessus.transform.SetParent(racine.transform, false);
-            dessus.transform.localPosition = new Vector3(0f, Reglages.EpaisseurPizza * 0.52f, 0f);
-            dessus.transform.localScale = new Vector3(0.40f, 1f, 0.40f);
+            dessus.transform.localPosition = new Vector3(0f, Reglages.EpaisseurPizza * 0.505f, 0f);
+            dessus.transform.localScale = new Vector3(0.385f, 1f, 0.385f);
             dessus.GetComponent<MeshFilter>().sharedMesh = _disque;
             dessus.GetComponent<MeshRenderer>().sharedMaterial = _garniture;
 
@@ -132,8 +132,8 @@ namespace Pizzeria3D
             var crouteDoree = Bloc.Couleur(0xD98A38);
 
             const float c = Taille / 2f, R = Taille / 2f - 2f;
-            const float FinGarniture = 0.74f;   // au-dela, la sauce puis la croute
-            const float DebutCroute  = 0.83f;
+            const float FinGarniture = 0.68f;   // au-dela, la sauce puis la croute
+            const float DebutCroute  = 0.75f;   // bourrelet large : un quart du rayon
 
             for (int y = 0; y < Taille; y++)
             for (int x = 0; x < Taille; x++)
@@ -197,7 +197,7 @@ namespace Pizzeria3D
             for (int i = 0; i < 16; i++)
             {
                 float a = i * AngleOr + 0.6f;      // l'angle d'or, tel quel : le multiplier le detruit
-                float rad = Mathf.Sqrt((i + 0.5f) / 16f) * R * 0.66f;
+                float rad = Mathf.Sqrt((i + 0.5f) / 16f) * R * 0.60f;
                 float cx = c + Mathf.Cos(a) * rad, cy = c + Mathf.Sin(a) * rad;
                 float r = R * (0.055f + Hash(i * 1.3f, 6.4f) * 0.045f);
 
@@ -230,14 +230,14 @@ namespace Pizzeria3D
             for (int i = 0; i < 14; i++)
             {
                 float a = i * AngleOr + Hash(i * 3.1f, 1.7f) * 0.35f;
-                float rad = Mathf.Sqrt((i + 0.55f) / 14f) * R * 0.68f;
+                float rad = Mathf.Sqrt((i + 0.55f) / 14f) * R * 0.62f;
                 Disque(px, c + Mathf.Cos(a) * rad, c + Mathf.Sin(a) * rad, R * 0.115f, pepperoni, bord);
             }
 
             for (int i = 0; i < 6; i++)
             {
                 float a = i * AngleOr + 1.9f;
-                float rad = Mathf.Sqrt((i + 0.35f) / 6f) * R * 0.60f;
+                float rad = Mathf.Sqrt((i + 0.35f) / 6f) * R * 0.55f;
                 Feuille(px, c + Mathf.Cos(a) * rad, c + Mathf.Sin(a) * rad,
                         Hash(i * 1.9f, 3.3f) * Mathf.PI, basilic);
             }
@@ -251,7 +251,7 @@ namespace Pizzeria3D
             for (int i = 0; i < 150; i++)
             {
                 float a = Hash(i * 1.37f, 9.1f) * Mathf.PI * 2f;
-                float rad = Mathf.Sqrt(Hash(i * 2.11f, 5.7f)) * R * 0.9f;
+                float rad = Mathf.Sqrt(Hash(i * 2.11f, 5.7f)) * R * 0.72f;
                 int x = (int)(c + Mathf.Cos(a) * rad), y = (int)(c + Mathf.Sin(a) * rad);
                 if (x < 1 || y < 1 || x >= Taille - 1 || y >= Taille - 1) continue;
                 px[y * Taille + x] = herbe;
