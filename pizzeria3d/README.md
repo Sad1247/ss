@@ -61,6 +61,7 @@ Scripts/Jeu/
   Joueur.cs     deplacement isometrique et pile portee
   Manette.cs    le joystick a l'ecran, flottant, dessine sans sprite
   Doigt.cs      lecture du doigt, ancien comme nouveau systeme d'entrees
+  Obstacles.cs  les murs vus de dessus, et la resolution des deplacements
   Four.cs       production continue et transfert vers le joueur
   Comptoir.cs   depot, file d'attente, service
   Client.cs     arrivee, file, reception pizza par pizza, paiement, depart
@@ -80,7 +81,7 @@ Scripts/Monde/
 
 Tests~/FakeUnity/            (ignore par Unity : le ~ final)
   FakeUnity3D.cs  faux runtime Unity (hierarchie, transforms, entrees, cycle de vie)
-  Harness3D.cs    47 verifications qui jouent la boucle complete
+  Harness3D.cs    54 verifications qui jouent la boucle complete
 ```
 
 ## Verifier sans Unity
@@ -92,7 +93,8 @@ mono h3d.exe
 ```
 
 Couvert : montage de la scene sans editeur, camera orthographique, manette
-flottante et axes isometriques, apparition et course du joystick, production du four, chargement et plafond de la
+flottante et axes isometriques, apparition et course du joystick, collisions et
+glissement le long des murs, production du four, chargement et plafond de la
 pile portee, dechargement au comptoir, file d'attente, duree de commande et
 ouverture puis fermeture du tiroir-caisse, encaissement au bareme, liasse qui
 attend au sol puis se ramasse, dalle verte qui preleve puis livre,
@@ -113,7 +115,7 @@ dossier finit par `~`, qui le rend invisible a Unity.
 
 ## Ce qui est verifie, et ce qui ne l'est pas
 
-La logique tourne : les 47 verifications ci-dessus s'executent hors editeur.
+La logique tourne : les 54 verifications ci-dessus s'executent hors editeur.
 Le **rendu 3D n'a jamais ete affiche** — positions, echelles, cadrage de la
 camera et couleurs ont ete poses sans jamais etre vus. C'est la premiere chose
 a corriger a l'oeil au lancement.

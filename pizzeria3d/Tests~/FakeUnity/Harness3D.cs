@@ -37,6 +37,29 @@ static class Harness3D
     /// <summary>Teleporte le joueur : les tests de deplacement sont separes.</summary>
     static void Placer(Joueur j, Vector3 p) => j.transform.position = p;
 
+    /// <summary>
+    /// Pousse le joueur vers un point en actionnant vraiment la manette : c'est
+    /// le seul moyen de tester les collisions, qu'une teleportation ignore.
+    /// L'ecran etant tourne de 45 degres, on reporte la direction du monde sur
+    /// les axes de l'ecran avant d'agiter le doigt.
+    /// </summary>
+    static void PousserVers(Joueur j, Vector3 cible, float secondes)
+    {
+        var d = cible - j.transform.position;
+        float ex = (d.x - d.z), ey = (d.x + d.z);
+        float m = Mathf.Sqrt(ex * ex + ey * ey);
+        if (m <= 0f) return;
+        ex /= m; ey /= m;
+
+        Input.mousePosition = new Vector3(500f, 500f, 0f);
+        Input.Boutons[0] = true;
+        Frames(1);
+        Input.mousePosition = new Vector3(500f + ex * 200f, 500f + ey * 200f, 0f);
+        Secondes(secondes);
+        Input.Boutons[0] = false;
+        Frames(2);
+    }
+
     static void Main()
     {
         // Une scene Unity neuve arrive avec une Main Camera et une lumiere :
@@ -99,6 +122,36 @@ static class Harness3D
         var arret = joueur.transform.position;
         Secondes(0.3f);
         Check("le joueur s'arrete quand on lache", (joueur.transform.position - arret).magnitude < 0.01f);
+
+        // --- collisions ---
+        Check("le decor est solide", Obstacles.Nombre >= 5);
+        Check("le comptoir barre le passage", Obstacles.Bloque(comptoir.transform.position, 0.05f));
+        Check("le four barre le passage", Obstacles.Bloque(four.transform.position, 0.05f));
+
+        Placer(joueur, comptoir.transform.position + new Vector3(0f, 0f, -3.5f));
+        PousserVers(joueur, comptoir.transform.position, 2.5f);
+        Check("le joueur n'entre pas dans le comptoir",
+              !Obstacles.Bloque(joueur.transform.position, 0.02f));
+
+        Placer(joueur, new Vector3(6.5f, 0f, 6f));
+        PousserVers(joueur, new Vector3(40f, 0f, 40f), 3f);
+        Check("le joueur ne quitte pas le dallage",
+              Mathf.Abs(joueur.transform.position.x) <= 8.1f &&
+              Mathf.Abs(joueur.transform.position.z) <= 7.1f);
+
+        // le point capital : un four solide ne doit pas rendre le chargement
+        // impossible, sinon la boucle du jeu casse.
+        Placer(joueur, new Vector3(-4.2f, 0f, -1.5f));
+        PousserVers(joueur, four.Sortie.transform.position, 2.5f);
+        Check("le joueur atteint quand meme la pierre du four",
+              joueur.EstPres(four.Sortie.transform.position, Reglages.RayonRamassage));
+
+        // et il glisse le long d'un mur au lieu de s'y coller
+        Placer(joueur, new Vector3(0f, 0f, 6f));
+        var avantGlisse = joueur.transform.position;
+        PousserVers(joueur, new Vector3(4f, 0f, 9f), 1.5f);   // en biais vers le mur du fond
+        Check("le joueur glisse le long du mur",
+              Mathf.Abs(joueur.transform.position.x - avantGlisse.x) > 0.5f);
 
         // --- le four produit ---
         Placer(joueur, new Vector3(0f, 0f, -6f));    // loin, pour laisser le stock monter

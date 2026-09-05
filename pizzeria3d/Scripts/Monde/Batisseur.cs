@@ -21,6 +21,7 @@ namespace Pizzeria3D
             Banque.Reinitialiser();
 
             Qualite();
+            Obstacles.Reinitialiser();
 
             var racine = new GameObject("Pizzeria");
             Decor(racine.transform);
@@ -50,12 +51,15 @@ namespace Pizzeria3D
                 .SansCollision();
             Bloc.Boite("Sol", parent, new Vector3(0f, -0.2f, 0f), new Vector3(17f, 0.4f, 15f), Bloc.Sol)
                 .SansCollision();
+            // le joueur reste sur le dallage, une marge le tenant loin du bord
+            Obstacles.DefinirTerrain(8.5f - 0.6f, 7.5f - 0.6f);
             Bloc.Boite("Trottoir", parent, new Vector3(0f, -0.35f, -8.8f), new Vector3(19f, 0.5f, 3f),
                        Bloc.SolBordure).SansCollision();
 
             // batiment du fond, purement decoratif
             Bloc.Boite("Mur", parent, new Vector3(-1f, 1.6f, 7.2f), new Vector3(14f, 3.2f, 0.6f),
                        Bloc.MachineBis).SansCollision();
+            Obstacles.Ajouter(new Vector3(-1f, 0f, 7.2f), 14f, 0.6f);
             for (int i = 0; i < 4; i++)
                 Bloc.Boite("Vitre" + i, parent, new Vector3(-5.4f + i * 2.9f, 1.9f, 6.85f),
                            new Vector3(1.8f, 1.5f, 0.15f), Bloc.Couleur(0xBFE8F2)).SansCollision();
@@ -65,8 +69,11 @@ namespace Pizzeria3D
             for (int i = 0; i < 3; i++)
                 Bloc.Boite("Caisse" + i, parent, new Vector3(6.6f, 0.45f + i * 0.9f, 5.4f - i * 0.15f),
                            new Vector3(1.5f, 0.9f, 1.5f), Bloc.Carton).SansCollision();
+            Obstacles.Ajouter(new Vector3(6.6f, 0f, 5.4f), 1.5f, 1.5f);
+
             Bloc.Boite("Palette", parent, new Vector3(-7f, 0.2f, 5.6f), new Vector3(2.2f, 0.4f, 2.2f),
                        Bloc.Metal).SansCollision();
+            Obstacles.Ajouter(new Vector3(-7f, 0f, 5.6f), 2.2f, 2.2f);
 
             float[] xs = { -12f, -9.5f, 11.5f, 13f, -13.5f };
             float[] zs = { 9.5f, -6.5f, 8f, -3.5f, 2f };
@@ -174,6 +181,8 @@ namespace Pizzeria3D
                        Bloc.Metal).SansCollision();
             var caisse = Caisse.Creer(go.transform, new Vector3(-1.05f, 1.15f, 0f));
 
+            Obstacles.Ajouter(go.transform.position, 3.9f, 2.1f);
+
             var pile = new GameObject("Stock");
             pile.transform.SetParent(go.transform, false);
             pile.transform.localPosition = new Vector3(0.6f, 1.25f, 0f);
@@ -244,6 +253,11 @@ namespace Pizzeria3D
             // pierre du four : le plan ou les pizzas sortent
             Bloc.Boite("PierreDuFour", t, new Vector3(0f, 1.0f, -1.62f), new Vector3(2.5f, 0.16f, 1.3f),
                        Bloc.Pierre).SansCollision();
+
+            // le corps du four et sa pierre barrent le passage ; la pile de
+            // sortie reste a portee du joueur arrete devant
+            Obstacles.Ajouter(position, 2.8f, 2.4f);
+            Obstacles.Ajouter(position + new Vector3(0f, 0f, -1.62f), 2.5f, 1.3f);
 
             var pile = new GameObject("Sortie");
             pile.transform.SetParent(t, false);

@@ -55,7 +55,7 @@ namespace Pizzeria3D
         void Deplacer(Vector3 pas)
         {
             if (pas.sqrMagnitude <= 0f) return;
-            transform.position += pas;
+            transform.position = Obstacles.Resoudre(transform.position, pas, Reglages.RayonJoueur);
             if (_corps != null)
             {
                 var cible = Quaternion.LookRotation(pas.normalized, Vector3.up);

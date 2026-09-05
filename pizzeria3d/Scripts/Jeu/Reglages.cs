@@ -10,6 +10,7 @@ namespace Pizzeria3D
         public const float VitesseRotation = 14f;
         public const int CapacitePortee = 8;        // pizzas portees sur la tete
         public const float RayonRamassage = 1.6f;   // distance pour prendre / poser
+        public const float RayonJoueur = 0.42f;     // encombrement, pour les collisions
         public const float DelaiTransfert = 0.09f;  // secondes entre deux pizzas
 
         // --- four ---
