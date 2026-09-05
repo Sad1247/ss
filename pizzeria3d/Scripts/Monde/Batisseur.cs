@@ -154,14 +154,15 @@ namespace Pizzeria3D
             go.transform.SetParent(parent, false);
             go.transform.position = Vector3.zero;
             var membres = Personnage.Construire(go.transform, Bloc.Tablier, Bloc.Casquette);
-            Marche(go, membres);
+            Marche(go, membres, Reglages.VitesseJoueur);
             return go.AddComponent<Joueur>();
         }
 
         /// <summary>Donne sa demarche a un personnage : le meme pas pour tous.</summary>
-        static void Marche(GameObject go, Personnage.Membres m)
+        static void Marche(GameObject go, Personnage.Membres m, float vitesseMax)
         {
             var d = go.AddComponent<Demarche>();
+            d.VitesseReference = vitesseMax;   // pas ample a sa propre allure
             d.Corps = m.Corps;
             d.HancheG = m.HancheG; d.HancheD = m.HancheD;
             d.EpauleG = m.EpauleG; d.EpauleD = m.EpauleD;
@@ -175,7 +176,7 @@ namespace Pizzeria3D
             go.transform.position = position;
             var membres = Personnage.Construire(go.transform, Bloc.Couleur(0x7BC86B),
                                                Bloc.Couleur(0xF4F1EA));
-            Marche(go, membres);
+            Marche(go, membres, Reglages.VitesseCaissier);
 
             var c = go.AddComponent<Caissier>();
             c.Comptoir = comptoir;
