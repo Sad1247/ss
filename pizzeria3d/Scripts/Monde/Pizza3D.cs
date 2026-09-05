@@ -19,6 +19,22 @@ namespace Pizzeria3D
 
         static Material _pate, _garniture;
         static Mesh _disque;
+        static Sprite _icone;
+
+        /// <summary>La meme garniture, en sprite, pour l'interface.</summary>
+        public static Sprite Icone
+        {
+            get
+            {
+                if (_icone == null)
+                {
+                    var t = Texture();
+                    _icone = Sprite.Create(t, new Rect(0, 0, t.width, t.height),
+                                           new Vector2(0.5f, 0.5f), 100f);
+                }
+                return _icone;
+            }
+        }
 
         public static GameObject Creer(Transform parent, int index)
         {

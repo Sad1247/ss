@@ -75,6 +75,7 @@ Scripts/Monde/
   Bloc.cs       fabrique de primitives colorees + la palette
   Pile.cs       une pile de pizzas (joueur, four, comptoir, sac client)
   Pizza3D.cs    la pizza : pate en volume, garniture en texture generee
+  Bulle.cs      la bulle au-dessus d'un client, et le nombre qu'il attend
   Fumee.cs      les bouffees qui sortent de la cheminee
   Caisse.cs     la caisse enregistreuse et son tiroir coulissant
   Personnage.cs la silhouette commune au joueur et aux employes
@@ -82,7 +83,7 @@ Scripts/Monde/
 
 Tests~/FakeUnity/            (ignore par Unity : le ~ final)
   FakeUnity3D.cs  faux runtime Unity (hierarchie, transforms, entrees, cycle de vie)
-  Harness3D.cs    54 verifications qui jouent la boucle complete
+  Harness3D.cs    57 verifications qui jouent la boucle complete
 ```
 
 ## Verifier sans Unity
@@ -95,7 +96,7 @@ mono h3d.exe
 
 Couvert : montage de la scene sans editeur, camera orthographique, manette
 flottante et axes isometriques, apparition et course du joystick, collisions et
-glissement le long des murs, production du four, chargement et plafond de la
+glissement le long des murs, bulles de commande au-dessus des clients, production du four, chargement et plafond de la
 pile portee, dechargement au comptoir, file d'attente, duree de commande et
 ouverture puis fermeture du tiroir-caisse, encaissement au bareme, liasse qui
 attend au sol puis se ramasse, dalle verte qui preleve puis livre,
@@ -116,7 +117,7 @@ dossier finit par `~`, qui le rend invisible a Unity.
 
 ## Ce qui est verifie, et ce qui ne l'est pas
 
-La logique tourne : les 54 verifications ci-dessus s'executent hors editeur.
+La logique tourne : les 57 verifications ci-dessus s'executent hors editeur.
 Le **rendu 3D n'a jamais ete affiche** — positions, echelles, cadrage de la
 camera et couleurs ont ete poses sans jamais etre vus. C'est la premiere chose
 a corriger a l'oeil au lancement.

@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using Pizzeria3D;
 using UnityEngine;
+using UnityEngine.UI;
 
 static class Harness3D
 {
@@ -32,6 +33,20 @@ static class Harness3D
         foreach (var o in UnityEngine.Object.Tous)
             if (o is T t && !t.gameObject.Detruit) r.Add(t);
         return r;
+    }
+
+    /// <summary>Le texte affiche dans la bulle d'un client, ou null.</summary>
+    static string TexteBulle(Client c)
+    {
+        foreach (var e in c.transform.Enfants)
+        {
+            if (e.gameObject.name != "Bulle") continue;
+            if (!e.gameObject.Actif) return "";
+            foreach (var f in e.Enfants)
+                if (f.gameObject.name == "Nombre")
+                    return f.gameObject.GetComponent<Text>().text;
+        }
+        return null;
     }
 
     /// <summary>Teleporte le joueur : les tests de deplacement sont separes.</summary>
@@ -232,6 +247,10 @@ static class Harness3D
             client = p;
         }
         Check("un nouveau client entame sa commande", client != null);
+        Check("il annonce sa commande dans une bulle",
+              TexteBulle(client) == "x" + client.Pizzas);
+        Check("la bulle demande entre une et trois pizzas",
+              client.Pizzas >= Reglages.PizzasParClientMin && client.Pizzas <= Reglages.PizzasParClientMax);
         Check("le tiroir s'ouvre des le debut de la commande", caisse.EstOuverte);
         Check("la commande n'est pas finie tout de suite", !client.CommandeFinie);
 
@@ -253,6 +272,18 @@ static class Harness3D
         while (comptoir.Premier != null && garde1++ < 60 * 90) Frames(1);
         Check("le tiroir se referme quand le client repart",
               comptoir.Premier != null || !caisse.EstOuverte);
+        // la bulle suit ce qu'il reste a remettre, pour tous les clients
+        bool bullesJustes = true;
+        foreach (var cl in TousLes<Client>())
+        {
+            var texte = TexteBulle(cl);
+            // un client qui s'en va n'a plus de commande a annoncer, servi ou
+            // parti d'impatience
+            if (cl.SEnVa) { if (texte != "") bullesJustes = false; continue; }
+            if (texte != "x" + cl.Restant) bullesJustes = false;
+        }
+        Check("les bulles affichent ce qu'il reste a servir", bullesJustes);
+
         Check("le prix suit le bareme",
               (Banque.Solde - avantVente) % Reglages.PrixPizza == 0);
 

@@ -118,6 +118,21 @@ namespace UnityEngine
 
         Component AjouterType(Type t)
         {
+            // Unity remplace le Transform d'un objet par un RectTransform des
+            // qu'on en demande un : sans cela, l'objet en aurait deux, et
+            // transform ne designerait pas celui que GetComponent renvoie.
+            if (t == typeof(RectTransform) && !(transform is RectTransform))
+            {
+                var rt = new RectTransform { gameObject = this };
+                rt.SetParent(transform.parent, false);
+                foreach (var e in new List<Transform>(transform.Enfants)) e.SetParent(rt, false);
+                Composants.Remove(transform);
+                Tous.Remove(transform);
+                transform = rt;
+                Composants.Insert(0, rt);
+                return rt;
+            }
+
             var c = (Component)Activator.CreateInstance(t);
             c.gameObject = this;
             Composants.Add(c);
@@ -451,7 +466,7 @@ namespace UnityEngine
     public enum TextAnchor { UpperLeft, UpperCenter, UpperRight, MiddleLeft, MiddleCenter, MiddleRight, LowerLeft, LowerCenter, LowerRight }
     public enum HorizontalWrapMode { Wrap, Overflow }
     public enum VerticalWrapMode { Truncate, Overflow }
-    public enum RenderMode { ScreenSpaceOverlay }
+    public enum RenderMode { ScreenSpaceOverlay, ScreenSpaceCamera, WorldSpace }
 
     public class Canvas : Behaviour { public RenderMode renderMode; }
 

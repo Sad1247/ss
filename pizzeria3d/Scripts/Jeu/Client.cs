@@ -18,6 +18,7 @@ namespace Pizzeria3D
 
         Comptoir _comptoir;
         Pile _sac;
+        Bulle _bulle;
         Vector3 _cible;
         bool _sEnVa;
         int _recues;
@@ -52,6 +53,9 @@ namespace Pizzeria3D
             sac.transform.localPosition = new Vector3(0.55f, 1.1f, 0f);
             _sac = sac.AddComponent<Pile>();
             _sac.Max = Reglages.PizzasParClientMax;
+
+            _bulle = Bulle.Creer(transform, 2.15f);
+            _bulle.Afficher(Pizzas);
         }
 
         public void RangA(int rang)
@@ -103,9 +107,20 @@ namespace Pizzeria3D
             _compteurRemise = Reglages.DelaiTransfert * 2f;
             _recues++;
             if (_sac != null) _sac.Ajouter();
+            if (_bulle != null) _bulle.Afficher(Pizzas - _recues);
             return true;
         }
 
-        public void Partir() => _sEnVa = true;
+        public void Partir()
+        {
+            _sEnVa = true;
+            if (_bulle != null) _bulle.Afficher(0);   // la commande n'a plus lieu d'etre
+        }
+
+        /// <summary>Ce qu'il reste a lui remettre, tel qu'affiche dans sa bulle.</summary>
+        public int Restant => Pizzas - _recues;
+
+        /// <summary>Vrai des qu'il quitte la file, servi ou lasse d'attendre.</summary>
+        public bool SEnVa => _sEnVa;
     }
 }
