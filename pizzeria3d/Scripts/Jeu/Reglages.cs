@@ -6,7 +6,7 @@ namespace Pizzeria3D
     public static class Reglages
     {
         // --- joueur ---
-        public const float VitesseJoueur = 5.5f;
+        public const float VitesseJoueur = 4.5f;
         public const float VitesseRotation = 14f;
         public const int CapacitePortee = 8;        // pizzas portees sur la tete
         public const float RayonRamassage = 1.6f;   // distance pour prendre / poser
@@ -21,7 +21,7 @@ namespace Pizzeria3D
         public const int StockComptoirMax = 16;
 
         // --- caissier ---
-        public const float VitesseCaissier = 4.0f;
+        public const float VitesseCaissier = 3.3f;
         public const int CapacitePorteeCaissier = 6;
         /// <summary>En dessous, il part chercher des pizzas au four.</summary>
         public const int SeuilRechargeComptoir = 4;
