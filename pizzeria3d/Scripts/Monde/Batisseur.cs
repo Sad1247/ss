@@ -225,23 +225,18 @@ namespace Pizzeria3D
 
             Obstacles.Ajouter(position, 3.2f, 1.4f);
 
-            // Deux piles de cartons posees sur le dessus, comme dans une vraie
-            // pizzeria. Une seule pile de douze monterait plus haut qu'un homme.
-            var gauche = new GameObject("Boites");
-            gauche.transform.SetParent(t, false);
-            gauche.transform.localPosition = new Vector3(-0.95f, 1.23f, 0f);
-
-            var droite = new GameObject("Appoint");
-            droite.transform.SetParent(t, false);
-            droite.transform.localPosition = new Vector3(0.95f, 1.23f, 0f);
+            // Une seule rangee de cartons, posee a plat sur le dessus. Empiles,
+            // ils formaient une tour plus haute que le personnel.
+            var rangee = new GameObject("Boites");
+            rangee.transform.SetParent(t, false);
+            rangee.transform.localPosition = new Vector3(-0.98f, 1.23f, 0f);
 
             var poste = new GameObject("Poste");
             poste.transform.SetParent(t, false);
             poste.transform.localPosition = new Vector3(0f, 0f, -1.40f);
 
             var e = go.AddComponent<Emballage>();
-            e.Boites = gauche.AddComponent<Pile>();
-            e.Appoint = droite.AddComponent<Pile>();
+            e.Boites = rangee.AddComponent<Pile>();
             e.Poste = poste.transform;
             e.Garnir();
             return e;

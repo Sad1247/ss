@@ -69,9 +69,15 @@ namespace Pizzeria3D
         public const float EpaisseurBoite = 0.16f;
         /// <summary>Secondes que met le caissier a mettre une pizza en boite.</summary>
         public const float DelaiEmballage = 0.30f;
-        /// <summary>Cartons par pile sur le plan de travail — il y en a deux.</summary>
-        public const int BoitesParPile = 6;
-        /// <summary>Secondes entre deux cartons livres sur le plan de travail.</summary>
-        public const float DelaiReappro = 1.5f;
+        /// <summary>
+        /// Cartons alignes sur le plan de travail. Une seule rangee, a plat :
+        /// empiles, ils montaient plus haut qu'un homme.
+        /// </summary>
+        public const int BoitesEnRangee = 3;
+        /// <summary>
+        /// Secondes entre deux cartons livres. Court, parce que la rangee tient
+        /// moins de cartons que le caissier ne porte de pizzas.
+        /// </summary>
+        public const float DelaiReappro = 0.5f;
     }
 }

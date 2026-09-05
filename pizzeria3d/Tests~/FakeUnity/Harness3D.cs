@@ -209,11 +209,24 @@ static class Harness3D
               MemeCouleur(table.transform, "Dessus", comptoir.transform, "Dessus"));
 
         Check("des boites a pizza y attendent",
-              table != null && table.Reserve == Reglages.BoitesParPile * 2);
-        Check("elles sont rangees en deux piles, pas en tour",
-              table != null &&
-              Compte(table.Boites.transform, "Boite", false) == Reglages.BoitesParPile &&
-              Compte(table.Appoint.transform, "Boite", false) == Reglages.BoitesParPile);
+              table != null && table.Reserve == Reglages.BoitesEnRangee);
+        Check("elles forment une seule rangee",
+              table != null && table.Boites.Sens == Pile.Disposition.Rangee &&
+              Compte(table.Boites.transform, "Boite", false) == Reglages.BoitesEnRangee);
+
+        // Une rangee, c'est cote a cote : les cartons s'ecartent en x et
+        // restent tous a la meme hauteur.
+        float hautMin = 99f, hautMax = -99f, largeurRangee = 0f;
+        if (table != null)
+            foreach (var b in table.Boites.transform.Enfants)
+            {
+                hautMin = Mathf.Min(hautMin, b.localPosition.y);
+                hautMax = Mathf.Max(hautMax, b.localPosition.y);
+                largeurRangee = Mathf.Max(largeurRangee, b.localPosition.x);
+            }
+        Check("aucun carton n'est empile sur un autre", hautMax - hautMin < 0.01f);
+        Check("ils s'alignent le long du plan", largeurRangee > Reglages.LargeurBoite);
+        Check("la rangee tient sur le plan de travail", largeurRangee < 2.4f);
         Check("le caissier vient s'y placer devant, pas dedans",
               table != null && table.PointDeTravail.z < table.transform.position.z);
         // en marchant droit dessus, le joueur doit etre arrete avant le plateau
@@ -554,7 +567,7 @@ static class Harness3D
             if (navetteur.Portees > 0) aPorte = true;
             if (pasDuCaissier != null && pasDuCaissier.Allure > 0.2f) aMarche = true;
             if (navetteur.PorteeEmballee) aEmballe = true;
-            if (table.Reserve < Reglages.BoitesParPile * 2) reserveEntamee = true;
+            if (table.Reserve < Reglages.BoitesEnRangee) reserveEntamee = true;
 
             var versTable = employe.transform.position - table.PointDeTravail;
             versTable.y = 0f;

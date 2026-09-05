@@ -7,67 +7,53 @@ namespace Pizzeria3D
     /// du fond, derriere la caisse. Meme facture que le comptoir : caisson bleu
     /// et dessus metallique.
     ///
-    /// Il porte deux piles de cartons ou le caissier vient piocher. Elles se
-    /// regarnissent toutes seules : une table vide bloquerait le service pour
-    /// de bon.
+    /// Il porte une rangee de cartons ou le caissier vient piocher. Elle se
+    /// regarnit toute seule, carton par carton : une table vide bloquerait le
+    /// service pour de bon.
     /// </summary>
     public sealed class Emballage : MonoBehaviour
     {
-        public Pile Boites;      // pile de gauche
-        public Pile Appoint;     // pile de droite
+        public Pile Boites;      // la rangee posee sur le plan
         public Transform Poste;  // ou le caissier se place pour emballer
 
         float _compteurReappro;
 
-        public int Reserve => Nombre(Boites) + Nombre(Appoint);
+        public int Reserve => Boites != null ? Boites.Nombre : 0;
 
         /// <summary>Ou le caissier doit se tenir pour travailler.</summary>
         public Vector3 PointDeTravail
             => Poste != null ? Poste.position : transform.position + new Vector3(0f, 0f, -1.4f);
 
         /// <summary>
-        /// Remplit les deux piles. Appelee apres le cablage : au moment du
-        /// Awake, elles ne sont pas encore branchees.
+        /// Remplit la rangee. Appelee apres le cablage : au moment du Awake, la
+        /// pile n'est pas encore branchee.
         /// </summary>
         public void Garnir()
         {
-            foreach (var pile in new[] { Boites, Appoint })
-            {
-                if (pile == null) continue;
-                pile.Max = Reglages.BoitesParPile;
-                while (!pile.EstPleine) pile.Ajouter(true);
-            }
+            if (Boites == null) return;
+            Boites.Sens = Pile.Disposition.Rangee;
+            Boites.Max = Reglages.BoitesEnRangee;
+            while (!Boites.EstPleine) Boites.Ajouter(true);
         }
 
         void Awake() => Garnir();
 
         void Update()
         {
-            var aRemplir = Manquante();
-            if (aRemplir == null) return;
+            if (Boites == null || Boites.EstPleine) return;
 
             _compteurReappro -= Time.deltaTime;
             if (_compteurReappro > 0f) return;
             _compteurReappro = Reglages.DelaiReappro;
-            aRemplir.Ajouter(true);
+            Boites.Ajouter(true);
         }
 
-        /// <summary>Prend un carton, sur la plus haute des deux piles.</summary>
+        /// <summary>Prend un carton au bout de la rangee.</summary>
         public bool PrendreBoite()
         {
-            var pile = Nombre(Boites) >= Nombre(Appoint) ? Boites : Appoint;
-            if (pile == null || pile.EstVide) return false;
-            pile.Retirer();
+            if (Boites == null || Boites.EstVide) return false;
+            Boites.Retirer();
             return true;
         }
-
-        Pile Manquante()
-        {
-            if (Boites != null && !Boites.EstPleine) return Boites;
-            if (Appoint != null && !Appoint.EstPleine) return Appoint;
-            return null;
-        }
-
-        static int Nombre(Pile p) => p != null ? p.Nombre : 0;
     }
 }

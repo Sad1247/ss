@@ -18,6 +18,10 @@ namespace Pizzeria3D
 
         readonly List<Element> _elements = new List<Element>();
 
+        /// <summary>Empilee en hauteur, ou alignee cote a cote sur un plan.</summary>
+        public enum Disposition { Empilee, Rangee }
+
+        public Disposition Sens = Disposition.Empilee;
         public int Max = 12;
         public int Nombre => _elements.Count;
         public bool EstPleine => _elements.Count >= Max;
@@ -79,21 +83,35 @@ namespace Pizzeria3D
         }
 
         /// <summary>
-        /// Rempile tout : une boite est plus haute qu'une pizza nue, donc chaque
-        /// mise en boite decale ce qui est au-dessus.
+        /// Range tout apres chaque changement. En pile, une boite est plus haute
+        /// qu'une pizza nue : chaque mise en boite decale ce qui est au-dessus.
+        /// En rangee, les elements sont poses cote a cote et bien droits.
         /// </summary>
         void Reposer()
         {
-            float hauteur = 0f;
+            float avance = 0f;
             foreach (var e in _elements)
             {
+                float pas = Sens == Disposition.Rangee
+                    ? (e.Emballe ? Reglages.LargeurBoite : Reglages.DiametrePizza) * 1.06f
+                    : (e.Emballe ? Reglages.EpaisseurBoite : Reglages.EpaisseurPizza);
+
                 if (e.Objet != null)
                 {
-                    var p = e.Objet.transform.localPosition;
-                    p.y = hauteur;
-                    e.Objet.transform.localPosition = p;
+                    var t = e.Objet.transform;
+                    if (Sens == Disposition.Rangee)
+                    {
+                        t.localPosition = new Vector3(avance, 0f, 0f);
+                        t.localRotation = Quaternion.identity;   // une rangee se veut alignee
+                    }
+                    else
+                    {
+                        var p = t.localPosition;
+                        p.y = avance;
+                        t.localPosition = p;
+                    }
                 }
-                hauteur += e.Emballe ? Reglages.EpaisseurBoite : Reglages.EpaisseurPizza;
+                avance += pas;
             }
         }
 
