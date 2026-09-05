@@ -187,6 +187,10 @@ namespace Pizzeria3D
                                          Mathf.Clamp01((t - 0.72f) / 0.28f));
                 }
 
+                // Hors du disque, transparent : le maillage 3D n'en montre
+                // jamais les coins, mais l'icone de l'interface, si — et un
+                // carre de sauce n'a rien d'un logo de pizza.
+                couleur.a = Mathf.Clamp01((1f - d) * R);
                 px[y * Taille + x] = couleur;
             }
 
@@ -227,7 +231,9 @@ namespace Pizzeria3D
                     // contour bosselé : un cercle net ferait pastille
                     float bord = r * (0.82f + Bruit(x * 0.16f + i * 13f, y * 0.16f) * 0.36f);
                     if (d > bord) continue;
-                    px[y * Taille + x] = Color.Lerp(blanc, ombre, Mathf.Clamp01((d / bord - 0.6f) / 0.4f));
+                    var col = Color.Lerp(blanc, ombre, Mathf.Clamp01((d / bord - 0.6f) / 0.4f));
+                    col.a = px[y * Taille + x].a / 255f;
+                    px[y * Taille + x] = col;
                 }
             }
         }
@@ -270,9 +276,10 @@ namespace Pizzeria3D
                 float rad = Mathf.Sqrt(Hash(i * 2.11f, 5.7f)) * R * 0.72f;
                 int x = (int)(c + Mathf.Cos(a) * rad), y = (int)(c + Mathf.Sin(a) * rad);
                 if (x < 1 || y < 1 || x >= Taille - 1 || y >= Taille - 1) continue;
-                px[y * Taille + x] = herbe;
-                if (Hash(i * 3.3f, 1.1f) > 0.5f) px[y * Taille + x + 1] = herbe;
-                else px[(y + 1) * Taille + x] = herbe;
+                var col = herbe; col.a = px[y * Taille + x].a / 255f;
+                px[y * Taille + x] = col;
+                if (Hash(i * 3.3f, 1.1f) > 0.5f) px[y * Taille + x + 1] = col;
+                else px[(y + 1) * Taille + x] = col;
             }
         }
 
@@ -287,7 +294,9 @@ namespace Pizzeria3D
                 float d = Mathf.Sqrt(dx * dx + dy * dy);
                 if (d > r) continue;
                 // rebord plus fonce : c'est ce qui fait lire "rondelle"
-                px[y * Taille + x] = Color.Lerp(plein, bord, Mathf.Clamp01((d / r - 0.65f) / 0.35f));
+                var col = Color.Lerp(plein, bord, Mathf.Clamp01((d / r - 0.65f) / 0.35f));
+                col.a = px[y * Taille + x].a / 255f;
+                px[y * Taille + x] = col;
             }
         }
 
@@ -320,6 +329,7 @@ namespace Pizzeria3D
                 float t = Mathf.Abs(v) / Mathf.Max(largeur, 0.0001f);
                 var col = Color.Lerp(couleur, sombre, t * t);
                 if (t < 0.14f) col = Color.Lerp(col, nervure, 0.6f);
+                col.a = px[ay * Taille + ax].a / 255f;
                 px[ay * Taille + ax] = col;
             }
         }

@@ -22,7 +22,7 @@ namespace Pizzeria3D
             var go = new GameObject("Bulle", typeof(RectTransform));
             go.transform.SetParent(porteur, false);
             go.transform.localPosition = new Vector3(0f, hauteur, 0f);
-            go.transform.localScale = new Vector3(0.0075f, 0.0075f, 0.0075f);
+            go.transform.localScale = new Vector3(0.0058f, 0.0058f, 0.0058f);
 
             var canvas = go.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.WorldSpace;
@@ -42,6 +42,7 @@ namespace Pizzeria3D
             icone.transform.SetParent(go.transform, false);
             var iimg = icone.AddComponent<Image>();
             iimg.sprite = Pizza3D.Icone;
+            iimg.preserveAspect = true;   // ronde, jamais etiree
             iimg.raycastTarget = false;
             var irt = icone.GetComponent<RectTransform>();
             irt.anchorMin = irt.anchorMax = new Vector2(0.5f, 1f);

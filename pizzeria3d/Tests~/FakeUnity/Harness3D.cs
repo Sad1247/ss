@@ -95,7 +95,10 @@ static class Harness3D
             {
                 var p = tex.Pixels[(h - 1 - y) * w + x];
                 int i = (y * w + x) * 3;
-                buf[i] = p.r; buf[i + 1] = p.g; buf[i + 2] = p.b;
+                float a = p.a / 255f;   // compose sur blanc : on voit la decoupe
+                buf[i]     = (byte)(p.r * a + 255 * (1 - a));
+                buf[i + 1] = (byte)(p.g * a + 255 * (1 - a));
+                buf[i + 2] = (byte)(p.b * a + 255 * (1 - a));
             }
             fs.Write(buf, 0, buf.Length);
         }
