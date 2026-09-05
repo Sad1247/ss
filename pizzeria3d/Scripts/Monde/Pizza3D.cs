@@ -72,7 +72,7 @@ namespace Pizzeria3D
         static void Preparer()
         {
             if (_disque == null) _disque = Disque(Segments);
-            if (_pate == null) _pate = Bloc.Peinture(Bloc.Couleur(0xE8B45C));
+            if (_pate == null) _pate = Bloc.Peinture(Bloc.Couleur(0xD9A867));
             if (_garniture == null)
             {
                 _garniture = Bloc.Peinture(Color.white);
@@ -144,12 +144,14 @@ namespace Pizzeria3D
             var px = new Color32[Taille * Taille];
 
             // couleurs relevees sur la photo de reference
-            var sauce       = Bloc.Couleur(0xE04A22);
-            var sauceSombre = Bloc.Couleur(0xB2331A);
-            var fondu       = Bloc.Couleur(0xF2D98A);   // fromage fondu, dore
-            var fonduClair  = Bloc.Couleur(0xF8E9B8);
-            var croute      = Bloc.Couleur(0xF0B860);
-            var crouteDoree = Bloc.Couleur(0xD98A38);
+            // Teintes desaturees, plus proches d'une vraie pizza cuite : le
+            // rouge vif et le jaune d'or precedents faisaient jouet.
+            var sauce       = Bloc.Couleur(0xB84A2C);
+            var sauceSombre = Bloc.Couleur(0x8E3520);
+            var fondu       = Bloc.Couleur(0xE8DAB0);   // mozzarella fondue, ivoire
+            var fonduClair  = Bloc.Couleur(0xF2E8CE);
+            var croute      = Bloc.Couleur(0xD9A867);
+            var crouteDoree = Bloc.Couleur(0xB07A3E);
 
             const float c = Taille / 2f, R = Taille / 2f - 2f;
             const float FinGarniture = 0.68f;   // au-dela, la sauce puis la croute
@@ -215,8 +217,8 @@ namespace Pizzeria3D
         {
             const float c = Taille / 2f, R = Taille / 2f - 2f;
             const float AngleOr = 2.39996f;
-            var blanc = Bloc.Couleur(0xFCF7EA);
-            var ombre = Bloc.Couleur(0xE2D3B4);
+            var blanc = Bloc.Couleur(0xF6EFDF);
+            var ombre = Bloc.Couleur(0xD8C9AB);
 
             for (int i = 0; i < 16; i++)
             {
@@ -247,9 +249,9 @@ namespace Pizzeria3D
         {
             const float c = Taille / 2f, R = Taille / 2f - 2f;
             const float AngleOr = 2.39996f;
-            var pepperoni = Bloc.Couleur(0xC0341F);
-            var bord = Bloc.Couleur(0x862014);
-            var basilic = Bloc.Couleur(0x4EA83A);
+            var pepperoni = Bloc.Couleur(0xA8402C);
+            var bord = Bloc.Couleur(0x7A2A1C);
+            var basilic = Bloc.Couleur(0x407A33);
 
             // Repartition en spirale d'angle d'or plutot qu'au hasard : tire au
             // sort, les rondelles s'agglutinent d'un cote et laissent des vides.
@@ -273,7 +275,7 @@ namespace Pizzeria3D
         static void Origan(Color32[] px)
         {
             const float c = Taille / 2f, R = Taille / 2f - 2f;
-            var herbe = Bloc.Couleur(0x6E7A3A);
+            var herbe = Bloc.Couleur(0x6A6F3C);
             for (int i = 0; i < 150; i++)
             {
                 float a = Hash(i * 1.37f, 9.1f) * Mathf.PI * 2f;
