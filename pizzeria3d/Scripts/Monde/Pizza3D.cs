@@ -123,47 +123,59 @@ namespace Pizzeria3D
             tex.filterMode = FilterMode.Bilinear;
             var px = new Color32[Taille * Taille];
 
-            var sauce = Bloc.Couleur(0xD2452A);
-            var sauceSombre = Bloc.Couleur(0xA82E1B);
-            var fromage = Bloc.Couleur(0xFAF3E0);
-            var fromageDore = Bloc.Couleur(0xE0B96A);
-            var pate = Bloc.Couleur(0xE8B45C);
-            var pepperoni = Bloc.Couleur(0xB93225);
-            var pepperoniBord = Bloc.Couleur(0x83201A);
-            var basilic = Bloc.Couleur(0x59A63C);
+            // couleurs relevees sur la photo de reference
+            var sauce       = Bloc.Couleur(0xE04A22);
+            var sauceSombre = Bloc.Couleur(0xB2331A);
+            var fondu       = Bloc.Couleur(0xF2D98A);   // fromage fondu, dore
+            var fonduClair  = Bloc.Couleur(0xF8E9B8);
+            var croute      = Bloc.Couleur(0xF0B860);
+            var crouteDoree = Bloc.Couleur(0xD98A38);
 
             const float c = Taille / 2f, R = Taille / 2f - 2f;
+            const float FinGarniture = 0.74f;   // au-dela, la sauce puis la croute
+            const float DebutCroute  = 0.83f;
 
             for (int y = 0; y < Taille; y++)
             for (int x = 0; x < Taille; x++)
             {
                 float dx = x + 0.5f - c, dy = y + 0.5f - c;
-                float d = Mathf.Sqrt(dx * dx + dy * dy);
+                float d = Mathf.Sqrt(dx * dx + dy * dy) / R;
 
-                // fond : sauce mouchetee, cernee d'un bord de pate
-                float grain = Bruit(x * 0.06f, y * 0.06f);
+                float grain = Bruit(x * 0.07f, y * 0.07f);
                 var couleur = Color.Lerp(sauceSombre, sauce, grain);
-                // un lisere de pate au bord, la ou la sauce s'arrete
-                if (d > R * 0.94f)
-                    couleur = Color.Lerp(couleur, pate, Mathf.Clamp01((d - R * 0.94f) / (R * 0.06f)));
 
-                // Mozzarella : elle couvre l'essentiel de la pizza, la sauce ne
-                // remontant que par endroits. Un seuil trop haut donnait des
-                // flaques isolees sur un fond rouge.
-                float flaques = Bruit(x * 0.032f + 40f, y * 0.032f + 40f);
-                float bord = Bruit(x * 0.11f + 7f, y * 0.11f + 7f) * 0.08f;
-                if (flaques + bord > 0.40f && d < R * 0.95f)
+                // couche de fromage fondu, percee la ou la sauce remonte
+                if (d < FinGarniture)
                 {
-                    float epaisseur = Mathf.Clamp01((flaques + bord - 0.40f) * 7f);
-                    var f = Color.Lerp(fromage, fromageDore,
-                                       Mathf.Clamp01((Bruit(x * 0.05f + 90f, y * 0.05f + 90f) - 0.55f) * 4f));
-                    couleur = Color.Lerp(couleur, f, epaisseur);
+                    float nappe = Bruit(x * 0.035f + 40f, y * 0.035f + 40f)
+                                + Bruit(x * 0.12f + 7f, y * 0.12f + 7f) * 0.10f;
+                    if (nappe > 0.37f)
+                    {
+                        float epaisseur = Mathf.Clamp01((nappe - 0.37f) * 6f);
+                        var f = Color.Lerp(fondu, fonduClair, grain);
+                        couleur = Color.Lerp(couleur, f, epaisseur);
+                    }
+                }
+
+                // La croute est dans la texture, et pas seulement dans le
+                // volume : c'est elle qui donne son epaisseur a la pizza vue
+                // de dessus, comme sur la photo.
+                if (d > DebutCroute)
+                {
+                    float t = Mathf.Clamp01((d - DebutCroute) / (1f - DebutCroute));
+                    float cloques = Bruit(x * 0.09f + 130f, y * 0.09f + 130f);
+                    var pate = Color.Lerp(croute, crouteDoree, Mathf.Clamp01((cloques - 0.45f) * 2.6f));
+                    couleur = Color.Lerp(couleur, pate, Mathf.Clamp01(t * 3f));
+                    // ombre du bourrelet, tout au bord
+                    couleur = Color.Lerp(couleur, Color.Lerp(pate, Color.black, 0.35f),
+                                         Mathf.Clamp01((t - 0.72f) / 0.28f));
                 }
 
                 px[y * Taille + x] = couleur;
             }
 
-            Rondelles(px, pepperoni, pepperoniBord, basilic);
+            Mozzarella(px);
+            Rondelles(px);
             Origan(px);
 
             tex.SetPixels32(px);
@@ -171,26 +183,61 @@ namespace Pizzeria3D
             return tex;
         }
 
-        /// <summary>Pepperoni, basilic et brins d'herbe, poses sur la sauce.</summary>
-        static void Rondelles(Color32[] px, Color pepperoni, Color bord, Color basilic)
+        /// <summary>
+        /// Les morceaux de mozzarella. Sur la photo ce sont des taches blanches
+        /// bien distinctes posees sur le fondu, pas une nappe uniforme.
+        /// </summary>
+        static void Mozzarella(Color32[] px)
         {
             const float c = Taille / 2f, R = Taille / 2f - 2f;
+            const float AngleOr = 2.39996f;
+            var blanc = Bloc.Couleur(0xFCF7EA);
+            var ombre = Bloc.Couleur(0xE2D3B4);
+
+            for (int i = 0; i < 16; i++)
+            {
+                float a = i * AngleOr + 0.6f;      // l'angle d'or, tel quel : le multiplier le detruit
+                float rad = Mathf.Sqrt((i + 0.5f) / 16f) * R * 0.66f;
+                float cx = c + Mathf.Cos(a) * rad, cy = c + Mathf.Sin(a) * rad;
+                float r = R * (0.055f + Hash(i * 1.3f, 6.4f) * 0.045f);
+
+                int x0 = Mathf.Max(0, (int)(cx - r - 2)), x1 = Mathf.Min(Taille - 1, (int)(cx + r + 2));
+                int y0 = Mathf.Max(0, (int)(cy - r - 2)), y1 = Mathf.Min(Taille - 1, (int)(cy + r + 2));
+                for (int y = y0; y <= y1; y++)
+                for (int x = x0; x <= x1; x++)
+                {
+                    float dx = x + 0.5f - cx, dy = y + 0.5f - cy;
+                    float d = Mathf.Sqrt(dx * dx + dy * dy);
+                    // contour bosselé : un cercle net ferait pastille
+                    float bord = r * (0.82f + Bruit(x * 0.16f + i * 13f, y * 0.16f) * 0.36f);
+                    if (d > bord) continue;
+                    px[y * Taille + x] = Color.Lerp(blanc, ombre, Mathf.Clamp01((d / bord - 0.6f) / 0.4f));
+                }
+            }
+        }
+
+        /// <summary>Pepperoni et basilic, par-dessus le fromage.</summary>
+        static void Rondelles(Color32[] px)
+        {
+            const float c = Taille / 2f, R = Taille / 2f - 2f;
+            const float AngleOr = 2.39996f;
+            var pepperoni = Bloc.Couleur(0xC0341F);
+            var bord = Bloc.Couleur(0x862014);
+            var basilic = Bloc.Couleur(0x4EA83A);
 
             // Repartition en spirale d'angle d'or plutot qu'au hasard : tire au
             // sort, les rondelles s'agglutinent d'un cote et laissent des vides.
-            const float AngleOr = 2.39996f;
-
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < 14; i++)
             {
-                float a = i * AngleOr + Hash(i * 3.1f, 1.7f) * 0.5f;
-                float rad = Mathf.Sqrt((i + 0.6f) / 10f) * R * 0.74f;
-                Disque(px, c + Mathf.Cos(a) * rad, c + Mathf.Sin(a) * rad, R * 0.135f, pepperoni, bord);
+                float a = i * AngleOr + Hash(i * 3.1f, 1.7f) * 0.35f;
+                float rad = Mathf.Sqrt((i + 0.55f) / 14f) * R * 0.68f;
+                Disque(px, c + Mathf.Cos(a) * rad, c + Mathf.Sin(a) * rad, R * 0.115f, pepperoni, bord);
             }
 
-            for (int i = 0; i < 5; i++)
+            for (int i = 0; i < 6; i++)
             {
-                float a = i * AngleOr + 1.1f;
-                float rad = Mathf.Sqrt((i + 0.4f) / 5f) * R * 0.66f;
+                float a = i * AngleOr + 1.9f;
+                float rad = Mathf.Sqrt((i + 0.35f) / 6f) * R * 0.60f;
                 Feuille(px, c + Mathf.Cos(a) * rad, c + Mathf.Sin(a) * rad,
                         Hash(i * 1.9f, 3.3f) * Mathf.PI, basilic);
             }
@@ -228,20 +275,36 @@ namespace Pizzeria3D
             }
         }
 
+        /// <summary>
+        /// Feuille de basilic : pointue aux deux bouts et parcourue d'une
+        /// nervure claire. Une ellipse pleine ressemblait a une olive.
+        /// </summary>
         static void Feuille(Color32[] px, float cx, float cy, float angle, Color couleur)
         {
             float cos = Mathf.Cos(angle), sin = Mathf.Sin(angle);
-            float ra = Taille * 0.055f, rb = Taille * 0.028f;
+            float ra = Taille * 0.058f, rb = Taille * 0.026f;
             int r = (int)ra + 2;
+            var sombre = Color.Lerp(couleur, Color.black, 0.35f);
+            var nervure = Color.Lerp(couleur, Color.white, 0.30f);
+
             for (int y = -r; y <= r; y++)
             for (int x = -r; x <= r; x++)
             {
-                int px_ = (int)cx + x, py_ = (int)cy + y;
-                if (px_ < 0 || py_ < 0 || px_ >= Taille || py_ >= Taille) continue;
-                float u = (x * cos + y * sin) / ra, v = (-x * sin + y * cos) / rb;
-                float d = Mathf.Sqrt(u * u + v * v);
-                if (d > 1f) continue;
-                px[py_ * Taille + px_] = Color.Lerp(couleur, Color.Lerp(couleur, Color.black, 0.35f), d);
+                int ax = (int)cx + x, ay = (int)cy + y;
+                if (ax < 0 || ay < 0 || ax >= Taille || ay >= Taille) continue;
+
+                float u = (x * cos + y * sin) / ra;      // le long de la feuille
+                float v = (-x * sin + y * cos) / rb;     // en travers
+                if (Mathf.Abs(u) > 1f) continue;
+                // largeur qui s'annule aux deux pointes
+                float largeur = Mathf.Sqrt(Mathf.Clamp01(1f - u * u));
+                largeur *= largeur > 0f ? 1f : 0f;
+                if (Mathf.Abs(v) > largeur) continue;
+
+                float t = Mathf.Abs(v) / Mathf.Max(largeur, 0.0001f);
+                var col = Color.Lerp(couleur, sombre, t * t);
+                if (t < 0.14f) col = Color.Lerp(col, nervure, 0.6f);
+                px[ay * Taille + ax] = col;
             }
         }
     }
