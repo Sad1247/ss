@@ -60,6 +60,7 @@ Scripts/Jeu/
   Reglages.cs   TOUT l'equilibrage (vitesses, prix, cadences, capacites)
   Joueur.cs     deplacement isometrique et pile portee
   Manette.cs    le joystick a l'ecran, flottant, dessine sans sprite
+  Doigt.cs      lecture du doigt, ancien comme nouveau systeme d'entrees
   Four.cs       production continue et transfert vers le joueur
   Comptoir.cs   depot, file d'attente, service
   Client.cs     arrivee, file, reception pizza par pizza, paiement, depart

@@ -34,15 +34,17 @@ namespace Pizzeria3D
 
         void Update()
         {
-            if (Input.GetMouseButtonDown(0))
+            Doigt.Lire();
+
+            if (Doigt.Presse)
             {
-                _origine = Input.mousePosition;
+                _origine = Doigt.Position;
                 _tenu = true;
                 Montrer(true);
                 _socle.position = _origine;
                 _bouton.position = _origine;
             }
-            if (Input.GetMouseButtonUp(0))
+            if (Doigt.Relache)
             {
                 _tenu = false;
                 Direction = Vector2.zero;
@@ -50,7 +52,7 @@ namespace Pizzeria3D
             }
             if (!_tenu) { Direction = Vector2.zero; return; }
 
-            var delta = Input.mousePosition - _origine;
+            var delta = Doigt.Position - _origine;
             var plan = new Vector2(delta.x, delta.y);
             float force = Mathf.Clamp01(plan.magnitude / Rayon);
             Direction = force < 0.12f ? Vector2.zero : plan.normalized * force;
