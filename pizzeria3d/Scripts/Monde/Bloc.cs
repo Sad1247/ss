@@ -29,14 +29,26 @@ namespace Pizzeria3D
             return null;
         }
 
+        static readonly System.Collections.Generic.Dictionary<int, Material> _peintures =
+            new System.Collections.Generic.Dictionary<int, Material>();
+
+        /// <summary>
+        /// Un materiau par couleur, partage entre tous les objets : le decor
+        /// compte des centaines de pieces, en creer un chacun multiplierait les
+        /// appels de rendu sans aucun gain.
+        /// </summary>
         public static Material Peinture(Color couleur)
         {
+            int cle = ((int)(couleur.r * 255) << 16) | ((int)(couleur.g * 255) << 8) | (int)(couleur.b * 255);
+            if (_peintures.TryGetValue(cle, out var connu) && connu != null) return connu;
+
             var m = new Material(Shader());
             m.color = couleur;
             // surfaces mates : le style ne supporte pas les reflets
             if (m.HasProperty("_Smoothness")) m.SetFloat("_Smoothness", 0.05f);
             if (m.HasProperty("_Glossiness")) m.SetFloat("_Glossiness", 0.05f);
             if (m.HasProperty("_Metallic")) m.SetFloat("_Metallic", 0f);
+            _peintures[cle] = m;
             return m;
         }
 

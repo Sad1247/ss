@@ -271,6 +271,7 @@ namespace UnityEngine
     public class Material : Object
     {
         public Color color;
+        public Texture mainTexture;
         public Material(Shader s) { }
         public bool HasProperty(string nom) => true;
         public void SetFloat(string nom, float v) { }
@@ -278,6 +279,16 @@ namespace UnityEngine
 
     public class Renderer : Behaviour { public Material sharedMaterial, material; }
     public class MeshRenderer : Renderer { }
+
+    public class Mesh : Object
+    {
+        public Vector3[] vertices = new Vector3[0];
+        public Vector3[] normals = new Vector3[0];
+        public Vector2[] uv = new Vector2[0];
+        public int[] triangles = new int[0];
+    }
+
+    public class MeshFilter : Component { public Mesh mesh, sharedMesh; }
     public class Collider : Behaviour { }
     public class BoxCollider : Collider { }
 

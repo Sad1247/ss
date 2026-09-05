@@ -60,8 +60,41 @@ static class Harness3D
         Frames(2);
     }
 
+    /// <summary>Exporte la texture de la pizza pour la controler a l'oeil.</summary>
+    static void DumpPizza(string chemin)
+    {
+        var racine = Pizza3D.Creer(new GameObject("Bac").transform, 0);
+        Texture2D tex = null;
+        foreach (var e in racine.transform.Enfants)
+            if (e.gameObject.name == "Garniture")
+                tex = e.gameObject.GetComponent<MeshRenderer>().sharedMaterial.mainTexture as Texture2D;
+
+        int w = tex.width, h = tex.height;
+        using (var fs = new System.IO.FileStream(chemin, System.IO.FileMode.Create))
+        {
+            var entete = System.Text.Encoding.ASCII.GetBytes($"P6\n{w} {h}\n255\n");
+            fs.Write(entete, 0, entete.Length);
+            var buf = new byte[w * h * 3];
+            for (int y = 0; y < h; y++)
+            for (int x = 0; x < w; x++)
+            {
+                var p = tex.Pixels[(h - 1 - y) * w + x];
+                int i = (y * w + x) * 3;
+                buf[i] = p.r; buf[i + 1] = p.g; buf[i + 2] = p.b;
+            }
+            fs.Write(buf, 0, buf.Length);
+        }
+        Console.WriteLine("texture ecrite dans " + chemin);
+    }
+
     static void Main()
     {
+        if (Environment.GetEnvironmentVariable("DUMP_PIZZA") is string chemin && chemin.Length > 0)
+        {
+            DumpPizza(chemin);
+            return;
+        }
+
         // Une scene Unity neuve arrive avec une Main Camera et une lumiere :
         // on reproduit ces conditions, c'est ce que le joueur aura.
         var camScene = new GameObject("Main Camera").AddComponent<UnityEngine.Camera>();
