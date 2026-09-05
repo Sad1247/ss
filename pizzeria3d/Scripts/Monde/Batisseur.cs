@@ -33,9 +33,9 @@ namespace Pizzeria3D
             var comptoir = Comptoir(racine.transform, joueur);
             var four = Four(racine.transform, joueur, new Vector3(-4.2f, 0f, 3.2f), "Four1", true);
 
-            // La table de mise en boite, juste a cote du four : le caissier y
-            // passe entre le four et le comptoir.
-            var table = Table(racine.transform, new Vector3(-6.9f, 0f, 2.4f));
+            // Le plan de mise en boite, adosse aux fenetres du fond, derriere
+            // la caisse : le caissier y passe entre le four et le comptoir.
+            var table = Table(racine.transform, new Vector3(1.6f, 0f, 6.0f));
 
             // L'embauche se paie derriere la caisse, la ou l'employe se tiendra.
             var caissier = Caissier(racine.transform, comptoir, four.GetComponent<Four>(),
@@ -204,8 +204,9 @@ namespace Pizzeria3D
         }
 
         /// <summary>
-        /// La table de mise en boite : un plan de travail en bois, sa reserve
-        /// de cartons dessus, et un poste devant ou vient se placer le caissier.
+        /// Le plan de mise en boite. Il reprend la facture du comptoir —
+        /// caisson bleu, dessus metallique qui deborde — pour que les deux
+        /// meubles de la pizzeria se ressemblent au lieu de jurer.
         /// </summary>
         static Emballage Table(Transform parent, Vector3 position)
         {
@@ -214,40 +215,33 @@ namespace Pizzeria3D
             go.transform.position = position;
             var t = go.transform;
 
-            var bois = Bloc.Couleur(0xC08A4E);
-            var boisOmbre = Bloc.Couleur(0x8C6034);
+            Bloc.Boite("Plan", t, new Vector3(0f, 0.55f, 0f), new Vector3(3.0f, 1.1f, 1.2f),
+                       Bloc.Machine).SansCollision();
+            Bloc.Boite("Dessus", t, new Vector3(0f, 1.15f, 0f), new Vector3(3.2f, 0.16f, 1.4f),
+                       Bloc.Metal).SansCollision();
+            // le bandeau sombre du comptoir, repris a l'identique
+            Bloc.Boite("Bandeau", t, new Vector3(0f, 0.20f, -0.61f), new Vector3(3.0f, 0.30f, 0.04f),
+                       Bloc.MachineBis).SansCollision();
 
-            Bloc.Boite("Plateau", t, new Vector3(0f, 0.92f, 0f), new Vector3(1.70f, 0.14f, 1.30f), bois)
-                .SansCollision();
-            Bloc.Boite("Etagere", t, new Vector3(0f, 0.34f, 0f), new Vector3(1.50f, 0.10f, 1.10f), boisOmbre)
-                .SansCollision();
-            foreach (float x in new[] { -0.74f, 0.74f })
-                foreach (float z in new[] { -0.54f, 0.54f })
-                    Bloc.Boite("Pied", t, new Vector3(x, 0.44f, z),
-                               new Vector3(0.14f, 0.88f, 0.14f), boisOmbre).SansCollision();
+            Obstacles.Ajouter(position, 3.2f, 1.4f);
 
-            // la table barre le passage, comme le four
-            Obstacles.Ajouter(position, 1.80f, 1.40f);
+            // Deux piles de cartons posees sur le dessus, comme dans une vraie
+            // pizzeria. Une seule pile de douze monterait plus haut qu'un homme.
+            var gauche = new GameObject("Boites");
+            gauche.transform.SetParent(t, false);
+            gauche.transform.localPosition = new Vector3(-0.95f, 1.23f, 0f);
 
-            // La reserve de cartons, sur le plateau. Une deuxieme pile, figee,
-            // sous la table : le stock de la pizzeria.
-            var reserve = new GameObject("Boites");
-            reserve.transform.SetParent(t, false);
-            reserve.transform.localPosition = new Vector3(-0.38f, 0.99f, 0f);
-
-            var appoint = new GameObject("Reserve");
-            appoint.transform.SetParent(t, false);
-            appoint.transform.localPosition = new Vector3(0.40f, 0.39f, 0f);
-            var pileBasse = appoint.AddComponent<Pile>();
-            pileBasse.Max = 6;
-            while (!pileBasse.EstPleine) pileBasse.Ajouter(true);
+            var droite = new GameObject("Appoint");
+            droite.transform.SetParent(t, false);
+            droite.transform.localPosition = new Vector3(0.95f, 1.23f, 0f);
 
             var poste = new GameObject("Poste");
             poste.transform.SetParent(t, false);
             poste.transform.localPosition = new Vector3(0f, 0f, -1.40f);
 
             var e = go.AddComponent<Emballage>();
-            e.Boites = reserve.AddComponent<Pile>();
+            e.Boites = gauche.AddComponent<Pile>();
+            e.Appoint = droite.AddComponent<Pile>();
             e.Poste = poste.transform;
             e.Garnir();
             return e;

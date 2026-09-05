@@ -45,6 +45,25 @@ static class Harness3D
     }
 
     /// <summary>Couleur du haut d'un client, pour verifier la variete.</summary>
+    /// <summary>Deux meubles sont-ils peints pareil ? Compare une piece a une piece.</summary>
+    static bool MemeCouleur(Transform a, string nomA, Transform b, string nomB)
+    {
+        var ca = CouleurDe(a, nomA);
+        var cb = CouleurDe(b, nomB);
+        return ca.r == cb.r && ca.g == cb.g && ca.b == cb.b;
+    }
+
+    static Color CouleurDe(Transform parent, string nom)
+    {
+        foreach (var e in parent.Enfants)
+            if (e.gameObject.name == nom)
+            {
+                var r = e.gameObject.GetComponent<MeshRenderer>();
+                if (r != null) return r.sharedMaterial.color;
+            }
+        return Color.black;
+    }
+
     static Color CouleurHaut(Client c)
     {
         foreach (var e in c.transform.Enfants)
@@ -174,20 +193,33 @@ static class Harness3D
         Check("le tiroir-caisse est ferme au depart", caisse != null && !caisse.EstOuverte);
 
         // --- la table de mise en boite ---
-        Check("une table de mise en boite est montee", table != null);
-        var ecartFour = table != null ? table.transform.position - four.transform.position : Vector3.zero;
-        ecartFour.y = 0f;
-        Check("elle est posee a cote du four", table != null && ecartFour.magnitude < 4f);
+        Check("un plan de mise en boite est monte", table != null);
+        Check("il est derriere la caisse",
+              table != null && table.transform.position.z > comptoir.transform.position.z + 2f);
+        // les vitres du fond sont a z 6,85 : le plan doit leur etre adosse
+        var vitre = Trouver("VitreFond2");
+        Check("il est adosse aux fenetres du fond",
+              table != null && vitre != null &&
+              Mathf.Abs(table.transform.position.z - vitre.transform.position.z) < 1.5f);
+
+        // Meme facture que le comptoir : c'est ce qui a ete demande, et deux
+        // meubles de styles differents jureraient dans une scene aussi petite.
+        Check("il a la meme facture que la caisse",
+              table != null && MemeCouleur(table.transform, "Plan", comptoir.transform, "Plan") &&
+              MemeCouleur(table.transform, "Dessus", comptoir.transform, "Dessus"));
+
         Check("des boites a pizza y attendent",
-              table != null && table.Reserve == Reglages.BoitesSurLaTable);
-        Check("ce sont bien des cartons, pas des pizzas nues",
-              table != null && Compte(table.Boites.transform, "Boite", false) == table.Reserve);
+              table != null && table.Reserve == Reglages.BoitesParPile * 2);
+        Check("elles sont rangees en deux piles, pas en tour",
+              table != null &&
+              Compte(table.Boites.transform, "Boite", false) == Reglages.BoitesParPile &&
+              Compte(table.Appoint.transform, "Boite", false) == Reglages.BoitesParPile);
         Check("le caissier vient s'y placer devant, pas dedans",
               table != null && table.PointDeTravail.z < table.transform.position.z);
         // en marchant droit dessus, le joueur doit etre arrete avant le plateau
-        var buteeTable = Obstacles.Resoudre(new Vector3(-6.9f, 0f, 1.0f),
+        var buteeTable = Obstacles.Resoudre(new Vector3(1.6f, 0f, 4.6f),
                                             new Vector3(0f, 0f, 0.5f), Reglages.RayonJoueur);
-        Check("on ne traverse pas la table", buteeTable.z < 1.45f);
+        Check("on ne traverse pas le plan", buteeTable.z < 5.05f);
 
         // --- manette flottante ---
         var manette = UnityEngine.Object.FindObjectOfType<Manette>();
@@ -261,12 +293,17 @@ static class Harness3D
         Check("le joueur atteint quand meme la pierre du four",
               joueur.EstPres(four.Sortie.transform.position, Reglages.RayonRamassage));
 
-        // et il glisse le long d'un mur au lieu de s'y coller
-        Placer(joueur, new Vector3(0f, 0f, 6f));
+        // et il glisse le long d'un mur au lieu de s'y coller. On part a
+        // l'ouest du plan de mise en boite, sinon on demarre dedans.
+        Placer(joueur, new Vector3(-3f, 0f, 6f));
         var avantGlisse = joueur.transform.position;
-        PousserVers(joueur, new Vector3(4f, 0f, 9f), 1.5f);   // en biais vers le mur du fond
+        PousserVers(joueur, new Vector3(0f, 0f, 9f), 1.5f);   // en biais vers le mur du fond
+        // glisser, c'est avancer lateralement TOUT EN etant plaque au mur :
+        // verifier le seul deplacement en x laisserait passer un joueur qui
+        // n'a jamais touche le mur.
         Check("le joueur glisse le long du mur",
-              Mathf.Abs(joueur.transform.position.x - avantGlisse.x) > 0.5f);
+              Mathf.Abs(joueur.transform.position.x - avantGlisse.x) > 0.5f &&
+              joueur.transform.position.z > 6.3f);
 
         // --- le four produit ---
         Placer(joueur, new Vector3(0f, 0f, -6f));    // loin, pour laisser le stock monter
@@ -517,7 +554,7 @@ static class Harness3D
             if (navetteur.Portees > 0) aPorte = true;
             if (pasDuCaissier != null && pasDuCaissier.Allure > 0.2f) aMarche = true;
             if (navetteur.PorteeEmballee) aEmballe = true;
-            if (table.Reserve < Reglages.BoitesSurLaTable) reserveEntamee = true;
+            if (table.Reserve < Reglages.BoitesParPile * 2) reserveEntamee = true;
 
             var versTable = employe.transform.position - table.PointDeTravail;
             versTable.y = 0f;
@@ -525,7 +562,7 @@ static class Harness3D
         }
         Check("le caissier va chercher les pizzas au four", aPorte);
         Check("il marche pour de bon, membres animes", aMarche);
-        Check("il fait un detour par la table de mise en boite", aTouche);
+        Check("il fait un detour par le plan de mise en boite", aTouche);
         Check("il pioche dans la reserve de cartons", reserveEntamee);
         Check("il porte des pizzas en boite en repartant", aEmballe);
 

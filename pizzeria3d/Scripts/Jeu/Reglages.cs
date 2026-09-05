@@ -69,8 +69,9 @@ namespace Pizzeria3D
         public const float EpaisseurBoite = 0.16f;
         /// <summary>Secondes que met le caissier a mettre une pizza en boite.</summary>
         public const float DelaiEmballage = 0.30f;
-        /// <summary>Boites en reserve sur la table, et rythme de reappro.</summary>
-        public const int BoitesSurLaTable = 12;
+        /// <summary>Cartons par pile sur le plan de travail — il y en a deux.</summary>
+        public const int BoitesParPile = 6;
+        /// <summary>Secondes entre deux cartons livres sur le plan de travail.</summary>
         public const float DelaiReappro = 1.5f;
     }
 }
