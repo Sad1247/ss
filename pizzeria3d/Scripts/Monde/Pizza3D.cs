@@ -51,14 +51,18 @@ namespace Pizzeria3D
             var pate = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             pate.name = "Pate";
             pate.transform.SetParent(racine.transform, false);
-            pate.transform.localScale = new Vector3(0.92f, Reglages.EpaisseurPizza * 0.5f, 0.92f);
+            pate.transform.localScale = new Vector3(Reglages.DiametrePizza,
+                                                   Reglages.EpaisseurPizza * 0.5f,
+                                                   Reglages.DiametrePizza);
             pate.GetComponent<Renderer>().sharedMaterial = _pate;
             pate.SansCollision();
 
             var dessus = new GameObject("Garniture", typeof(MeshFilter), typeof(MeshRenderer));
             dessus.transform.SetParent(racine.transform, false);
             dessus.transform.localPosition = new Vector3(0f, Reglages.EpaisseurPizza * 0.505f, 0f);
-            dessus.transform.localScale = new Vector3(0.385f, 1f, 0.385f);
+            // le disque laisse voir la tranche doree tout autour
+            float rayonGarniture = Reglages.DiametrePizza * 0.42f;
+            dessus.transform.localScale = new Vector3(rayonGarniture, 1f, rayonGarniture);
             dessus.GetComponent<MeshFilter>().sharedMesh = _disque;
             dessus.GetComponent<MeshRenderer>().sharedMaterial = _garniture;
 

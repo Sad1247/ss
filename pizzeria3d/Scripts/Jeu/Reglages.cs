@@ -46,7 +46,10 @@ namespace Pizzeria3D
         public const float DebitAchat = 45f;        // euros par seconde en restant dessus
 
         // --- pile de pizzas ---
-        public const float EpaisseurPizza = 0.20f;   // pate plus haute, croute plus epaisse
+/// <summary>Hauteur d'une pizza, qui sert aussi d'ecart dans une pile.</summary>
+        public const float EpaisseurPizza = 0.30f;
+        /// <summary>Diametre de la pate. Le rapport aux deux fait l'allure de la pizza.</summary>
+        public const float DiametrePizza = 0.78f;
         public const float HauteurTete = 1.82f;   // juste au-dessus de la casquette
     }
 }
