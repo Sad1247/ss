@@ -40,8 +40,7 @@ namespace Pizzeria3D
         /// <summary>Distance a laquelle le joueur tient lui-meme la caisse.</summary>
         public const float RayonService = 2.8f;
 
-        // --- zones d'achat ---
-        public const int PrixSecondFour = 150;
+        // --- zone d'achat ---
         public const int PrixCaissier = 250;
         public const float DebitAchat = 45f;        // euros par seconde en restant dessus
 

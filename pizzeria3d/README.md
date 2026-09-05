@@ -78,7 +78,7 @@ Scripts/Monde/
 
 Tests~/FakeUnity/            (ignore par Unity : le ~ final)
   FakeUnity3D.cs  faux runtime Unity (hierarchie, transforms, entrees, cycle de vie)
-  Harness3D.cs    45 verifications qui jouent la boucle complete
+  Harness3D.cs    39 verifications qui jouent la boucle complete
 ```
 
 ## Verifier sans Unity
@@ -93,7 +93,7 @@ Couvert : montage de la scene sans editeur, camera orthographique, manette
 flottante et axes isometriques, production du four, chargement et plafond de la
 pile portee, dechargement au comptoir, file d'attente, duree de commande et
 ouverture puis fermeture du tiroir-caisse, encaissement au bareme, liasse qui
-attend au sol puis se ramasse, dalles vertes qui prelevent puis livrent,
+attend au sol puis se ramasse, dalle verte qui preleve puis livre,
 embauche du caissier et service sans le joueur.
 
 `Tests~/FakeUnity/` redefinit les types d'UnityEngine : c'est pour cela que son
@@ -102,6 +102,8 @@ dossier finit par `~`, qui le rend invisible a Unity.
 ## Ce qui n'y est pas encore
 
 - Les employes qui font la navette (le caissier existe, pas le porteur).
+- Un second four : il existait, sa dalle a ete retiree ; a rebrancher sur une
+  nouvelle zone d'achat quand la progression le demandera.
 - La chaine de production complete (pate, garnissage, four, mise en carton).
 - Les ameliorations chiffrees : vitesse, capacite de portage, cadence des fours.
 - La sauvegarde de la partie, les sons, les effets a l'encaissement.
@@ -109,7 +111,7 @@ dossier finit par `~`, qui le rend invisible a Unity.
 
 ## Ce qui est verifie, et ce qui ne l'est pas
 
-La logique tourne : les 45 verifications ci-dessus s'executent hors editeur.
+La logique tourne : les 39 verifications ci-dessus s'executent hors editeur.
 Le **rendu 3D n'a jamais ete affiche** — positions, echelles, cadrage de la
 camera et couleurs ont ete poses sans jamais etre vus. C'est la premiere chose
 a corriger a l'oeil au lancement.

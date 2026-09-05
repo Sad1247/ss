@@ -57,20 +57,13 @@ static class Harness3D
         var joueur = UnityEngine.Object.FindObjectOfType<Joueur>();
         var four = UnityEngine.Object.FindObjectOfType<Four>();
         var comptoir = UnityEngine.Object.FindObjectOfType<Comptoir>();
-        ZoneAchat zone = null, zoneCaissier = null;
-        foreach (var z in TousLes<ZoneAchat>())
-        {
-            if (z.Libelle.Contains("four")) zone = z;
-            if (z.Libelle.Contains("caissier")) zoneCaissier = z;
-        }
+        var zoneCaissier = UnityEngine.Object.FindObjectOfType<ZoneAchat>();
         var caisse = UnityEngine.Object.FindObjectOfType<Caisse>();
         var camera = UnityEngine.Object.FindObjectOfType<UnityEngine.Camera>();
 
         Check("la scene se monte sans editeur", joueur != null && four != null && comptoir != null);
         Check("camera isometrique orthographique", camera != null && camera.orthographic);
-        Check("le second four est cache au depart", Trouver("Four2") != null && !Trouver("Four2").activeSelf);
         Check("la caisse demarre a zero", Banque.Solde == 0);
-        Check("une zone d'achat attend le joueur", zone != null && zone.Restant == Reglages.PrixSecondFour);
         Check("une zone d'embauche attend derriere la caisse",
               zoneCaissier != null && zoneCaissier.Restant == Reglages.PrixCaissier);
         Check("le caissier n'est pas encore la",
@@ -179,19 +172,6 @@ static class Harness3D
         Check("marcher sur la liasse encaisse", Banque.Solde == avantLiasse + 42);
         Check("la liasse disparait une fois prise", TousLes<Billet>().Count == 0);
 
-        // --- zone d'achat ---
-        Banque.Encaisser(Reglages.PrixSecondFour);
-        int avant = Banque.Solde;
-        Placer(joueur, zone.transform.position);
-        Secondes(0.5f);
-        Check("l'argent s'ecoule en restant sur la dalle", Banque.Solde < avant);
-        Check("un indice annonce ce qui reste a payer",
-              Hud.Indice != null && Hud.Indice.Contains("reste"));
-
-        Secondes(6f);
-        Check("le second four est livre", Trouver("Four2") != null && Trouver("Four2").activeSelf);
-        Check("la dalle disparait une fois payee", zone.gameObject.Detruit);
-
         // --- embauche du caissier ---
         Placer(joueur, new Vector3(0f, 0f, -9f));      // le joueur quitte le comptoir
         Secondes(1f);
@@ -200,6 +180,8 @@ static class Harness3D
         Placer(joueur, zoneCaissier.transform.position);
         Secondes(0.5f);
         Check("l'embauche preleve a la dalle", Banque.Solde < avantEmbauche);
+        Check("un indice annonce ce qui reste a payer",
+              Hud.Indice != null && Hud.Indice.Contains("reste"));
 
         Secondes(Reglages.PrixCaissier / Reglages.DebitAchat + 2f);
         var employe = Trouver("Caissier");
@@ -238,10 +220,6 @@ static class Harness3D
         }
         Check("le joueur encaisse les liasses laissees par le caissier",
               liasses.Count == 0 || Banque.Solde > soldeAvant);
-
-        // --- le second four produit a son tour ---
-        var fours = TousLes<Four>();
-        Check("deux fours tournent desormais", fours.Count == 2);
 
         var erreurs = new List<string>();
         foreach (var l in Debug.Journal) if (l.StartsWith("ERROR")) erreurs.Add(l);

@@ -11,7 +11,7 @@ namespace Pizzeria3D
     {
         public Joueur Joueur;
         public GameObject Achat;          // objet a reveler une fois paye
-        public int Prix = Reglages.PrixSecondFour;
+        public int Prix = Reglages.PrixCaissier;
         public string Libelle = "Nouveau four";
 
         float _verse;
