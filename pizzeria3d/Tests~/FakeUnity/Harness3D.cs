@@ -57,7 +57,12 @@ static class Harness3D
         var joueur = UnityEngine.Object.FindObjectOfType<Joueur>();
         var four = UnityEngine.Object.FindObjectOfType<Four>();
         var comptoir = UnityEngine.Object.FindObjectOfType<Comptoir>();
-        var zone = UnityEngine.Object.FindObjectOfType<ZoneAchat>();
+        ZoneAchat zone = null, zoneCaissier = null;
+        foreach (var z in TousLes<ZoneAchat>())
+        {
+            if (z.Libelle.Contains("four")) zone = z;
+            if (z.Libelle.Contains("caissier")) zoneCaissier = z;
+        }
         var caisse = UnityEngine.Object.FindObjectOfType<Caisse>();
         var camera = UnityEngine.Object.FindObjectOfType<UnityEngine.Camera>();
 
@@ -66,6 +71,10 @@ static class Harness3D
         Check("le second four est cache au depart", Trouver("Four2") != null && !Trouver("Four2").activeSelf);
         Check("la caisse demarre a zero", Banque.Solde == 0);
         Check("une zone d'achat attend le joueur", zone != null && zone.Restant == Reglages.PrixSecondFour);
+        Check("une zone d'embauche attend derriere la caisse",
+              zoneCaissier != null && zoneCaissier.Restant == Reglages.PrixCaissier);
+        Check("le caissier n'est pas encore la",
+              Trouver("Caissier") != null && !Trouver("Caissier").activeSelf && !comptoir.CaissierPresent);
         Check("le tiroir-caisse est ferme au depart", caisse != null && !caisse.EstOuverte);
 
         // --- manette flottante ---
@@ -116,7 +125,9 @@ static class Harness3D
         // --- la commande dure trois secondes, tiroir ouvert ---
         // On guette un client QUI VIENT de commencer : en attraper un deja
         // engage fausserait la mesure du delai.
-        Placer(joueur, new Vector3(0f, 0f, -9f));      // le joueur s'ecarte
+        // Tant qu'aucun caissier n'est embauche, le joueur doit tenir la
+        // caisse lui-meme : on le laisse donc au comptoir.
+        Placer(joueur, comptoir.transform.position);
         Client client = null;
         Client dernier = comptoir.Premier;
         for (int i = 0; i < 60 * 200 && client == null; i++)
@@ -146,7 +157,6 @@ static class Harness3D
         Secondes(Reglages.DelaiClient + 10f);         // sert, encaisse les liasses sur place
         Check("servir des clients rapporte de l'argent", Banque.Solde > avantVente);
         // le tiroir se referme quand plus personne n'est au comptoir
-        Placer(joueur, new Vector3(0f, 0f, -9f));
         int garde1 = 0;
         while (comptoir.Premier != null && garde1++ < 60 * 90) Frames(1);
         Check("le tiroir se referme quand le client repart",
@@ -180,7 +190,54 @@ static class Harness3D
 
         Secondes(6f);
         Check("le second four est livre", Trouver("Four2") != null && Trouver("Four2").activeSelf);
-        Check("la dalle disparait une fois payee", UnityEngine.Object.FindObjectOfType<ZoneAchat>() == null);
+        Check("la dalle disparait une fois payee", zone.gameObject.Detruit);
+
+        // --- embauche du caissier ---
+        Placer(joueur, new Vector3(0f, 0f, -9f));      // le joueur quitte le comptoir
+        Secondes(1f);
+        Banque.Encaisser(Reglages.PrixCaissier);
+        int avantEmbauche = Banque.Solde;
+        Placer(joueur, zoneCaissier.transform.position);
+        Secondes(0.5f);
+        Check("l'embauche preleve a la dalle", Banque.Solde < avantEmbauche);
+
+        Secondes(Reglages.PrixCaissier / Reglages.DebitAchat + 2f);
+        var employe = Trouver("Caissier");
+        Check("le caissier apparait une fois paye", employe != null && employe.activeSelf);
+        Check("le comptoir sait qu'un caissier tient la caisse", comptoir.CaissierPresent);
+        Check("la dalle d'embauche disparait", zoneCaissier.gameObject.Detruit);
+
+        // --- le caissier sert sans le joueur ---
+        // On garnit d'abord le comptoir, sinon le test passerait faute de stock
+        // plutot que grace au caissier.
+        Placer(joueur, four.Sortie.transform.position);
+        Secondes(Reglages.DureeCuisson * 4f);
+        Placer(joueur, comptoir.transform.position);
+        Secondes(2f);
+        Check("le comptoir a du stock avant le test", comptoir.Stock.Nombre > 0);
+
+        Placer(joueur, new Vector3(-9f, 0f, -9f));     // le joueur s'en va vraiment
+        Check("le joueur est bien hors de portee de la caisse",
+              !joueur.EstPres(comptoir.transform.position, Reglages.RayonService));
+        // Le caissier sert, mais les liasses restent au sol : c'est au joueur
+        // d'aller les ramasser. Ce sont donc elles qu'il faut compter, pas le
+        // solde, qui ne bouge qu'au ramassage.
+        int liassesAvant = TousLes<Billet>().Count;
+        int servisAvant = comptoir.Stock.Nombre;
+        Secondes(Reglages.DelaiClient + Reglages.DureeCommande + 14f);
+        Check("le caissier sert les clients sans le joueur",
+              TousLes<Billet>().Count > liassesAvant || comptoir.Stock.Nombre < servisAvant);
+
+        // et le joueur encaisse en revenant marcher dessus
+        int soldeAvant = Banque.Solde;
+        var liasses = TousLes<Billet>();
+        if (liasses.Count > 0)
+        {
+            Placer(joueur, liasses[0].transform.position);
+            Secondes(1.5f);
+        }
+        Check("le joueur encaisse les liasses laissees par le caissier",
+              liasses.Count == 0 || Banque.Solde > soldeAvant);
 
         // --- le second four produit a son tour ---
         var fours = TousLes<Four>();

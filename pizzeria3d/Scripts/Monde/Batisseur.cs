@@ -19,7 +19,6 @@ namespace Pizzeria3D
             Debug.Log("Pizzeria : construction de la scene...");
 
             Banque.Reinitialiser();
-            Hud.Indice = null;
 
             Qualite();
 
@@ -30,10 +29,16 @@ namespace Pizzeria3D
             var joueur = Pizzaiolo(racine.transform);
             Camera(racine.transform, joueur.transform);
 
-            Comptoir(racine.transform, joueur);
+            var comptoir = Comptoir(racine.transform, joueur);
             Four(racine.transform, joueur, new Vector3(-4.2f, 0f, 3.2f), "Four1", true);
             var second = Four(racine.transform, joueur, new Vector3(-4.2f, 0f, -1.2f), "Four2", false);
-            Zone(racine.transform, joueur, second);
+            Zone(racine.transform, joueur, second, new Vector3(-2.3f, 0f, -3.4f),
+                 Reglages.PrixSecondFour, "Nouveau four");
+
+            // L'embauche se paie derriere la caisse, la ou l'employe se tiendra.
+            var caissier = Caissier(racine.transform, comptoir, new Vector3(3.6f, 0f, 2.05f));
+            Zone(racine.transform, joueur, caissier, new Vector3(3.6f, 0f, 3.3f),
+                 Reglages.PrixCaissier, "Embaucher un caissier");
 
             racine.AddComponent<Hud>();
             Debug.Log("Pizzeria : scene prete. Maintiens le clic et glisse pour te deplacer.");
@@ -141,47 +146,22 @@ namespace Pizzeria3D
         {
             var go = new GameObject("Joueur");
             go.transform.SetParent(parent, false);
-            go.transform.position = new Vector3(0f, 0f, 0f);
-
-            var corps = new GameObject("Corps");
-            corps.transform.SetParent(go.transform, false);
-            var t = corps.transform;
-
-            // Jambes separees plutot qu'un bloc : c'est ce qui donne la
-            // silhouette du personnage, meme immobile.
-            Bloc.Capsule("JambeG", t, new Vector3(-0.15f, 0.42f, 0f),
-                         new Vector3(0.26f, 0.30f, 0.26f), Bloc.Pantalon).SansCollision();
-            Bloc.Capsule("JambeD", t, new Vector3(0.15f, 0.42f, 0f),
-                         new Vector3(0.26f, 0.30f, 0.26f), Bloc.Pantalon).SansCollision();
-            Bloc.Galet("PiedG", t, new Vector3(-0.15f, 0.09f, 0.06f),
-                       new Vector3(0.28f, 0.18f, 0.40f), Bloc.Pantalon).SansCollision();
-            Bloc.Galet("PiedD", t, new Vector3(0.15f, 0.09f, 0.06f),
-                       new Vector3(0.28f, 0.18f, 0.40f), Bloc.Pantalon).SansCollision();
-
-            // T-shirt : un galet large et court, manches courtes marquees
-            Bloc.Galet("Torse", t, new Vector3(0f, 0.95f, 0f),
-                       new Vector3(0.62f, 0.62f, 0.46f), Bloc.Tablier).SansCollision();
-            Bloc.Galet("MancheG", t, new Vector3(-0.28f, 1.02f, 0f),
-                       new Vector3(0.26f, 0.30f, 0.28f), Bloc.Tablier).SansCollision();
-            Bloc.Galet("MancheD", t, new Vector3(0.28f, 1.02f, 0f),
-                       new Vector3(0.26f, 0.30f, 0.28f), Bloc.Tablier).SansCollision();
-
-            // Bras nus, legerement ecartes du corps
-            Bloc.Capsule("BrasG", t, new Vector3(-0.32f, 0.76f, 0f),
-                         new Vector3(0.19f, 0.20f, 0.19f), Bloc.Peau).SansCollision();
-            Bloc.Capsule("BrasD", t, new Vector3(0.32f, 0.76f, 0f),
-                         new Vector3(0.19f, 0.20f, 0.19f), Bloc.Peau).SansCollision();
-
-            Bloc.Bille("Tete", t, new Vector3(0f, 1.42f, 0f), 0.52f, Bloc.Peau).SansCollision();
-
-            // Casquette : une calotte bombee qui coiffe le crane, plus large que
-            // lui, et une visiere inclinee vers l'avant.
-            Bloc.Galet("Calotte", t, new Vector3(0f, 1.52f, -0.01f),
-                       new Vector3(0.60f, 0.44f, 0.60f), Bloc.Casquette).SansCollision();
-            Bloc.Galet("Visiere", t, new Vector3(0f, 1.46f, 0.26f),
-                       new Vector3(0.46f, 0.10f, 0.34f), Bloc.Casquette, -12f).SansCollision();
-
+            go.transform.position = Vector3.zero;
+            Personnage.Construire(go.transform, Bloc.Tablier, Bloc.Casquette);
             return go.AddComponent<Joueur>();
+        }
+
+        /// <summary>L'employe de caisse, cache tant qu'il n'est pas embauche.</summary>
+        static GameObject Caissier(Transform parent, Comptoir comptoir, Vector3 position)
+        {
+            var go = new GameObject("Caissier");
+            go.transform.SetParent(parent, false);
+            go.transform.position = position;
+            Personnage.Construire(go.transform, Bloc.Couleur(0x7BC86B), Bloc.Couleur(0xF4F1EA));
+            var c = go.AddComponent<Caissier>();
+            c.Comptoir = comptoir;
+            go.SetActive(false);
+            return go;
         }
 
         static Comptoir Comptoir(Transform parent, Joueur joueur)
@@ -279,22 +259,27 @@ namespace Pizzeria3D
             return go;
         }
 
-        static void Zone(Transform parent, Joueur joueur, GameObject achat)
+        /// <summary>
+        /// Une dalle a peine posee sur le sol : un carre trop epais ou trop
+        /// large ressemble a un objet pose la, pas a un emplacement a acheter.
+        /// </summary>
+        static void Zone(Transform parent, Joueur joueur, GameObject achat, Vector3 position,
+                         int prix, string libelle)
         {
             var go = new GameObject("ZoneAchat");
             go.transform.SetParent(parent, false);
-            go.transform.position = new Vector3(-1.2f, 0f, -3.2f);
+            go.transform.position = position;
 
-            Bloc.Boite("Dalle", go.transform, new Vector3(0f, 0.03f, 0f), new Vector3(2.6f, 0.06f, 2.6f),
-                       Bloc.Zone).SansCollision();
-            Bloc.Boite("Cadre", go.transform, new Vector3(0f, 0.02f, 0f), new Vector3(2.9f, 0.04f, 2.9f),
-                       Color.white).SansCollision();
+            Bloc.Boite("Cadre", go.transform, new Vector3(0f, 0.012f, 0f),
+                       new Vector3(1.95f, 0.024f, 1.95f), Color.white).SansCollision();
+            Bloc.Boite("Dalle", go.transform, new Vector3(0f, 0.018f, 0f),
+                       new Vector3(1.75f, 0.024f, 1.75f), Bloc.Zone).SansCollision();
 
             var z = go.AddComponent<ZoneAchat>();
             z.Joueur = joueur;
             z.Achat = achat;
-            z.Prix = Reglages.PrixSecondFour;
-            z.Libelle = "Nouveau four";
+            z.Prix = prix;
+            z.Libelle = libelle;
         }
     }
 

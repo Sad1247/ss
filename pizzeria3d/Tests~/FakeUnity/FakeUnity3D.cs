@@ -77,8 +77,36 @@ namespace UnityEngine
             foreach (var t in types) AjouterType(t);
         }
 
-        public void SetActive(bool b) => Actif = b;
+        public void SetActive(bool b)
+        {
+            bool avant = Actif;
+            Actif = b;
+            // Unity appelle OnEnable au moment ou l'objet devient actif :
+            // sans cela, un objet revele en cours de partie ne s'annonce jamais.
+            if (b && !avant) Reveiller(this);
+        }
+
+        static void Reveiller(GameObject go)
+        {
+            foreach (var c in new List<Component>(go.Composants))
+                if (c is MonoBehaviour mb) mb.Invoquer("OnEnable");
+            foreach (var e in new List<Transform>(go.transform.Enfants))
+                if (e.gameObject.Actif) Reveiller(e.gameObject);
+        }
+
         public bool activeSelf => Actif;
+
+        /// <summary>Actif seulement si tous ses parents le sont aussi.</summary>
+        public bool ActifDansHierarchie
+        {
+            get
+            {
+                if (!Actif) return false;
+                for (var p = transform.parent; p != null; p = p.parent)
+                    if (!p.gameObject.Actif) return false;
+                return true;
+            }
+        }
 
         public static GameObject CreatePrimitive(PrimitiveType type)
         {
@@ -172,8 +200,12 @@ namespace UnityEngine
                 if (mb.gameObject.Detruit) continue;
                 if (Demarres.Add(mb)) mb.Invoquer("Start");
             }
-            foreach (var mb in copie) if (!mb.gameObject.Detruit) mb.Invoquer("Update");
-            foreach (var mb in copie) if (!mb.gameObject.Detruit) mb.Invoquer("LateUpdate");
+            // Unity ne met a jour que les objets actifs : sans ce filtre, le
+            // second four produirait des pizzas avant meme d'etre achete.
+            foreach (var mb in copie)
+                if (!mb.gameObject.Detruit && mb.gameObject.ActifDansHierarchie) mb.Invoquer("Update");
+            foreach (var mb in copie)
+                if (!mb.gameObject.Detruit && mb.gameObject.ActifDansHierarchie) mb.Invoquer("LateUpdate");
             Input.FinDeFrame();
         }
     }

@@ -22,9 +22,9 @@ namespace Pizzeria3D
         void Update()
         {
             if (Joueur == null) return;
-            bool dessus = Joueur.EstPres(transform.position, 1.5f);
-            Hud.Indice = dessus ? $"{Libelle} — reste {Restant} EUR" : null;
-            if (!dessus) return;
+            bool dessus = Joueur.EstPres(transform.position, 1.2f);
+            if (dessus) Hud.MontrerIndice(this, $"{Libelle} — reste {Restant} EUR");
+            else { Hud.EffacerIndice(this); return; }
 
             // on retire par euros entiers, en gardant la fraction pour la suite
             _reste += Reglages.DebitAchat * Time.deltaTime;
@@ -42,7 +42,7 @@ namespace Pizzeria3D
         void Livrer()
         {
             if (Achat != null) Achat.SetActive(true);
-            Hud.Indice = null;
+            Hud.EffacerIndice(this);
             Hud.Annonce(Libelle + " installe !");
             Destroy(gameObject);
         }

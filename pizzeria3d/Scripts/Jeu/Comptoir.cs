@@ -15,6 +15,9 @@ namespace Pizzeria3D
         public Transform Sortie;             // ou les clients s'en vont
         public Caisse Caisse;
 
+        /// <summary>Vrai des qu'un employe tient la caisse a la place du joueur.</summary>
+        public bool CaissierPresent;
+
         readonly List<Client> _file = new List<Client>();
         float _compteurArrivee;
 
@@ -62,9 +65,17 @@ namespace Pizzeria3D
             for (int i = 0; i < _file.Count; i++) _file[i].RangA(i);
         }
 
+        /// <summary>
+        /// Quelqu'un doit tenir la caisse : le joueur en personne tant qu'aucun
+        /// employe n'est embauche, l'employe ensuite.
+        /// </summary>
+        public bool CaisseTenue =>
+            CaissierPresent ||
+            (Joueur != null && Joueur.EstPres(transform.position, Reglages.RayonService));
+
         void Servir()
         {
-            if (_file.Count == 0) return;
+            if (_file.Count == 0 || !CaisseTenue) return;
             var premier = _file[0];
             if (!premier.EstArrive) return;
 

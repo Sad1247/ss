@@ -36,8 +36,13 @@ namespace Pizzeria3D
         public const float RayonRamassageBillet = 1.4f;
         public const float VitesseBillet = 9f;      // vol du billet vers le joueur
 
-        // --- zone d'achat ---
+        // --- service au comptoir ---
+        /// <summary>Distance a laquelle le joueur tient lui-meme la caisse.</summary>
+        public const float RayonService = 2.8f;
+
+        // --- zones d'achat ---
         public const int PrixSecondFour = 150;
+        public const int PrixCaissier = 250;
         public const float DebitAchat = 45f;        // euros par seconde en restant dessus
 
         // --- pile de pizzas ---

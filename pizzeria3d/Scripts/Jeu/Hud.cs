@@ -6,8 +6,26 @@ namespace Pizzeria3D
     /// <summary>Le strict necessaire a l'ecran : la caisse, et un indice contextuel.</summary>
     public sealed class Hud : MonoBehaviour
     {
-        /// <summary>Texte affiche tant que le joueur est sur une zone d'achat.</summary>
-        public static string Indice;
+        /// <summary>
+        /// Texte affiche tant que le joueur est sur une zone d'achat. Chaque
+        /// zone ne peut effacer que son propre message : sans cette regle, les
+        /// autres dalles remettent l'indice a zero des qu'on quitte la leur.
+        /// </summary>
+        public static string Indice { get; private set; }
+        static object _source;
+
+        public static void MontrerIndice(object source, string texte)
+        {
+            _source = source;
+            Indice = texte;
+        }
+
+        public static void EffacerIndice(object source)
+        {
+            if (_source != source) return;
+            _source = null;
+            Indice = null;
+        }
 
         static Hud _instance;
         Text _argent, _indice, _annonce;
