@@ -215,21 +215,22 @@ namespace Pizzeria3D
             go.transform.position = position;
             var t = go.transform;
 
-            Bloc.Boite("Plan", t, new Vector3(0f, 0.55f, 0f), new Vector3(3.0f, 1.1f, 1.2f),
+            // memes cotes que le caisson du comptoir : les deux meubles se
+            // repondent au lieu de sembler pris dans deux jeux differents
+            Bloc.Boite("Plan", t, new Vector3(0f, 0.55f, 0f), new Vector3(3.6f, 1.1f, 1.2f),
                        Bloc.Machine).SansCollision();
-            Bloc.Boite("Dessus", t, new Vector3(0f, 1.15f, 0f), new Vector3(3.2f, 0.16f, 1.4f),
+            Bloc.Boite("Dessus", t, new Vector3(0f, 1.15f, 0f), new Vector3(3.8f, 0.16f, 1.4f),
                        Bloc.Metal).SansCollision();
-            // le bandeau sombre du comptoir, repris a l'identique
-            Bloc.Boite("Bandeau", t, new Vector3(0f, 0.20f, -0.61f), new Vector3(3.0f, 0.30f, 0.04f),
+            Bloc.Boite("Bandeau", t, new Vector3(0f, 0.20f, -0.61f), new Vector3(3.6f, 0.30f, 0.04f),
                        Bloc.MachineBis).SansCollision();
 
-            Obstacles.Ajouter(position, 3.2f, 1.4f);
+            Obstacles.Ajouter(position, 3.8f, 1.4f);
 
-            // Une seule rangee de cartons, posee a plat sur le dessus. Empiles,
-            // ils formaient une tour plus haute que le personnel.
+            // Une seule rangee de cartons, a plat, poussee dans le coin arriere
+            // gauche du plan : au milieu, elle occupait tout le meuble.
             var rangee = new GameObject("Boites");
             rangee.transform.SetParent(t, false);
-            rangee.transform.localPosition = new Vector3(-0.98f, 1.23f, 0f);
+            rangee.transform.localPosition = new Vector3(-1.58f, 1.23f, 0.26f);
 
             var poste = new GameObject("Poste");
             poste.transform.SetParent(t, false);

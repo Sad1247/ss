@@ -93,7 +93,7 @@ namespace Pizzeria3D
             foreach (var e in _elements)
             {
                 float pas = Sens == Disposition.Rangee
-                    ? (e.Emballe ? Reglages.LargeurBoite : Reglages.DiametrePizza) * 1.06f
+                    ? (e.Emballe ? Reglages.LargeurBoite : Reglages.DiametrePizza) * 1.20f
                     : (e.Emballe ? Reglages.EpaisseurBoite : Reglages.EpaisseurPizza);
 
                 if (e.Objet != null)

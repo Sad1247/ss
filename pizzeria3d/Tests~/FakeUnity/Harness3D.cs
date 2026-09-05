@@ -45,6 +45,19 @@ static class Harness3D
     }
 
     /// <summary>Couleur du haut d'un client, pour verifier la variete.</summary>
+    /// <summary>Aucun enfant pose de travers ? Une boite carree ne pardonne pas.</summary>
+    static bool ToutDroit(Transform parent)
+    {
+        foreach (var e in parent.Enfants)
+        {
+            if (!e.gameObject.name.StartsWith("Boite")) continue;
+            var r = e.localRotation;
+            if (Mathf.Abs(r.x) > 0.001f || Mathf.Abs(r.y) > 0.001f ||
+                Mathf.Abs(r.z) > 0.001f) return false;
+        }
+        return true;
+    }
+
     /// <summary>Deux meubles sont-ils peints pareil ? Compare une piece a une piece.</summary>
     static bool MemeCouleur(Transform a, string nomA, Transform b, string nomB)
     {
@@ -227,6 +240,14 @@ static class Harness3D
         Check("aucun carton n'est empile sur un autre", hautMax - hautMin < 0.01f);
         Check("ils s'alignent le long du plan", largeurRangee > Reglages.LargeurBoite);
         Check("la rangee tient sur le plan de travail", largeurRangee < 2.4f);
+
+        // Elle est poussee dans un coin : au milieu, elle mangeait tout le plan.
+        var coin = table != null ? table.Boites.transform.localPosition : Vector3.zero;
+        Check("la rangee est poussee dans un coin", coin.x < -1f && coin.z > 0.1f);
+        Check("elle laisse le reste du plan libre",
+              table != null && coin.x + largeurRangee + Reglages.LargeurBoite < 1.4f);
+        Check("les cartons sont poses bien droits",
+              table != null && ToutDroit(table.Boites.transform));
         Check("le caissier vient s'y placer devant, pas dedans",
               table != null && table.PointDeTravail.z < table.transform.position.z);
         // en marchant droit dessus, le joueur doit etre arrete avant le plateau
@@ -583,6 +604,13 @@ static class Harness3D
         for (int i = 0; i < 60 * 30 && comptoir.Stock.Nombre <= deposees; i++) Frames(1);
         Check("il les depose sur le comptoir", comptoir.Stock.Nombre > deposees);
         Check("ce qu'il depose est en boite", comptoir.Stock.SommetEmballe);
+        // Empilees, mais au cordeau : c'est ce qui a ete demande. On attend
+        // d'en avoir plusieurs — une pile d'une seule boite serait droite
+        // meme avec un decalage par element.
+        for (int i = 0; i < 60 * 40 && comptoir.Stock.Nombre < 3; i++) Frames(1);
+        Check("le comptoir empile plusieurs boites", comptoir.Stock.Nombre >= 3);
+        Check("les boites s'empilent bien droites au comptoir",
+              ToutDroit(comptoir.Stock.transform));
 
         // --- le caissier sert sans le joueur ---
         // On garnit d'abord le comptoir, sinon le test passerait faute de stock

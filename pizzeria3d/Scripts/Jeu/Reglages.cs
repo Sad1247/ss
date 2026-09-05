@@ -65,7 +65,7 @@ namespace Pizzeria3D
 
         // --- emballage ---
         /// <summary>Cote et hauteur d'une boite : plus haute qu'une pizza nue.</summary>
-        public const float LargeurBoite = 0.92f;
+        public const float LargeurBoite = 0.80f;
         public const float EpaisseurBoite = 0.16f;
         /// <summary>Secondes que met le caissier a mettre une pizza en boite.</summary>
         public const float DelaiEmballage = 0.30f;

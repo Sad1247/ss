@@ -14,9 +14,9 @@ namespace Pizzeria3D
             var racine = new GameObject("Boite" + index);
             racine.transform.SetParent(parent, false);
             racine.transform.localPosition = new Vector3(0f, index * Reglages.EpaisseurBoite, 0f);
-            // legerement de travers, comme les pizzas : une pile au cordeau
-            // trahit le decor genere
-            racine.transform.localRotation = Quaternion.Euler(0f, (index * 23f) % 360f, 0f);
+            // Aucun decalage d'un carton a l'autre : contrairement aux pizzas,
+            // des boites carrees posees de travers font desordre. Elles
+            // s'empilent au cordeau.
 
             float c = Reglages.LargeurBoite;
             float h = Reglages.EpaisseurBoite;
