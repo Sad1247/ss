@@ -67,14 +67,16 @@ Scripts/Jeu/
   Client.cs     arrivee, file, reception pizza par pizza, paiement, depart
   Billet.cs     la liasse au sol, puis son vol vers le joueur
   ZoneAchat.cs  la dalle verte : l'argent s'ecoule, l'objet apparait
-  Caissier.cs   l'employe : navette vers le four, depot, tenue de la caisse
+  Caissier.cs   l'employe : four, mise en boite, depot, tenue de la caisse
+  Emballage.cs  la table a cote du four : reserve de cartons et poste de travail
   Banque.cs     la caisse
   Hud.cs        compteur d'argent et indice contextuel
 
 Scripts/Monde/
   Bloc.cs       fabrique de primitives colorees + la palette
-  Pile.cs       une pile de pizzas (joueur, four, comptoir, sac client)
+  Pile.cs       une pile de pizzas nues ou en boite (joueur, four, comptoir, sac)
   Pizza3D.cs    la pizza : pate en volume, garniture en texture generee
+  Boite3D.cs    le carton a pizza : couvercle, rainure et etiquette
   Bulle.cs      la bulle au-dessus d'un client, et le nombre qu'il attend
   Fumee.cs      les bouffees qui sortent de la cheminee
   Caisse.cs     la caisse enregistreuse et son tiroir coulissant
@@ -84,7 +86,7 @@ Scripts/Monde/
 
 Tests~/FakeUnity/            (ignore par Unity : le ~ final)
   FakeUnity3D.cs  faux runtime Unity (hierarchie, transforms, entrees, cycle de vie)
-  Harness3D.cs    84 verifications qui jouent la boucle complete
+  Harness3D.cs    95 verifications qui jouent la boucle complete
 ```
 
 ## Verifier sans Unity
@@ -123,7 +125,7 @@ partie. Le remettre a 0.
 
 ## Ce qui est verifie, et ce qui ne l'est pas
 
-La logique tourne : les 84 verifications ci-dessus s'executent hors editeur.
+La logique tourne : les 95 verifications ci-dessus s'executent hors editeur.
 Le **rendu 3D n'a jamais ete affiche** — positions, echelles, cadrage de la
 camera et couleurs ont ete poses sans jamais etre vus. C'est la premiere chose
 a corriger a l'oeil au lancement.

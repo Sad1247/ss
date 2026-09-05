@@ -126,6 +126,8 @@ namespace Pizzeria3D
         public static readonly Color Sauce      = Couleur(0xE8452B);
         public static readonly Color Croute     = Couleur(0xE8A33D);
         public static readonly Color Carton     = Couleur(0xF0A93C);
+        public static readonly Color CartonClair= Couleur(0xF8C878);
+        public static readonly Color CartonOmbre= Couleur(0xC07C24);
         public static readonly Color Billet     = Couleur(0x5CD65C);
         public static readonly Color Zone       = Couleur(0x4AE04A);
         public static readonly Color Casquette  = Couleur(0xE23B2E);

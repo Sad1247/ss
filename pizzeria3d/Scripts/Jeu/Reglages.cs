@@ -62,5 +62,15 @@ namespace Pizzeria3D
         public const float EpaisseurPizza = 0.10f;
         /// <summary>Diametre de la pate. Le rapport aux deux fait l'allure de la pizza.</summary>
         public const float DiametrePizza = 0.78f;
+
+        // --- emballage ---
+        /// <summary>Cote et hauteur d'une boite : plus haute qu'une pizza nue.</summary>
+        public const float LargeurBoite = 0.92f;
+        public const float EpaisseurBoite = 0.16f;
+        /// <summary>Secondes que met le caissier a mettre une pizza en boite.</summary>
+        public const float DelaiEmballage = 0.30f;
+        /// <summary>Boites en reserve sur la table, et rythme de reappro.</summary>
+        public const int BoitesSurLaTable = 12;
+        public const float DelaiReappro = 1.5f;
     }
 }

@@ -160,6 +160,7 @@ static class Harness3D
         var comptoir = UnityEngine.Object.FindObjectOfType<Comptoir>();
         var zoneCaissier = UnityEngine.Object.FindObjectOfType<ZoneAchat>();
         var caisse = UnityEngine.Object.FindObjectOfType<Caisse>();
+        var table = UnityEngine.Object.FindObjectOfType<Emballage>();
         var camera = UnityEngine.Object.FindObjectOfType<UnityEngine.Camera>();
 
         Check("la scene se monte sans editeur", joueur != null && four != null && comptoir != null);
@@ -171,6 +172,22 @@ static class Harness3D
         Check("le caissier n'est pas encore la",
               Trouver("Caissier") != null && !Trouver("Caissier").activeSelf && !comptoir.CaissierPresent);
         Check("le tiroir-caisse est ferme au depart", caisse != null && !caisse.EstOuverte);
+
+        // --- la table de mise en boite ---
+        Check("une table de mise en boite est montee", table != null);
+        var ecartFour = table != null ? table.transform.position - four.transform.position : Vector3.zero;
+        ecartFour.y = 0f;
+        Check("elle est posee a cote du four", table != null && ecartFour.magnitude < 4f);
+        Check("des boites a pizza y attendent",
+              table != null && table.Reserve == Reglages.BoitesSurLaTable);
+        Check("ce sont bien des cartons, pas des pizzas nues",
+              table != null && Compte(table.Boites.transform, "Boite", false) == table.Reserve);
+        Check("le caissier vient s'y placer devant, pas dedans",
+              table != null && table.PointDeTravail.z < table.transform.position.z);
+        // en marchant droit dessus, le joueur doit etre arrete avant le plateau
+        var buteeTable = Obstacles.Resoudre(new Vector3(-6.9f, 0f, 1.0f),
+                                            new Vector3(0f, 0f, 0.5f), Reglages.RayonJoueur);
+        Check("on ne traverse pas la table", buteeTable.z < 1.45f);
 
         // --- manette flottante ---
         var manette = UnityEngine.Object.FindObjectOfType<Manette>();
@@ -493,19 +510,29 @@ static class Harness3D
         // On observe les deux faits jusqu'a les avoir vus tous les deux :
         // s'arreter au premier ratait la marche quand le caissier portait deja
         // une pizza a la premiere image.
-        bool aPorte = false, aMarche = false;
-        for (int i = 0; i < 60 * 90 && !(aPorte && aMarche); i++)
+        bool aPorte = false, aMarche = false, aEmballe = false, aTouche = false, reserveEntamee = false;
+        for (int i = 0; i < 60 * 90 && !(aPorte && aMarche && aEmballe && aTouche); i++)
         {
             Frames(1);
             if (navetteur.Portees > 0) aPorte = true;
             if (pasDuCaissier != null && pasDuCaissier.Allure > 0.2f) aMarche = true;
+            if (navetteur.PorteeEmballee) aEmballe = true;
+            if (table.Reserve < Reglages.BoitesSurLaTable) reserveEntamee = true;
+
+            var versTable = employe.transform.position - table.PointDeTravail;
+            versTable.y = 0f;
+            if (versTable.magnitude < 0.8f) aTouche = true;
         }
         Check("le caissier va chercher les pizzas au four", aPorte);
         Check("il marche pour de bon, membres animes", aMarche);
+        Check("il fait un detour par la table de mise en boite", aTouche);
+        Check("il pioche dans la reserve de cartons", reserveEntamee);
+        Check("il porte des pizzas en boite en repartant", aEmballe);
 
         int deposees = comptoir.Stock.Nombre;
         for (int i = 0; i < 60 * 30 && comptoir.Stock.Nombre <= deposees; i++) Frames(1);
         Check("il les depose sur le comptoir", comptoir.Stock.Nombre > deposees);
+        Check("ce qu'il depose est en boite", comptoir.Stock.SommetEmballe);
 
         // --- le caissier sert sans le joueur ---
         // On garnit d'abord le comptoir, sinon le test passerait faute de stock
@@ -525,6 +552,20 @@ static class Harness3D
         int liassesAvant = TousLes<Billet>().Count;
         int servisAvant = comptoir.Stock.Nombre;
         Secondes(Reglages.DelaiClient + Reglages.DureeCommande + 14f);
+        // Un client servi par le caissier repart avec des cartons, pas avec
+        // des pizzas nues posees les unes sur les autres.
+        bool clientEnBoite = false;
+        for (int i = 0; i < 60 * 40 && !clientEnBoite; i++)
+        {
+            Frames(1);
+            foreach (var cl in TousLes<Client>())
+            {
+                var sac = cl.transform.Find("Sac");
+                if (sac != null && Compte(sac, "Boite", false) > 0) clientEnBoite = true;
+            }
+        }
+        Check("les clients repartent avec des boites", clientEnBoite);
+
         Check("le caissier sert les clients sans le joueur",
               TousLes<Billet>().Count > liassesAvant || comptoir.Stock.Nombre < servisAvant);
 

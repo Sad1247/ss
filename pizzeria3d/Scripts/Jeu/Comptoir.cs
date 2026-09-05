@@ -86,7 +86,9 @@ namespace Pizzeria3D
             if (!premier.CommandeFinie) return;
 
             if (Stock == null || Stock.EstVide) return;
-            if (!premier.Recevoir()) return;      // pas encore le moment
+            // le client repart avec ce qu'on lui tend : une boite si le
+            // caissier est passe par la table, la pizza nue sinon
+            if (!premier.Recevoir(Stock.SommetEmballe)) return;   // pas encore le moment
             Stock.Retirer();
 
             if (premier.EstServi)

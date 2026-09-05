@@ -160,14 +160,14 @@ namespace Pizzeria3D
             if (_resteCommande > 0f) _resteCommande -= deltaTemps;
         }
 
-        /// <summary>Prend une pizza si le rythme de remise le permet.</summary>
-        public bool Recevoir()
+        /// <summary>Prend une pizza — en boite ou nue — si le rythme le permet.</summary>
+        public bool Recevoir(bool emballee)
         {
             if (EstServi) return false;
             if (_compteurRemise > 0f) { _compteurRemise -= Time.deltaTime; return false; }
             _compteurRemise = Reglages.DelaiTransfert * 2f;
             _recues++;
-            if (_sac != null) _sac.Ajouter();
+            if (_sac != null) _sac.Ajouter(emballee);
             if (_bulle != null) _bulle.Afficher(Pizzas - _recues);
             return true;
         }

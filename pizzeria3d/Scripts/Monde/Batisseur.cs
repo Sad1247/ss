@@ -33,9 +33,13 @@ namespace Pizzeria3D
             var comptoir = Comptoir(racine.transform, joueur);
             var four = Four(racine.transform, joueur, new Vector3(-4.2f, 0f, 3.2f), "Four1", true);
 
+            // La table de mise en boite, juste a cote du four : le caissier y
+            // passe entre le four et le comptoir.
+            var table = Table(racine.transform, new Vector3(-6.9f, 0f, 2.4f));
+
             // L'embauche se paie derriere la caisse, la ou l'employe se tiendra.
             var caissier = Caissier(racine.transform, comptoir, four.GetComponent<Four>(),
-                                    new Vector3(3.6f, 0f, 2.05f));
+                                    table, new Vector3(3.6f, 0f, 2.05f));
             Zone(racine.transform, joueur, caissier, new Vector3(3.6f, 0f, 3.3f),
                  Reglages.PrixCaissier, "Embaucher un caissier");
 
@@ -177,7 +181,8 @@ namespace Pizzeria3D
         }
 
         /// <summary>L'employe de caisse, cache tant qu'il n'est pas embauche.</summary>
-        static GameObject Caissier(Transform parent, Comptoir comptoir, Four four, Vector3 position)
+        static GameObject Caissier(Transform parent, Comptoir comptoir, Four four,
+                                   Emballage table, Vector3 position)
         {
             var go = new GameObject("Caissier");
             go.transform.SetParent(parent, false);
@@ -189,12 +194,63 @@ namespace Pizzeria3D
             var c = go.AddComponent<Caissier>();
             c.Comptoir = comptoir;
             c.Four = four;
+            c.Table = table;
             c.Poste = position;
             // en ligne droite, il traverserait le comptoir
             c.Relais = new Vector3(0.5f, 0f, 3.2f);
 
             go.SetActive(false);
             return go;
+        }
+
+        /// <summary>
+        /// La table de mise en boite : un plan de travail en bois, sa reserve
+        /// de cartons dessus, et un poste devant ou vient se placer le caissier.
+        /// </summary>
+        static Emballage Table(Transform parent, Vector3 position)
+        {
+            var go = new GameObject("TableEmballage");
+            go.transform.SetParent(parent, false);
+            go.transform.position = position;
+            var t = go.transform;
+
+            var bois = Bloc.Couleur(0xC08A4E);
+            var boisOmbre = Bloc.Couleur(0x8C6034);
+
+            Bloc.Boite("Plateau", t, new Vector3(0f, 0.92f, 0f), new Vector3(1.70f, 0.14f, 1.30f), bois)
+                .SansCollision();
+            Bloc.Boite("Etagere", t, new Vector3(0f, 0.34f, 0f), new Vector3(1.50f, 0.10f, 1.10f), boisOmbre)
+                .SansCollision();
+            foreach (float x in new[] { -0.74f, 0.74f })
+                foreach (float z in new[] { -0.54f, 0.54f })
+                    Bloc.Boite("Pied", t, new Vector3(x, 0.44f, z),
+                               new Vector3(0.14f, 0.88f, 0.14f), boisOmbre).SansCollision();
+
+            // la table barre le passage, comme le four
+            Obstacles.Ajouter(position, 1.80f, 1.40f);
+
+            // La reserve de cartons, sur le plateau. Une deuxieme pile, figee,
+            // sous la table : le stock de la pizzeria.
+            var reserve = new GameObject("Boites");
+            reserve.transform.SetParent(t, false);
+            reserve.transform.localPosition = new Vector3(-0.38f, 0.99f, 0f);
+
+            var appoint = new GameObject("Reserve");
+            appoint.transform.SetParent(t, false);
+            appoint.transform.localPosition = new Vector3(0.40f, 0.39f, 0f);
+            var pileBasse = appoint.AddComponent<Pile>();
+            pileBasse.Max = 6;
+            while (!pileBasse.EstPleine) pileBasse.Ajouter(true);
+
+            var poste = new GameObject("Poste");
+            poste.transform.SetParent(t, false);
+            poste.transform.localPosition = new Vector3(0f, 0f, -1.40f);
+
+            var e = go.AddComponent<Emballage>();
+            e.Boites = reserve.AddComponent<Pile>();
+            e.Poste = poste.transform;
+            e.Garnir();
+            return e;
         }
 
         static Comptoir Comptoir(Transform parent, Joueur joueur)

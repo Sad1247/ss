@@ -5,17 +5,19 @@ namespace Pizzeria3D
     /// <summary>
     /// L'employe embauche a la caisse. Il ne se contente pas de tenir le
     /// comptoir : quand le stock baisse, il va chercher des pizzas au four,
-    /// les rapporte et les depose. Le joueur n'a plus qu'a ramasser l'argent.
+    /// passe par la table pour les mettre en boite, puis les depose au
+    /// comptoir. Le joueur n'a plus qu'a ramasser l'argent.
     ///
     /// Son trajet passe par un point de relais : en ligne droite il traverserait
     /// le comptoir.
     /// </summary>
     public sealed class Caissier : MonoBehaviour
     {
-        enum Etat { Poste, VersFour, Charge, VersComptoir }
+        enum Etat { Poste, VersFour, Charge, VersTable, Emballe, VersComptoir }
 
         public Comptoir Comptoir;
         public Four Four;
+        public Emballage Table;
         public Vector3 Poste;
         public Vector3 Relais;
 
@@ -27,6 +29,8 @@ namespace Pizzeria3D
         float _compteurTransfert;
 
         public int Portees => _portee != null ? _portee.Nombre : 0;
+        /// <summary>Vrai quand tout ce qu'il porte est en boite.</summary>
+        public bool PorteeEmballee => _portee != null && !_portee.EstVide && _portee.ToutEmballe;
 
         void OnEnable()
         {
@@ -51,6 +55,8 @@ namespace Pizzeria3D
                 case Etat.Poste:        Attendre(); break;
                 case Etat.VersFour:     Aller(DevantFour(), Etat.Charge); break;
                 case Etat.Charge:       Charger(); break;
+                case Etat.VersTable:    Aller(PointTable(), Etat.Emballe); break;
+                case Etat.Emballe:      Emballer(); break;
                 case Etat.VersComptoir: Aller(Poste, Etat.Poste); break;
             }
         }
@@ -72,11 +78,12 @@ namespace Pizzeria3D
 
         void Charger()
         {
-            if (Four == null) { _etat = Etat.VersComptoir; return; }
+            if (Four == null) { _etat = Etat.VersComptoir; _passeParRelais = true; return; }
             if (_portee.EstPleine || Four.Sortie.EstVide)
             {
-                _etat = Etat.VersComptoir;
-                _passeParRelais = true;
+                // rien ne part au comptoir sans passer par la table
+                _etat = _portee.EstVide ? Etat.VersComptoir : Etat.VersTable;
+                _passeParRelais = _portee.EstVide;
                 return;
             }
             if (_compteurTransfert > 0f) return;
@@ -86,13 +93,35 @@ namespace Pizzeria3D
             _compteurTransfert = Reglages.DelaiTransfert;
         }
 
+        /// <summary>
+        /// Une pizza dans un carton, au rythme du geste. Il ne repart qu'une
+        /// fois tout emballe : c'est la condition pour servir un client.
+        /// </summary>
+        void Emballer()
+        {
+            if (Table == null || _portee.ToutEmballe)
+            {
+                _etat = Etat.VersComptoir;
+                _passeParRelais = true;
+                return;
+            }
+            if (_compteurTransfert > 0f) return;
+            if (!Table.PrendreBoite()) return;      // reserve vide : il attend le reappro
+
+            _portee.EmballerUne();
+            _compteurTransfert = Reglages.DelaiEmballage;
+        }
+
+        Vector3 PointTable() => Table != null ? Table.PointDeTravail : Poste;
+
         void Decharger()
         {
             if (_portee.EstVide || Comptoir == null || Comptoir.Stock.EstPleine) return;
             if (_compteurTransfert > 0f) return;
 
+            bool emballe = _portee.SommetEmballe;
             _portee.Retirer();
-            Comptoir.Stock.Ajouter();
+            Comptoir.Stock.Ajouter(emballe);
             _compteurTransfert = Reglages.DelaiTransfert;
         }
 
