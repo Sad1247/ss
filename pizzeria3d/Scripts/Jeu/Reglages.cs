@@ -62,6 +62,5 @@ namespace Pizzeria3D
         public const float EpaisseurPizza = 0.10f;
         /// <summary>Diametre de la pate. Le rapport aux deux fait l'allure de la pizza.</summary>
         public const float DiametrePizza = 0.78f;
-        public const float HauteurTete = 1.82f;   // juste au-dessus de la casquette
     }
 }

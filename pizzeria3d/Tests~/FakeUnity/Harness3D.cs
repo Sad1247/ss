@@ -259,8 +259,44 @@ static class Harness3D
         // --- ramassage ---
         Placer(joueur, four.Sortie.transform.position);
         Secondes(1.2f);
-        Check("le joueur charge la pile sur sa tete", joueur.Portee.Nombre >= 3);
+        Check("le joueur charge la pile dans ses mains", joueur.Portee.Nombre >= 3);
         Check("le stock du four baisse d'autant", four.Sortie.Nombre < 3);
+
+        // --- la pile se porte a la main, plus sur la tete ---
+        var corpsJoueur = joueur.transform.Find("Corps");
+        var mainsJoueur = corpsJoueur != null ? corpsJoueur.Find("Mains") : null;
+        Check("le personnage a un point de portage au buste", mainsJoueur != null);
+
+        var pileJoueur = joueur.Portee.transform;
+        Check("la pile portee pend aux mains", mainsJoueur != null && pileJoueur.parent == mainsJoueur);
+        Check("elle est plus bas que la tete", mainsJoueur != null && mainsJoueur.localPosition.y < 1.2f);
+        Check("elle est devant le corps", mainsJoueur != null && mainsJoueur.localPosition.z > 0.3f);
+
+        var demarcheJoueur = joueur.GetComponent<Demarche>();
+        Check("les bras se figent quand il porte",
+              demarcheJoueur != null && demarcheJoueur.BrasPortent);
+
+        // Les paumes doivent tomber sur la pile : on refait le calcul de la
+        // demarche a la main. Une pile posee a cote des mains serait pire que
+        // sur la tete.
+        if (mainsJoueur != null && corpsJoueur != null)
+        {
+            var epaule = corpsJoueur.Find("EpauleG");
+            Transform paume = null;
+            if (epaule != null)
+                foreach (var e in epaule.Enfants) if (e.gameObject.name == "Main") paume = e;
+
+            bool sousLesPaumes = false;
+            if (epaule != null && paume != null)
+            {
+                var p = epaule.localPosition + epaule.localRotation * paume.localPosition;
+                var ecart = p - mainsJoueur.localPosition;
+                ecart.x = 0f;                       // les deux mains encadrent la pile
+                sousLesPaumes = ecart.magnitude < 0.06f;
+            }
+            Check("la pile repose bien entre les paumes", sousLesPaumes);
+        }
+        else Check("la pile repose bien entre les paumes", false);
 
         int portees = joueur.Portee.Nombre;
         Secondes(Reglages.DureeCuisson * 2f);

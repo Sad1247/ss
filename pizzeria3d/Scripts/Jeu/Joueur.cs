@@ -4,7 +4,7 @@ namespace Pizzeria3D
 {
     /// <summary>
     /// Le pizzaiolo : deplacement au doigt facon manette flottante, et pile de
-    /// pizzas portee sur la tete. Le transfert vers/depuis les stations se fait
+    /// pizzas portee a bout de bras. Le transfert vers/depuis les stations se fait
     /// pizza par pizza, par proximite — c'est le geste central du genre.
     /// </summary>
     public sealed class Joueur : MonoBehaviour
@@ -12,6 +12,7 @@ namespace Pizzeria3D
         public Pile Portee;
 
         Transform _corps;
+        Demarche _demarche;
         float _compteurTransfert;
 
         public Vector3 Position => transform.position;
@@ -19,13 +20,8 @@ namespace Pizzeria3D
         void Awake()
         {
             _corps = transform.Find("Corps");
-            if (Portee == null)
-            {
-                var p = new GameObject("PilePortee");
-                p.transform.SetParent(transform, false);
-                p.transform.localPosition = new Vector3(0f, Reglages.HauteurTete, 0f);
-                Portee = p.AddComponent<Pile>();
-            }
+            _demarche = GetComponent<Demarche>();
+            if (Portee == null) Portee = Portage.Creer(transform, "PilePortee");
             Portee.Max = Reglages.CapacitePortee;
         }
 
@@ -33,6 +29,8 @@ namespace Pizzeria3D
         {
             Deplacer(Direction() * Reglages.VitesseJoueur * Time.deltaTime);
             if (_compteurTransfert > 0f) _compteurTransfert -= Time.deltaTime;
+            // bras tendus tant qu'il tient quelque chose, pendants sinon
+            if (_demarche != null) _demarche.BrasPortent = !Portee.EstVide;
         }
 
         Transform _camera;

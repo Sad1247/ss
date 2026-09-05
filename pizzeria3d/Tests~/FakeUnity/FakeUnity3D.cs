@@ -182,10 +182,19 @@ namespace UnityEngine
             p?.Enfants.Add(this);
         }
 
-        public Transform Find(string nom)
+        /// <summary>Comme Unity : accepte un chemin "Corps/Mains", pas seulement un nom.</summary>
+        public Transform Find(string chemin)
         {
-            foreach (var e in Enfants) if (e.gameObject.name == nom) return e;
-            return null;
+            var courant = this;
+            foreach (var nom in chemin.Split('/'))
+            {
+                if (nom.Length == 0) continue;
+                Transform trouve = null;
+                foreach (var e in courant.Enfants) if (e.gameObject.name == nom) { trouve = e; break; }
+                if (trouve == null) return null;
+                courant = trouve;
+            }
+            return courant == this ? null : courant;
         }
 
         public void Rotate(float x, float y, float z) { }
@@ -477,6 +486,8 @@ namespace UnityEngine
     public static class Mathf
     {
         public const float PI = (float)Math.PI;
+        public const float Deg2Rad = (float)(Math.PI / 180.0);
+        public const float Rad2Deg = (float)(180.0 / Math.PI);
         public static float Sin(float f) => (float)Math.Sin(f);
         public static float Cos(float f) => (float)Math.Cos(f);
         public static float Sqrt(float f) => (float)Math.Sqrt(f);

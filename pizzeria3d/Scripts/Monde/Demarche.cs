@@ -16,6 +16,13 @@ namespace Pizzeria3D
         public float Amplitude = 42f;
         public float VitesseReference = 6f;
 
+        /// <summary>
+        /// Vrai quand le personnage porte quelque chose : les bras se figent
+        /// alors devant lui. Sans cela la pile, posee au point de portage,
+        /// resterait immobile pendant que les mains, elles, se balanceraient.
+        /// </summary>
+        public bool BrasPortent;
+
         Vector3 _precedente;
         float _phase;
         float _allure;          // 0 a l'arret, 1 a pleine vitesse
@@ -45,8 +52,17 @@ namespace Pizzeria3D
             float angle = Mathf.Sin(_phase) * Amplitude * _allure;
             Tourner(HancheG, angle);
             Tourner(HancheD, -angle);
-            Tourner(EpauleG, -angle * 0.75f);
-            Tourner(EpauleD, angle * 0.75f);
+
+            if (BrasPortent)
+            {
+                Tourner(EpauleG, Personnage.AngleBrasPortant);
+                Tourner(EpauleD, Personnage.AngleBrasPortant);
+            }
+            else
+            {
+                Tourner(EpauleG, -angle * 0.75f);
+                Tourner(EpauleD, angle * 0.75f);
+            }
 
             if (Corps == null) return;
             var p = Corps.localPosition;

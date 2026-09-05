@@ -21,6 +21,7 @@ namespace Pizzeria3D
 
         Pile _portee;
         Transform _corps;
+        Demarche _demarche;
         Etat _etat = Etat.Poste;
         bool _passeParRelais;
         float _compteurTransfert;
@@ -35,16 +36,15 @@ namespace Pizzeria3D
         void Awake()
         {
             _corps = transform.Find("Corps");
-            var p = new GameObject("PilePortee");
-            p.transform.SetParent(transform, false);
-            p.transform.localPosition = new Vector3(0f, Reglages.HauteurTete, 0f);
-            _portee = p.AddComponent<Pile>();
+            _demarche = GetComponent<Demarche>();
+            _portee = Portage.Creer(transform, "PilePortee");
             _portee.Max = Reglages.CapacitePorteeCaissier;
         }
 
         void Update()
         {
             if (_compteurTransfert > 0f) _compteurTransfert -= Time.deltaTime;
+            if (_demarche != null) _demarche.BrasPortent = !_portee.EstVide;
 
             switch (_etat)
             {

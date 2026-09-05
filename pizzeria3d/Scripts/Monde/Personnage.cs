@@ -33,7 +33,16 @@ namespace Pizzeria3D
             public Transform Corps;
             public Transform HancheG, HancheD;
             public Transform EpauleG, EpauleD;
+            /// <summary>Point de portage, a hauteur des paumes bras tendus devant.</summary>
+            public Transform Mains;
         }
+
+        /// <summary>Inclinaison des epaules quand les bras tiennent une pile.</summary>
+        public const float AngleBrasPortant = -72f;
+
+        // Position d'une paume dans le repere de son epaule, bras pendant.
+        const float HauteurEpaule = 1.02f;
+        static readonly Vector3 PaumeAuRepos = new Vector3(0f, -0.47f, 0.01f);
 
         /// <summary>Raccourci pour le joueur et les employes, coiffes d'une casquette.</summary>
         public static Membres Construire(Transform parent, Color tshirt, Color casquette)
@@ -83,8 +92,8 @@ namespace Pizzeria3D
                            new Vector3(0.24f * a.Largeur, 0.22f, 0.20f), a.Pantalon).SansCollision();
 
             float ecartEpaules = 0.28f * a.Largeur;
-            m.EpauleG = Pivot("EpauleG", t, new Vector3(-ecartEpaules, 1.02f, 0f));
-            m.EpauleD = Pivot("EpauleD", t, new Vector3(ecartEpaules, 1.02f, 0f));
+            m.EpauleG = Pivot("EpauleG", t, new Vector3(-ecartEpaules, HauteurEpaule, 0f));
+            m.EpauleD = Pivot("EpauleD", t, new Vector3(ecartEpaules, HauteurEpaule, 0f));
             for (int i = 0; i < 2; i++)
             {
                 var epaule = i == 0 ? m.EpauleG : m.EpauleD;
@@ -94,9 +103,16 @@ namespace Pizzeria3D
                            new Vector3(0.26f, 0.30f, 0.28f), a.Tshirt).SansCollision();
                 Bloc.Capsule("Bras", epaule, new Vector3(cote * 0.02f, -0.26f, 0f),
                              new Vector3(0.18f, 0.19f, 0.18f), a.Peau).SansCollision();
-                Bloc.Bille("Main", epaule, new Vector3(cote * 0.035f, -0.47f, 0.01f),
+                Bloc.Bille("Main", epaule,
+                           new Vector3(cote * 0.035f, PaumeAuRepos.y, PaumeAuRepos.z),
                            0.17f, a.Peau).SansCollision();
             }
+
+            // Le point ou se rejoignent les deux paumes une fois les bras
+            // tendus devant : c'est la que se pose la pile de pizzas. Il tient
+            // au buste et non aux epaules, sinon la pile se balancerait avec
+            // les bras au moindre pas.
+            m.Mains = Pivot("Mains", t, PositionDesPaumes());
 
             Bloc.Bille("Tete", t, new Vector3(0f, 1.42f, 0f), 0.52f, a.Peau).SansCollision();
             Visage(t, a);
@@ -150,6 +166,20 @@ namespace Pizzeria3D
                                new Vector3(0.44f, 0.60f, 0.34f), a.Cheveux).SansCollision();
                     break;
             }
+        }
+
+        /// <summary>
+        /// Ou tombent les paumes quand l'epaule pivote de AngleBrasPortant :
+        /// la meme rotation autour de X que celle appliquee par la demarche.
+        /// </summary>
+        static Vector3 PositionDesPaumes()
+        {
+            float r = AngleBrasPortant * Mathf.Deg2Rad;
+            float cos = Mathf.Cos(r), sin = Mathf.Sin(r);
+            return new Vector3(
+                0f,
+                HauteurEpaule + PaumeAuRepos.y * cos - PaumeAuRepos.z * sin,
+                PaumeAuRepos.y * sin + PaumeAuRepos.z * cos);
         }
 
         static Transform Pivot(string nom, Transform parent, Vector3 position)
