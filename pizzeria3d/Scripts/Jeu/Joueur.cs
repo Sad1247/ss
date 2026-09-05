@@ -12,8 +12,6 @@ namespace Pizzeria3D
         public Pile Portee;
 
         Transform _corps;
-        Vector3 _origineDoigt;
-        bool _doigtPose;
         float _compteurTransfert;
 
         public Vector3 Position => transform.position;
@@ -37,21 +35,18 @@ namespace Pizzeria3D
             if (_compteurTransfert > 0f) _compteurTransfert -= Time.deltaTime;
         }
 
-        /// <summary>Manette flottante : l'origine est la ou le doigt s'est pose.</summary>
+        /// <summary>
+        /// La direction vient de la manette a l'ecran ; l'ecran etant tourne de
+        /// 45 degres par rapport au monde, on la reporte sur les axes
+        /// isometriques pour que "vers le haut" aille vraiment vers le fond.
+        /// </summary>
         Vector3 Direction()
         {
-            if (Input.GetMouseButtonDown(0)) { _origineDoigt = Input.mousePosition; _doigtPose = true; }
-            if (Input.GetMouseButtonUp(0)) _doigtPose = false;
-            if (!_doigtPose) return Vector3.zero;
+            var m = Manette.Active;
+            if (m == null) return Vector3.zero;
+            var plan = m.Direction;
+            if (plan.x == 0f && plan.y == 0f) return Vector3.zero;
 
-            Vector3 delta = Input.mousePosition - _origineDoigt;
-            float rayon = Mathf.Min(Screen.height * 0.12f, 140f);
-            var plan = new Vector2(delta.x, delta.y);
-            float force = Mathf.Clamp01(plan.magnitude / rayon);
-            if (force < 0.12f) return Vector3.zero;
-
-            plan = plan.normalized * force;
-            // repere isometrique : l'ecran est tourne de 45 degres par rapport au monde
             var avant = new Vector3(1f, 0f, 1f).normalized;
             var droite = new Vector3(1f, 0f, -1f).normalized;
             return droite * plan.x + avant * plan.y;

@@ -71,11 +71,21 @@ static class Harness3D
         Check("le tiroir-caisse est ferme au depart", caisse != null && !caisse.EstOuverte);
 
         // --- manette flottante ---
+        var manette = UnityEngine.Object.FindObjectOfType<Manette>();
+        Check("la manette existe", manette != null);
+        Check("la manette est cachee au repos", !manette.EstVisible);
+
         var depart = joueur.transform.position;
         Input.mousePosition = new Vector3(500f, 500f, 0f);
         Input.Boutons[0] = true;
         Frames(1);                                   // pose du doigt : origine
+        Check("la manette apparait sous le doigt", manette.EstVisible);
+        Check("elle est au repos tant qu'on n'a pas glisse",
+              manette.Direction.x == 0f && manette.Direction.y == 0f);
         Input.mousePosition = new Vector3(500f, 800f, 0f);   // glisse vers le haut
+        Frames(1);
+        Check("la manette suit le glissement", manette.Direction.y > 0.5f);
+        Check("sa course est bornee a un", manette.Direction.magnitude <= 1.001f);
         Secondes(0.5f);
         var apres = joueur.transform.position;
         Check("le doigt fait avancer le joueur", (apres - depart).magnitude > 1f);
@@ -83,6 +93,9 @@ static class Harness3D
               apres.x > depart.x + 0.5f && apres.z > depart.z + 0.5f);
         Input.Boutons[0] = false;
         Frames(2);
+        Check("la manette disparait au relachement", !manette.EstVisible);
+        Check("et sa direction retombe a zero",
+              manette.Direction.x == 0f && manette.Direction.y == 0f);
         var arret = joueur.transform.position;
         Secondes(0.3f);
         Check("le joueur s'arrete quand on lache", (joueur.transform.position - arret).magnitude < 0.01f);

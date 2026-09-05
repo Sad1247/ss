@@ -48,8 +48,8 @@ Pour reprendre la main, supprime `Batisseur.cs` et pose les composants toi-meme.
 
 ## Commandes
 
-Doigt ou souris, n'importe ou a l'ecran : une manette flottante apparait la ou
-tu appuies. Le reste se joue par proximite — s'approcher du four charge la
+Doigt ou souris, n'importe ou a l'ecran : un joystick apparait la ou tu
+appuies, avec son socle et son bouton, et disparait quand tu relaches. Le reste se joue par proximite — s'approcher du four charge la
 pile, s'approcher du comptoir la decharge, marcher sur une liasse l'encaisse,
 rester sur une dalle verte l'achete.
 
@@ -58,7 +58,8 @@ rester sur une dalle verte l'achete.
 ```
 Scripts/Jeu/
   Reglages.cs   TOUT l'equilibrage (vitesses, prix, cadences, capacites)
-  Joueur.cs     manette flottante, deplacement isometrique, pile portee
+  Joueur.cs     deplacement isometrique et pile portee
+  Manette.cs    le joystick a l'ecran, flottant, dessine sans sprite
   Four.cs       production continue et transfert vers le joueur
   Comptoir.cs   depot, file d'attente, service
   Client.cs     arrivee, file, reception pizza par pizza, paiement, depart
@@ -78,7 +79,7 @@ Scripts/Monde/
 
 Tests~/FakeUnity/            (ignore par Unity : le ~ final)
   FakeUnity3D.cs  faux runtime Unity (hierarchie, transforms, entrees, cycle de vie)
-  Harness3D.cs    39 verifications qui jouent la boucle complete
+  Harness3D.cs    47 verifications qui jouent la boucle complete
 ```
 
 ## Verifier sans Unity
@@ -90,7 +91,7 @@ mono h3d.exe
 ```
 
 Couvert : montage de la scene sans editeur, camera orthographique, manette
-flottante et axes isometriques, production du four, chargement et plafond de la
+flottante et axes isometriques, apparition et course du joystick, production du four, chargement et plafond de la
 pile portee, dechargement au comptoir, file d'attente, duree de commande et
 ouverture puis fermeture du tiroir-caisse, encaissement au bareme, liasse qui
 attend au sol puis se ramasse, dalle verte qui preleve puis livre,
@@ -111,7 +112,7 @@ dossier finit par `~`, qui le rend invisible a Unity.
 
 ## Ce qui est verifie, et ce qui ne l'est pas
 
-La logique tourne : les 39 verifications ci-dessus s'executent hors editeur.
+La logique tourne : les 47 verifications ci-dessus s'executent hors editeur.
 Le **rendu 3D n'a jamais ete affiche** — positions, echelles, cadrage de la
 camera et couleurs ont ete poses sans jamais etre vus. C'est la premiere chose
 a corriger a l'oeil au lancement.

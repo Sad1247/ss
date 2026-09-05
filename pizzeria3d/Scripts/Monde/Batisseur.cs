@@ -38,6 +38,7 @@ namespace Pizzeria3D
                  Reglages.PrixCaissier, "Embaucher un caissier");
 
             racine.AddComponent<Hud>();
+            racine.AddComponent<Manette>();
             Debug.Log("Pizzeria : scene prete. Maintiens le clic et glisse pour te deplacer.");
         }
 

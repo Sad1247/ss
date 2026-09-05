@@ -28,7 +28,8 @@ namespace Pizzeria3D
         }
 
         static Hud _instance;
-        Text _argent, _indice, _annonce;
+        Text _argent, _indice, _annonce, _portees;
+        Joueur _joueur;
         float _tempsAnnonce;
 
         public static void Annonce(string texte)
@@ -66,6 +67,14 @@ namespace Pizzeria3D
             _argent = Texte(carte.transform, police, "0", 56, TextAnchor.MiddleCenter, Bloc.Couleur(0x18400F));
             Etirer(_argent.GetComponent<RectTransform>());
 
+            // pile portee : sans ce compteur, rien ne dit au joueur qu'il a
+            // bien charge des pizzas au four
+            _portees = Texte(canvasGo.transform, police, "", 44, TextAnchor.UpperLeft, Color.white);
+            var rp = _portees.GetComponent<RectTransform>();
+            rp.anchorMin = new Vector2(0f, 1f); rp.anchorMax = new Vector2(0f, 1f);
+            rp.pivot = new Vector2(0f, 1f);
+            rp.anchoredPosition = new Vector2(34f, -34f); rp.sizeDelta = new Vector2(420f, 70f);
+
             _indice = Texte(canvasGo.transform, police, "", 40, TextAnchor.LowerCenter, Color.white);
             var ri = _indice.GetComponent<RectTransform>();
             ri.anchorMin = new Vector2(0f, 0f); ri.anchorMax = new Vector2(1f, 0f);
@@ -88,6 +97,12 @@ namespace Pizzeria3D
 
         void Update()
         {
+            if (_joueur == null) _joueur = Object.FindObjectOfType<Joueur>();
+            if (_joueur != null && _joueur.Portee != null)
+                _portees.text = _joueur.Portee.Nombre > 0
+                    ? $"Pizzas portees : {_joueur.Portee.Nombre} / {Reglages.CapacitePortee}"
+                    : "";
+
             _indice.text = Indice ?? "";
             if (_tempsAnnonce > 0f)
             {
