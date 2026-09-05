@@ -60,8 +60,13 @@ static class Harness3D
     /// </summary>
     static void PousserVers(Joueur j, Vector3 cible, float secondes)
     {
-        var d = cible - j.transform.position;
-        float ex = (d.x - d.z), ey = (d.x + d.z);
+        var cam = UnityEngine.Object.FindObjectOfType<UnityEngine.Camera>().transform;
+        var avant = cam.forward; avant.y = 0f; avant = avant.normalized;
+        var droite = cam.right;  droite.y = 0f; droite = droite.normalized;
+
+        var d = cible - j.transform.position; d.y = 0f;
+        float ex = d.x * droite.x + d.z * droite.z;   // composante ecran horizontale
+        float ey = d.x * avant.x + d.z * avant.z;     // composante ecran verticale
         float m = Mathf.Sqrt(ex * ex + ey * ey);
         if (m <= 0f) return;
         ex /= m; ey /= m;
@@ -167,8 +172,17 @@ static class Harness3D
         Secondes(0.5f);
         var apres = joueur.transform.position;
         Check("le doigt fait avancer le joueur", (apres - depart).magnitude > 1f);
-        Check("le deplacement suit l'axe isometrique",
-              apres.x > depart.x + 0.5f && apres.z > depart.z + 0.5f);
+        // Ce qui compte n'est pas le signe des coordonnees du monde mais ce
+        // que voit le joueur : pousser vers le haut doit monter a l'ecran, et
+        // ne pas deriver sur le cote.
+        var vue = camera.transform;
+        var camAvant = vue.forward; camAvant.y = 0f; camAvant = camAvant.normalized;
+        var camDroite = vue.right;  camDroite.y = 0f; camDroite = camDroite.normalized;
+        var course = apres - depart; course.y = 0f;
+        float versLeHaut = course.x * camAvant.x + course.z * camAvant.z;
+        float versLeCote = course.x * camDroite.x + course.z * camDroite.z;
+        Check("pousser vers le haut monte a l'ecran", versLeHaut > 1f);
+        Check("et ne derive pas sur le cote", Mathf.Abs(versLeCote) < 0.2f);
         Check("les membres se balancent quand il marche", demarche.Allure > 0.3f);
         float phaseAvant = demarche.Phase;
         Frames(10);

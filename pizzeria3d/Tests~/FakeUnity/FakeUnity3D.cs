@@ -171,6 +171,10 @@ namespace UnityEngine
             set => localRotation = value;
         }
 
+        public Vector3 forward => rotation * Vector3.forward;
+        public Vector3 right => rotation * new Vector3(1f, 0f, 0f);
+        public Vector3 up => rotation * Vector3.up;
+
         public void SetParent(Transform p, bool worldPositionStays)
         {
             parent?.Enfants.Remove(this);
@@ -268,13 +272,89 @@ namespace UnityEngine
         public override string ToString() => $"({x:F2},{y:F2},{z:F2})";
     }
 
+    /// <summary>
+    /// Un vrai quaternion, et non un bouchon : sans lui, impossible de verifier
+    /// qu'un deplacement calcule depuis l'orientation de la camera tombe juste.
+    /// </summary>
     public struct Quaternion
     {
-        public static Quaternion identity => new Quaternion();
-        public static Quaternion Euler(float x, float y, float z) => new Quaternion();
-        public static Quaternion LookRotation(Vector3 avant, Vector3 haut) => new Quaternion();
-        public static Quaternion Slerp(Quaternion a, Quaternion b, float t) => b;
-        public static Vector3 operator *(Quaternion q, Vector3 v) => v;
+        public float x, y, z, w;
+        public Quaternion(float px, float py, float pz, float pw) { x = px; y = py; z = pz; w = pw; }
+
+        public static Quaternion identity => new Quaternion(0, 0, 0, 1);
+
+        /// <summary>Ordre d'Unity : Z, puis X, puis Y.</summary>
+        public static Quaternion Euler(float ex, float ey, float ez)
+        {
+            float rx = ex * (float)Math.PI / 180f * 0.5f;
+            float ry = ey * (float)Math.PI / 180f * 0.5f;
+            float rz = ez * (float)Math.PI / 180f * 0.5f;
+
+            var qx = new Quaternion((float)Math.Sin(rx), 0, 0, (float)Math.Cos(rx));
+            var qy = new Quaternion(0, (float)Math.Sin(ry), 0, (float)Math.Cos(ry));
+            var qz = new Quaternion(0, 0, (float)Math.Sin(rz), (float)Math.Cos(rz));
+            return qy * qx * qz;
+        }
+
+        public static Quaternion operator *(Quaternion a, Quaternion b) => new Quaternion(
+            a.w * b.x + a.x * b.w + a.y * b.z - a.z * b.y,
+            a.w * b.y - a.x * b.z + a.y * b.w + a.z * b.x,
+            a.w * b.z + a.x * b.y - a.y * b.x + a.z * b.w,
+            a.w * b.w - a.x * b.x - a.y * b.y - a.z * b.z);
+
+        public static Vector3 operator *(Quaternion q, Vector3 v)
+        {
+            float ix = q.w * v.x + q.y * v.z - q.z * v.y;
+            float iy = q.w * v.y + q.z * v.x - q.x * v.z;
+            float iz = q.w * v.z + q.x * v.y - q.y * v.x;
+            float iw = -q.x * v.x - q.y * v.y - q.z * v.z;
+            return new Vector3(
+                ix * q.w + iw * -q.x + iy * -q.z - iz * -q.y,
+                iy * q.w + iw * -q.y + iz * -q.x - ix * -q.z,
+                iz * q.w + iw * -q.z + ix * -q.y - iy * -q.x);
+        }
+
+        public static Quaternion LookRotation(Vector3 avant, Vector3 haut)
+        {
+            var f = avant.normalized;
+            if (f.magnitude <= 0f) return identity;
+            var r = Croix(haut, f).normalized;
+            var u = Croix(f, r);
+
+            float trace = r.x + u.y + f.z;
+            if (trace > 0f)
+            {
+                float s = (float)Math.Sqrt(trace + 1f) * 2f;
+                return new Quaternion((u.z - f.y) / s, (f.x - r.z) / s, (r.y - u.x) / s, 0.25f * s);
+            }
+            if (r.x > u.y && r.x > f.z)
+            {
+                float s = (float)Math.Sqrt(1f + r.x - u.y - f.z) * 2f;
+                return new Quaternion(0.25f * s, (u.x + r.y) / s, (f.x + r.z) / s, (u.z - f.y) / s);
+            }
+            if (u.y > f.z)
+            {
+                float s = (float)Math.Sqrt(1f + u.y - r.x - f.z) * 2f;
+                return new Quaternion((u.x + r.y) / s, 0.25f * s, (f.y + u.z) / s, (f.x - r.z) / s);
+            }
+            else
+            {
+                float s = (float)Math.Sqrt(1f + f.z - r.x - u.y) * 2f;
+                return new Quaternion((f.x + r.z) / s, (f.y + u.z) / s, 0.25f * s, (r.y - u.x) / s);
+            }
+        }
+
+        static Vector3 Croix(Vector3 a, Vector3 b) => new Vector3(
+            a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
+
+        public static Quaternion Slerp(Quaternion a, Quaternion b, float t)
+        {
+            t = Mathf.Clamp01(t);
+            var q = new Quaternion(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t,
+                                   a.z + (b.z - a.z) * t, a.w + (b.w - a.w) * t);
+            float n = (float)Math.Sqrt(q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w);
+            return n <= 0f ? identity : new Quaternion(q.x / n, q.y / n, q.z / n, q.w / n);
+        }
     }
 
     public enum PrimitiveType { Cube, Sphere, Capsule, Cylinder, Plane, Quad }

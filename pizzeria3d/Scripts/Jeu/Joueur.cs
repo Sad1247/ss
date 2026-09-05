@@ -35,10 +35,13 @@ namespace Pizzeria3D
             if (_compteurTransfert > 0f) _compteurTransfert -= Time.deltaTime;
         }
 
+        Transform _camera;
+
         /// <summary>
-        /// La direction vient de la manette a l'ecran ; l'ecran etant tourne de
-        /// 45 degres par rapport au monde, on la reporte sur les axes
-        /// isometriques pour que "vers le haut" aille vraiment vers le fond.
+        /// La direction vient de la manette, exprimee en repere ecran. Elle est
+        /// reportee sur les axes de la CAMERA, et non sur des axes ecrits en
+        /// dur : ceux-ci etaient tournes d'un quart de tour, si bien que
+        /// pousser a droite faisait descendre le personnage a l'ecran.
         /// </summary>
         Vector3 Direction()
         {
@@ -47,8 +50,15 @@ namespace Pizzeria3D
             var plan = m.Direction;
             if (plan.x == 0f && plan.y == 0f) return Vector3.zero;
 
-            var avant = new Vector3(1f, 0f, 1f).normalized;
-            var droite = new Vector3(1f, 0f, -1f).normalized;
+            if (_camera == null)
+            {
+                var cam = Object.FindObjectOfType<Camera>();
+                if (cam == null) return Vector3.zero;
+                _camera = cam.transform;
+            }
+
+            var avant = _camera.forward; avant.y = 0f; avant = avant.normalized;
+            var droite = _camera.right;  droite.y = 0f; droite = droite.normalized;
             return droite * plan.x + avant * plan.y;
         }
 
