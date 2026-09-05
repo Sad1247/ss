@@ -35,6 +35,19 @@ static class Harness3D
         return r;
     }
 
+    /// <summary>Couleur du haut d'un client, pour verifier la variete.</summary>
+    static Color CouleurHaut(Client c)
+    {
+        foreach (var e in c.transform.Enfants)
+        {
+            if (e.gameObject.name != "Corps") continue;
+            foreach (var f in e.Enfants)
+                if (f.gameObject.name == "Torse")
+                    return f.gameObject.GetComponent<MeshRenderer>().sharedMaterial.color;
+        }
+        return Color.black;
+    }
+
     /// <summary>Le texte affiche dans la bulle d'un client, ou null.</summary>
     static string TexteBulle(Client c)
     {
@@ -256,6 +269,28 @@ static class Harness3D
 
         // --- un client arrive, patiente, est servi ---
         Check("des clients font la queue", comptoir.TailleFile >= 1 || TousLes<Client>().Count >= 1);
+
+        // --- allure des clients ---
+        var premierClient = TousLes<Client>()[0];
+        Check("un client a la meme silhouette que le personnel",
+              premierClient.transform.Find("Corps") != null &&
+              premierClient.transform.Find("Corps").Find("HancheG") != null);
+        Check("il marche au lieu de glisser", premierClient.GetComponent<Demarche>() != null);
+
+        // on en observe plusieurs : ils ne doivent pas etre habilles pareil
+        var vus = new List<Color>();
+        for (int i = 0; i < 60 * 120 && vus.Count < 6; i++)
+        {
+            Frames(1);
+            foreach (var cl in TousLes<Client>())
+            {
+                var c = CouleurHaut(cl);
+                bool connu = false;
+                foreach (var v in vus) if (v.r == c.r && v.g == c.g && v.b == c.b) connu = true;
+                if (!connu) vus.Add(c);
+            }
+        }
+        Check("les clients ne sont pas tous habilles pareil", vus.Count >= 3);
 
         // --- la commande dure trois secondes, tiroir ouvert ---
         // On guette un client QUI VIENT de commencer : en attraper un deja

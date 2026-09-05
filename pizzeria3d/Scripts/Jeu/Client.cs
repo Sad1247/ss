@@ -41,12 +41,33 @@ namespace Pizzeria3D
             return c;
         }
 
+        /// <summary>
+        /// Chaque client est habille au hasard : hauts, pantalons et chaussures
+        /// piochés dans des palettes distinctes, cheveux courts ou longs. Sans
+        /// cette variete, la file ressemble a une armee de clones.
+        /// </summary>
         void Silhouette()
         {
-            var teinte = Color.Lerp(Bloc.Client, Bloc.Couleur(0x8FA3B4), Random.value);
-            Bloc.Capsule("Corps", transform, new Vector3(0f, 0.75f, 0f), new Vector3(0.62f, 0.62f, 0.62f), teinte)
-                .SansCollision();
-            Bloc.Bille("Tete", transform, new Vector3(0f, 1.45f, 0f), 0.5f, teinte).SansCollision();
+            var a = new Personnage.Apparence
+            {
+                Tshirt     = Hauts[Random.Range(0, Hauts.Length)],
+                Pantalon   = Bas[Random.Range(0, Bas.Length)],
+                Chaussures = Chaussures[Random.Range(0, Chaussures.Length)],
+                Peau       = Peaux[Random.Range(0, Peaux.Length)],
+                Cheveux    = Cheveux[Random.Range(0, Cheveux.Length)],
+                Tete = Random.value < 0.5f
+                    ? Personnage.Coiffure.CheveuxLongs
+                    : Personnage.Coiffure.CheveuxCourts,
+            };
+
+            var membres = Personnage.Construire(transform, a);
+
+            // ils marchent jusqu'au comptoir : sans demarche ils glisseraient
+            var d = gameObject.AddComponent<Demarche>();
+            d.VitesseReference = Reglages.VitesseClient;
+            d.Corps = membres.Corps;
+            d.HancheG = membres.HancheG; d.HancheD = membres.HancheD;
+            d.EpauleG = membres.EpauleG; d.EpauleD = membres.EpauleD;
 
             var sac = new GameObject("Sac");
             sac.transform.SetParent(transform, false);
@@ -57,6 +78,34 @@ namespace Pizzeria3D
             _bulle = Bulle.Creer(transform, 2.15f);
             _bulle.Afficher(Pizzas);
         }
+
+        // --- garde-robe ---
+        static readonly Color[] Hauts =
+        {
+            Bloc.Couleur(0xE05C4E), Bloc.Couleur(0x4B8FE0), Bloc.Couleur(0x62B36B),
+            Bloc.Couleur(0xE0B44A), Bloc.Couleur(0x9A6FD0), Bloc.Couleur(0xE08AB4),
+            Bloc.Couleur(0x38B2A8), Bloc.Couleur(0xF0F0EA),
+        };
+        static readonly Color[] Bas =
+        {
+            Bloc.Couleur(0x36527A), Bloc.Couleur(0x2E2E36), Bloc.Couleur(0x7A6A56),
+            Bloc.Couleur(0x5A5F68), Bloc.Couleur(0x8C4A4A),
+        };
+        static readonly Color[] Chaussures =
+        {
+            Bloc.Couleur(0xF2F2F2), Bloc.Couleur(0x22242A), Bloc.Couleur(0xC0392B),
+            Bloc.Couleur(0x3D6EB4), Bloc.Couleur(0x8A5A2B),
+        };
+        static readonly Color[] Peaux =
+        {
+            Bloc.Couleur(0xF0C8A0), Bloc.Couleur(0xD9A066), Bloc.Couleur(0xA9713F),
+            Bloc.Couleur(0x6E4326), Bloc.Couleur(0x40281A),
+        };
+        static readonly Color[] Cheveux =
+        {
+            Bloc.Couleur(0x2B1D14), Bloc.Couleur(0x6B4423), Bloc.Couleur(0xC9A227),
+            Bloc.Couleur(0x8C2F2F), Bloc.Couleur(0x1A1A1E), Bloc.Couleur(0xD8D8D8),
+        };
 
         public void RangA(int rang)
         {
