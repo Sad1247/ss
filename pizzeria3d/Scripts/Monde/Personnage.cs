@@ -57,8 +57,15 @@ namespace Pizzeria3D
                            new Vector3(0.28f, 0.18f, 0.40f), a.Chaussures).SansCollision();
             }
 
-            Bloc.Galet("Torse", t, new Vector3(0f, 0.95f, 0f),
+            Bloc.Galet("Torse", t, new Vector3(0f, 0.95f, 0.01f),
                        new Vector3(0.62f, 0.62f, 0.46f), a.Tshirt).SansCollision();
+
+            // Le bassin est accroche au buste, pas aux hanches : suspendu aux
+            // pivots, il se balancerait avec les jambes.
+            Bloc.Galet("FesseG", t, new Vector3(-0.13f, 0.74f, -0.13f),
+                       new Vector3(0.30f, 0.28f, 0.26f), a.Pantalon).SansCollision();
+            Bloc.Galet("FesseD", t, new Vector3(0.13f, 0.74f, -0.13f),
+                       new Vector3(0.30f, 0.28f, 0.26f), a.Pantalon).SansCollision();
 
             m.EpauleG = Pivot("EpauleG", t, new Vector3(-0.28f, 1.02f, 0f));
             m.EpauleD = Pivot("EpauleD", t, new Vector3(0.28f, 1.02f, 0f));
@@ -71,8 +78,31 @@ namespace Pizzeria3D
             }
 
             Bloc.Bille("Tete", t, new Vector3(0f, 1.42f, 0f), 0.52f, a.Peau).SansCollision();
+            Visage(t, a);
             Coiffer(t, a);
             return m;
+        }
+
+        /// <summary>
+        /// Yeux et nez. Sans eux, une silhouette de dos et de face se
+        /// ressemblent : rien ne disait dans quel sens marchait un personnage.
+        /// </summary>
+        static void Visage(Transform t, Apparence a)
+        {
+            var blanc = Bloc.Couleur(0xF7F3EA);
+            var pupille = Bloc.Couleur(0x22201E);
+
+            foreach (float cote in new[] { -1f, 1f })
+            {
+                Bloc.Galet("Oeil", t, new Vector3(cote * 0.115f, 1.455f, 0.205f),
+                           new Vector3(0.135f, 0.155f, 0.07f), blanc).SansCollision();
+                Bloc.Galet("Pupille", t, new Vector3(cote * 0.115f, 1.45f, 0.245f),
+                           new Vector3(0.075f, 0.09f, 0.04f), pupille).SansCollision();
+            }
+
+            Bloc.Galet("Nez", t, new Vector3(0f, 1.375f, 0.235f),
+                       new Vector3(0.10f, 0.09f, 0.12f),
+                       Color.Lerp(a.Peau, Color.black, 0.12f)).SansCollision();
         }
 
         static void Coiffer(Transform t, Apparence a)

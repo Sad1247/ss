@@ -277,6 +277,20 @@ static class Harness3D
               premierClient.transform.Find("Corps").Find("HancheG") != null);
         Check("il marche au lieu de glisser", premierClient.GetComponent<Demarche>() != null);
 
+        // On doit pouvoir dire dans quel sens marche un personnage : yeux
+        // devant, fesses derriere.
+        var corpsClient = premierClient.transform.Find("Corps");
+        Transform oeil = null, fesse = null;
+        foreach (var e in corpsClient.Enfants)
+        {
+            if (e.gameObject.name == "Pupille") oeil = e;
+            if (e.gameObject.name == "FesseG") fesse = e;
+        }
+        Check("il a un visage", oeil != null);
+        Check("les yeux regardent devant", oeil != null && oeil.localPosition.z > 0.1f);
+        Check("il a des fesses", fesse != null);
+        Check("elles sont bien derriere", fesse != null && fesse.localPosition.z < -0.05f);
+
         // on en observe plusieurs : ils ne doivent pas etre habilles pareil
         var vus = new List<Color>();
         for (int i = 0; i < 60 * 120 && vus.Count < 6; i++)
