@@ -35,6 +35,15 @@ static class Harness3D
         return r;
     }
 
+    /// <summary>Compte les enfants directs portant ce nom.</summary>
+    static int Compte(Transform parent, string nom, bool exact)
+    {
+        int n = 0;
+        foreach (var e in parent.Enfants)
+            if (exact ? e.gameObject.name == nom : e.gameObject.name.Contains(nom)) n++;
+        return n;
+    }
+
     /// <summary>Couleur du haut d'un client, pour verifier la variete.</summary>
     static Color CouleurHaut(Client c)
     {
@@ -281,15 +290,19 @@ static class Harness3D
         // devant, fesses derriere.
         var corpsClient = premierClient.transform.Find("Corps");
         Transform oeil = null, fesse = null;
+        int mains = 0;
         foreach (var e in corpsClient.Enfants)
         {
             if (e.gameObject.name == "Pupille") oeil = e;
-            if (e.gameObject.name == "FesseG") fesse = e;
+            if (e.gameObject.name == "Fesse") fesse = e;
+            // les mains pendent aux epaules, pas au buste
+            if (e.gameObject.name.StartsWith("Epaule")) mains += Compte(e, "Main", true);
         }
         Check("il a un visage", oeil != null);
         Check("les yeux regardent devant", oeil != null && oeil.localPosition.z > 0.1f);
         Check("il a des fesses", fesse != null);
         Check("elles sont bien derriere", fesse != null && fesse.localPosition.z < -0.05f);
+        Check("il a deux mains", mains == 2);
 
         // on en observe plusieurs : ils ne doivent pas etre habilles pareil
         var vus = new List<Color>();
@@ -305,6 +318,34 @@ static class Harness3D
             }
         }
         Check("les clients ne sont pas tous habilles pareil", vus.Count >= 3);
+
+        // --- morphologies et coiffures ---
+        var carrures = new List<float>();
+        bool cheveuxLongs = false, cheveuxCourts = false;
+        for (int i = 0; i < 60 * 150 && (carrures.Count < 3 || !cheveuxLongs || !cheveuxCourts); i++)
+        {
+            Frames(1);
+            foreach (var cl in TousLes<Client>())
+            {
+                var corps = cl.transform.Find("Corps");
+                if (corps == null) continue;
+                foreach (var e in corps.Enfants)
+                {
+                    if (e.gameObject.name == "Torse")
+                    {
+                        float l = e.localScale.x;
+                        bool connue = false;
+                        foreach (var c in carrures) if (Mathf.Abs(c - l) < 0.03f) connue = true;
+                        if (!connue) carrures.Add(l);
+                    }
+                    if (e.gameObject.name == "Natte") cheveuxLongs = true;
+                }
+                if (Compte(corps, "Natte", false) == 0) cheveuxCourts = true;
+            }
+        }
+        Check("les carrures varient, des maigres aux corpulents", carrures.Count >= 3);
+        Check("des femmes ont les cheveux longs", cheveuxLongs);
+        Check("des hommes ont les cheveux courts", cheveuxCourts);
 
         // --- la commande dure trois secondes, tiroir ouvert ---
         // On guette un client QUI VIENT de commencer : en attraper un deja

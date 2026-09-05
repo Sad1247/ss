@@ -48,6 +48,16 @@ namespace Pizzeria3D
         /// </summary>
         void Silhouette()
         {
+            bool femme = Random.value < 0.5f;
+
+            // Carrure : la plupart des gens sont dans la moyenne, les extremes
+            // restent minoritaires — une file entierement obese ou maigre ne
+            // ressemblerait a rien.
+            float tirage = Random.value;
+            float largeur = tirage < 0.25f ? Random.Range(0.80f, 0.88f)     // maigres
+                          : tirage < 0.70f ? Random.Range(0.94f, 1.08f)     // moyens
+                                           : Random.Range(1.18f, 1.36f);    // corpulents
+
             var a = new Personnage.Apparence
             {
                 Tshirt     = Hauts[Random.Range(0, Hauts.Length)],
@@ -55,9 +65,11 @@ namespace Pizzeria3D
                 Chaussures = Chaussures[Random.Range(0, Chaussures.Length)],
                 Peau       = Peaux[Random.Range(0, Peaux.Length)],
                 Cheveux    = Cheveux[Random.Range(0, Cheveux.Length)],
-                Tete = Random.value < 0.5f
-                    ? Personnage.Coiffure.CheveuxLongs
-                    : Personnage.Coiffure.CheveuxCourts,
+                // les femmes portent les cheveux longs, les hommes courts
+                Tete = femme ? Personnage.Coiffure.CheveuxLongs
+                             : Personnage.Coiffure.CheveuxCourts,
+                Largeur = largeur,
+                Hauteur = femme ? Random.Range(0.92f, 1.00f) : Random.Range(0.98f, 1.06f),
             };
 
             var membres = Personnage.Construire(transform, a);

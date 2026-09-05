@@ -21,6 +21,11 @@ namespace Pizzeria3D
             public Color Peau = Bloc.Peau;
             public Color Cheveux = Bloc.Couleur(0x2E2018);
             public Coiffure Tete = Coiffure.Rien;
+
+            /// <summary>Carrure : 0,80 pour un maigre, 1,35 pour un corpulent.</summary>
+            public float Largeur = 1f;
+            /// <summary>Taille generale, autour de 1.</summary>
+            public float Hauteur = 1f;
         }
 
         public sealed class Membres
@@ -46,35 +51,51 @@ namespace Pizzeria3D
             var t = corps.transform;
 
             var m = new Membres { Corps = t };
+            t.localScale = new Vector3(a.Hauteur, a.Hauteur, a.Hauteur);
 
-            m.HancheG = Pivot("HancheG", t, new Vector3(-0.15f, 0.78f, 0f));
-            m.HancheD = Pivot("HancheD", t, new Vector3(0.15f, 0.78f, 0f));
+            float ecartJambes = 0.15f * Mathf.Lerp(1f, 1.25f, Mathf.Clamp01(a.Largeur - 1f));
+            float grosseurJambe = 0.26f * Mathf.Lerp(1f, 1.30f, Mathf.Clamp01((a.Largeur - 0.8f) / 0.55f));
+
+            m.HancheG = Pivot("HancheG", t, new Vector3(-ecartJambes, 0.78f, 0f));
+            m.HancheD = Pivot("HancheD", t, new Vector3(ecartJambes, 0.78f, 0f));
             foreach (var hanche in new[] { m.HancheG, m.HancheD })
             {
                 Bloc.Capsule("Jambe", hanche, new Vector3(0f, -0.36f, 0f),
-                             new Vector3(0.26f, 0.30f, 0.26f), a.Pantalon).SansCollision();
+                             new Vector3(grosseurJambe, 0.30f, grosseurJambe), a.Pantalon).SansCollision();
                 Bloc.Galet("Chaussure", hanche, new Vector3(0f, -0.69f, 0.06f),
                            new Vector3(0.28f, 0.18f, 0.40f), a.Chaussures).SansCollision();
             }
 
             Bloc.Galet("Torse", t, new Vector3(0f, 0.95f, 0.01f),
-                       new Vector3(0.62f, 0.62f, 0.46f), a.Tshirt).SansCollision();
+                       new Vector3(0.62f * a.Largeur, 0.62f, 0.46f * a.Largeur), a.Tshirt).SansCollision();
+
+            // le ventre ne sort que sur les corpulents
+            if (a.Largeur > 1.12f)
+                Bloc.Galet("Ventre", t, new Vector3(0f, 0.86f, 0.10f),
+                           new Vector3(0.58f * a.Largeur, 0.46f, 0.40f * a.Largeur), a.Tshirt)
+                    .SansCollision();
 
             // Le bassin est accroche au buste, pas aux hanches : suspendu aux
             // pivots, il se balancerait avec les jambes.
-            Bloc.Galet("FesseG", t, new Vector3(-0.13f, 0.74f, -0.13f),
-                       new Vector3(0.30f, 0.28f, 0.26f), a.Pantalon).SansCollision();
-            Bloc.Galet("FesseD", t, new Vector3(0.13f, 0.74f, -0.13f),
-                       new Vector3(0.30f, 0.28f, 0.26f), a.Pantalon).SansCollision();
+            float ecartFesses = 0.115f * a.Largeur;
+            foreach (float cote in new[] { -1f, 1f })
+                Bloc.Galet("Fesse", t, new Vector3(cote * ecartFesses, 0.74f, -0.11f),
+                           new Vector3(0.24f * a.Largeur, 0.22f, 0.20f), a.Pantalon).SansCollision();
 
-            m.EpauleG = Pivot("EpauleG", t, new Vector3(-0.28f, 1.02f, 0f));
-            m.EpauleD = Pivot("EpauleD", t, new Vector3(0.28f, 1.02f, 0f));
-            foreach (var epaule in new[] { m.EpauleG, m.EpauleD })
+            float ecartEpaules = 0.28f * a.Largeur;
+            m.EpauleG = Pivot("EpauleG", t, new Vector3(-ecartEpaules, 1.02f, 0f));
+            m.EpauleD = Pivot("EpauleD", t, new Vector3(ecartEpaules, 1.02f, 0f));
+            for (int i = 0; i < 2; i++)
             {
+                var epaule = i == 0 ? m.EpauleG : m.EpauleD;
+                float cote = i == 0 ? -1f : 1f;   // le decalage doit etre en miroir
+
                 Bloc.Galet("Manche", epaule, Vector3.zero,
                            new Vector3(0.26f, 0.30f, 0.28f), a.Tshirt).SansCollision();
-                Bloc.Capsule("Bras", epaule, new Vector3(-0.04f, -0.26f, 0f),
-                             new Vector3(0.19f, 0.20f, 0.19f), a.Peau).SansCollision();
+                Bloc.Capsule("Bras", epaule, new Vector3(cote * 0.02f, -0.26f, 0f),
+                             new Vector3(0.18f, 0.19f, 0.18f), a.Peau).SansCollision();
+                Bloc.Bille("Main", epaule, new Vector3(cote * 0.035f, -0.47f, 0.01f),
+                           0.17f, a.Peau).SansCollision();
             }
 
             Bloc.Bille("Tete", t, new Vector3(0f, 1.42f, 0f), 0.52f, a.Peau).SansCollision();
