@@ -205,6 +205,7 @@ namespace UnityEngine
         public static void Frame(float dt)
         {
             Time.deltaTime = dt;
+            Time.time += dt;
             // Unity cesse d'appeler Update sur un objet detruit : sans cette
             // regle, un objet supprime continuerait de jouer sa logique ici.
             Comportements.RemoveAll(mb => mb.gameObject == null || mb.gameObject.Detruit);
@@ -455,7 +456,11 @@ namespace UnityEngine
         public static void LogError(object o) => Journal.Add("ERROR " + o);
     }
 
-    public static class Time { public static float deltaTime; }
+    public static class Time
+    {
+        public static float deltaTime;
+        public static float time;   // avance avec les images simulees
+    }
 
     public class RectOffset
     {

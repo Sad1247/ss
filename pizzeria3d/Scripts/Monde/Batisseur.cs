@@ -153,8 +153,18 @@ namespace Pizzeria3D
             var go = new GameObject("Joueur");
             go.transform.SetParent(parent, false);
             go.transform.position = Vector3.zero;
-            Personnage.Construire(go.transform, Bloc.Tablier, Bloc.Casquette);
+            var membres = Personnage.Construire(go.transform, Bloc.Tablier, Bloc.Casquette);
+            Marche(go, membres);
             return go.AddComponent<Joueur>();
+        }
+
+        /// <summary>Donne sa demarche a un personnage : le meme pas pour tous.</summary>
+        static void Marche(GameObject go, Personnage.Membres m)
+        {
+            var d = go.AddComponent<Demarche>();
+            d.Corps = m.Corps;
+            d.HancheG = m.HancheG; d.HancheD = m.HancheD;
+            d.EpauleG = m.EpauleG; d.EpauleD = m.EpauleD;
         }
 
         /// <summary>L'employe de caisse, cache tant qu'il n'est pas embauche.</summary>
@@ -163,7 +173,9 @@ namespace Pizzeria3D
             var go = new GameObject("Caissier");
             go.transform.SetParent(parent, false);
             go.transform.position = position;
-            Personnage.Construire(go.transform, Bloc.Couleur(0x7BC86B), Bloc.Couleur(0xF4F1EA));
+            var membres = Personnage.Construire(go.transform, Bloc.Couleur(0x7BC86B),
+                                               Bloc.Couleur(0xF4F1EA));
+            Marche(go, membres);
 
             var c = go.AddComponent<Caissier>();
             c.Comptoir = comptoir;

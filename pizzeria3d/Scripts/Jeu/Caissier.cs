@@ -23,7 +23,6 @@ namespace Pizzeria3D
         Transform _corps;
         Etat _etat = Etat.Poste;
         bool _passeParRelais;
-        float _balancement;
         float _compteurTransfert;
 
         public int Portees => _portee != null ? _portee.Nombre : 0;
@@ -46,7 +45,6 @@ namespace Pizzeria3D
         void Update()
         {
             if (_compteurTransfert > 0f) _compteurTransfert -= Time.deltaTime;
-            Balancer();
 
             switch (_etat)
             {
@@ -131,14 +129,5 @@ namespace Pizzeria3D
             return new Vector3(p.x, 0f, p.z - 1.0f);   // devant la pierre, pas dedans
         }
 
-        void Balancer()
-        {
-            if (_corps == null || _etat != Etat.Poste) return;
-            // un leger balancement : plante raide, il aurait l'air d'un decor
-            _balancement += Time.deltaTime * 1.6f;
-            var p = _corps.localPosition;
-            p.y = Mathf.Sin(_balancement) * 0.03f;
-            _corps.localPosition = p;
-        }
     }
 }

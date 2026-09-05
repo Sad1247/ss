@@ -160,14 +160,24 @@ static class Harness3D
         Input.mousePosition = new Vector3(500f, 800f, 0f);   // glisse vers le haut
         Frames(1);
         Check("la manette suit le glissement", manette.Direction.y > 0.5f);
+
+        var demarche = joueur.GetComponent<Demarche>();
+        Check("le joueur a une demarche", demarche != null);
         Check("sa course est bornee a un", manette.Direction.magnitude <= 1.001f);
         Secondes(0.5f);
         var apres = joueur.transform.position;
         Check("le doigt fait avancer le joueur", (apres - depart).magnitude > 1f);
         Check("le deplacement suit l'axe isometrique",
               apres.x > depart.x + 0.5f && apres.z > depart.z + 0.5f);
+        Check("les membres se balancent quand il marche", demarche.Allure > 0.3f);
+        float phaseAvant = demarche.Phase;
+        Frames(10);
+        Check("le pas avance", demarche.Phase > phaseAvant);
+
         Input.Boutons[0] = false;
         Frames(2);
+        Secondes(0.8f);
+        Check("le balancement s'arrete quand il s'arrete", demarche.Allure < 0.05f);
         Check("la manette disparait au relachement", !manette.EstVisible);
         Check("et sa direction retombe a zero",
               manette.Direction.x == 0f && manette.Direction.y == 0f);
@@ -339,13 +349,16 @@ static class Harness3D
         var navetteur = employe.GetComponent<Caissier>();
         Placer(joueur, new Vector3(-9f, 0f, -9f));     // le joueur ne touche a rien
         comptoir.Stock.Vider();
-        bool aPorte = false;
+        var pasDuCaissier = employe.GetComponent<Demarche>();
+        bool aPorte = false, aMarche = false;
         for (int i = 0; i < 60 * 60 && !aPorte; i++)
         {
             Frames(1);
             if (navetteur.Portees > 0) aPorte = true;
+            if (pasDuCaissier != null && pasDuCaissier.Allure > 0.2f) aMarche = true;
         }
         Check("le caissier va chercher les pizzas au four", aPorte);
+        Check("il marche pour de bon, membres animes", aMarche);
 
         int deposees = comptoir.Stock.Nombre;
         for (int i = 0; i < 60 * 30 && comptoir.Stock.Nombre <= deposees; i++) Frames(1);
