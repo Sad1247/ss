@@ -364,8 +364,11 @@ static class Harness3D
         Placer(joueur, new Vector3(-9f, 0f, -9f));     // le joueur ne touche a rien
         comptoir.Stock.Vider();
         var pasDuCaissier = employe.GetComponent<Demarche>();
+        // On observe les deux faits jusqu'a les avoir vus tous les deux :
+        // s'arreter au premier ratait la marche quand le caissier portait deja
+        // une pizza a la premiere image.
         bool aPorte = false, aMarche = false;
-        for (int i = 0; i < 60 * 60 && !aPorte; i++)
+        for (int i = 0; i < 60 * 90 && !(aPorte && aMarche); i++)
         {
             Frames(1);
             if (navetteur.Portees > 0) aPorte = true;
