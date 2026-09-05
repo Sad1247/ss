@@ -252,6 +252,18 @@ static class Harness3D
         Check("un nouveau client entame sa commande", client != null);
         Check("il annonce sa commande dans une bulle",
               TexteBulle(client) == "x" + client.Pizzas);
+
+        // Un Text tronque n'affiche rien du tout : c'est ce qui rendait le
+        // nombre invisible. On verifie le reglage, pas seulement le contenu.
+        Text champ = null;
+        foreach (var e in client.transform.Enfants)
+            if (e.gameObject.name == "Bulle")
+                foreach (var f in e.Enfants)
+                    if (f.gameObject.name == "Nombre") champ = f.gameObject.GetComponent<Text>();
+        Check("le nombre a une police", champ != null && champ.font != null);
+        Check("le nombre ne peut pas etre tronque",
+              champ.horizontalOverflow == HorizontalWrapMode.Overflow &&
+              champ.verticalOverflow == VerticalWrapMode.Overflow);
         Check("la bulle demande entre une et trois pizzas",
               client.Pizzas >= Reglages.PizzasParClientMin && client.Pizzas <= Reglages.PizzasParClientMax);
         Check("le tiroir s'ouvre des le debut de la commande", caisse.EstOuverte);

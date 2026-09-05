@@ -508,9 +508,12 @@ namespace UnityEngine.UI
         public Type type; public FillMethod fillMethod; public int fillOrigin; public float fillAmount = 1f;
     }
 
+    public enum FontStyle { Normal, Bold, Italic, BoldAndItalic }
+
     public class Text : Graphic
     {
         public Font font; public string text = ""; public int fontSize;
+        public FontStyle fontStyle;
         public TextAnchor alignment; public HorizontalWrapMode horizontalOverflow;
         public VerticalWrapMode verticalOverflow;
     }

@@ -133,6 +133,8 @@ namespace Pizzeria3D
             var t = go.AddComponent<Text>();
             t.font = police; t.text = contenu; t.fontSize = taille;
             t.alignment = ancre; t.color = couleur; t.raycastTarget = false;
+            t.horizontalOverflow = HorizontalWrapMode.Overflow;
+            t.verticalOverflow = VerticalWrapMode.Overflow;
             return t;
         }
     }

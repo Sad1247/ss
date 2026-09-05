@@ -81,16 +81,21 @@ namespace Pizzeria3D
             go.transform.SetParent(parent, false);
             var t = go.AddComponent<Text>();
             t.font = Police();
-            t.fontSize = 58;
+            t.fontSize = 46;
+            t.fontStyle = FontStyle.Bold;
             t.alignment = TextAnchor.MiddleLeft;
             t.color = Bloc.Couleur(0x2B2118);
             t.raycastTarget = false;
+            // Un Text d'Unity n'affiche RIEN quand sa ligne depasse la boite :
+            // il tronque au lieu de deborder. C'est ce qui masquait le nombre.
+            t.horizontalOverflow = HorizontalWrapMode.Overflow;
+            t.verticalOverflow = VerticalWrapMode.Overflow;
 
             var rt = go.GetComponent<RectTransform>();
             rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 1f);
             rt.pivot = new Vector2(0f, 1f);
-            rt.anchoredPosition = new Vector2(14f, -22f);
-            rt.sizeDelta = new Vector2(110f, 62f);
+            rt.anchoredPosition = new Vector2(10f, -26f);
+            rt.sizeDelta = new Vector2(150f, 90f);
             return t;
         }
 
