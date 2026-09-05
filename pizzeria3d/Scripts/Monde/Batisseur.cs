@@ -57,13 +57,21 @@ namespace Pizzeria3D
             Bloc.Boite("Trottoir", parent, new Vector3(0f, -0.35f, -8.8f), new Vector3(19f, 0.5f, 3f),
                        Bloc.SolBordure).SansCollision();
 
-            // batiment du fond, purement decoratif
-            Bloc.Boite("Mur", parent, new Vector3(-1f, 1.6f, 7.2f), new Vector3(14f, 3.2f, 0.6f),
+            // Le batiment ferme deux cotes : le fond et la gauche de l'ecran.
+            // Un seul pan donnait l'impression d'un decor pose sur un terrain vague.
+            Bloc.Boite("MurFond", parent, new Vector3(-1f, 1.6f, 7.2f), new Vector3(14.6f, 3.2f, 0.6f),
                        Bloc.MachineBis).SansCollision();
-            Obstacles.Ajouter(new Vector3(-1f, 0f, 7.2f), 14f, 0.6f);
+            Obstacles.Ajouter(new Vector3(-1f, 0f, 7.2f), 14.6f, 0.6f);
             for (int i = 0; i < 4; i++)
-                Bloc.Boite("Vitre" + i, parent, new Vector3(-5.4f + i * 2.9f, 1.9f, 6.85f),
+                Bloc.Boite("VitreFond" + i, parent, new Vector3(-5.4f + i * 2.9f, 1.9f, 6.85f),
                            new Vector3(1.8f, 1.5f, 0.15f), Bloc.Couleur(0xBFE8F2)).SansCollision();
+
+            Bloc.Boite("MurGauche", parent, new Vector3(-8.0f, 1.6f, 0.6f), new Vector3(0.6f, 3.2f, 13.8f),
+                       Bloc.MachineBis).SansCollision();
+            Obstacles.Ajouter(new Vector3(-8.0f, 0f, 0.6f), 0.6f, 13.8f);
+            for (int i = 0; i < 4; i++)
+                Bloc.Boite("VitreGauche" + i, parent, new Vector3(-7.65f, 1.9f, -4.6f + i * 2.9f),
+                           new Vector3(0.15f, 1.5f, 1.8f), Bloc.Couleur(0xBFE8F2)).SansCollision();
 
             // De quoi remplir la cour : sans ces caisses et ces arbustes, le sol
             // parait vide et la scene ne ressemble a rien.
