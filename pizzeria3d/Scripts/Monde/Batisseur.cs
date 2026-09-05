@@ -31,10 +31,11 @@ namespace Pizzeria3D
             Camera(racine.transform, joueur.transform);
 
             var comptoir = Comptoir(racine.transform, joueur);
-            Four(racine.transform, joueur, new Vector3(-4.2f, 0f, 3.2f), "Four1", true);
+            var four = Four(racine.transform, joueur, new Vector3(-4.2f, 0f, 3.2f), "Four1", true);
 
             // L'embauche se paie derriere la caisse, la ou l'employe se tiendra.
-            var caissier = Caissier(racine.transform, comptoir, new Vector3(3.6f, 0f, 2.05f));
+            var caissier = Caissier(racine.transform, comptoir, four.GetComponent<Four>(),
+                                    new Vector3(3.6f, 0f, 2.05f));
             Zone(racine.transform, joueur, caissier, new Vector3(3.6f, 0f, 3.3f),
                  Reglages.PrixCaissier, "Embaucher un caissier");
 
@@ -157,14 +158,20 @@ namespace Pizzeria3D
         }
 
         /// <summary>L'employe de caisse, cache tant qu'il n'est pas embauche.</summary>
-        static GameObject Caissier(Transform parent, Comptoir comptoir, Vector3 position)
+        static GameObject Caissier(Transform parent, Comptoir comptoir, Four four, Vector3 position)
         {
             var go = new GameObject("Caissier");
             go.transform.SetParent(parent, false);
             go.transform.position = position;
             Personnage.Construire(go.transform, Bloc.Couleur(0x7BC86B), Bloc.Couleur(0xF4F1EA));
+
             var c = go.AddComponent<Caissier>();
             c.Comptoir = comptoir;
+            c.Four = four;
+            c.Poste = position;
+            // en ligne droite, il traverserait le comptoir
+            c.Relais = new Vector3(0.5f, 0f, 3.2f);
+
             go.SetActive(false);
             return go;
         }

@@ -20,6 +20,12 @@ namespace Pizzeria3D
         // --- comptoir ---
         public const int StockComptoirMax = 16;
 
+        // --- caissier ---
+        public const float VitesseCaissier = 4.6f;
+        public const int CapacitePorteeCaissier = 6;
+        /// <summary>En dessous, il part chercher des pizzas au four.</summary>
+        public const int SeuilRechargeComptoir = 4;
+
         // --- clients ---
 // Une pizza toutes les 7 secondes, c'est lent : sans espacer les arrivees
         // dans la meme proportion, la file deborde et tous les clients partent.
@@ -34,6 +40,12 @@ namespace Pizzeria3D
         public const float VitesseClient = 3.2f;
 
         // --- argent ---
+        /// <summary>
+        /// MISE AU POINT UNIQUEMENT — argent donne au lancement pour essayer
+        /// les achats sans jouer la partie. Remettre a 0 avant publication.
+        /// </summary>
+        public const int ArgentDepart = 5000;
+
         public const float RayonRamassageBillet = 1.4f;
         public const float VitesseBillet = 9f;      // vol du billet vers le joueur
 

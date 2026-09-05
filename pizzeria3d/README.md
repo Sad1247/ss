@@ -67,7 +67,7 @@ Scripts/Jeu/
   Client.cs     arrivee, file, reception pizza par pizza, paiement, depart
   Billet.cs     la liasse au sol, puis son vol vers le joueur
   ZoneAchat.cs  la dalle verte : l'argent s'ecoule, l'objet apparait
-  Caissier.cs   l'employe embauche a la caisse
+  Caissier.cs   l'employe : navette vers le four, depot, tenue de la caisse
   Banque.cs     la caisse
   Hud.cs        compteur d'argent et indice contextuel
 
@@ -83,7 +83,7 @@ Scripts/Monde/
 
 Tests~/FakeUnity/            (ignore par Unity : le ~ final)
   FakeUnity3D.cs  faux runtime Unity (hierarchie, transforms, entrees, cycle de vie)
-  Harness3D.cs    59 verifications qui jouent la boucle complete
+  Harness3D.cs    61 verifications qui jouent la boucle complete
 ```
 
 ## Verifier sans Unity
@@ -100,14 +100,19 @@ glissement le long des murs, bulles de commande au-dessus des clients, productio
 pile portee, dechargement au comptoir, file d'attente, duree de commande et
 ouverture puis fermeture du tiroir-caisse, encaissement au bareme, liasse qui
 attend au sol puis se ramasse, dalle verte qui preleve puis livre,
-embauche du caissier et service sans le joueur.
+embauche du caissier, navette qu'il fait jusqu'au four et service sans le
+joueur.
 
 `Tests~/FakeUnity/` redefinit les types d'UnityEngine : c'est pour cela que son
 dossier finit par `~`, qui le rend invisible a Unity.
 
+## A retirer avant publication
+
+`Reglages.ArgentDepart` vaut 5000 pour essayer les achats sans jouer la
+partie. Le remettre a 0.
+
 ## Ce qui n'y est pas encore
 
-- Les employes qui font la navette (le caissier existe, pas le porteur).
 - Un second four : il existait, sa dalle a ete retiree ; a rebrancher sur une
   nouvelle zone d'achat quand la progression le demandera.
 - La chaine de production complete (pate, garnissage, four, mise en carton).
@@ -117,7 +122,7 @@ dossier finit par `~`, qui le rend invisible a Unity.
 
 ## Ce qui est verifie, et ce qui ne l'est pas
 
-La logique tourne : les 59 verifications ci-dessus s'executent hors editeur.
+La logique tourne : les 61 verifications ci-dessus s'executent hors editeur.
 Le **rendu 3D n'a jamais ete affiche** — positions, echelles, cadrage de la
 camera et couleurs ont ete poses sans jamais etre vus. C'est la premiere chose
 a corriger a l'oeil au lancement.

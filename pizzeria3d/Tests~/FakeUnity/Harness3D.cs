@@ -137,7 +137,8 @@ static class Harness3D
 
         Check("la scene se monte sans editeur", joueur != null && four != null && comptoir != null);
         Check("camera isometrique orthographique", camera != null && camera.orthographic);
-        Check("la caisse demarre a zero", Banque.Solde == 0);
+        Check("la caisse demarre au montant de mise au point",
+              Banque.Solde == Reglages.ArgentDepart);
         Check("une zone d'embauche attend derriere la caisse",
               zoneCaissier != null && zoneCaissier.Restant == Reglages.PrixCaissier);
         Check("le caissier n'est pas encore la",
@@ -333,6 +334,22 @@ static class Harness3D
         Check("le caissier apparait une fois paye", employe != null && employe.activeSelf);
         Check("le comptoir sait qu'un caissier tient la caisse", comptoir.CaissierPresent);
         Check("la dalle d'embauche disparait", zoneCaissier.gameObject.Detruit);
+
+        // --- le caissier fait la navette jusqu'au four ---
+        var navetteur = employe.GetComponent<Caissier>();
+        Placer(joueur, new Vector3(-9f, 0f, -9f));     // le joueur ne touche a rien
+        comptoir.Stock.Vider();
+        bool aPorte = false;
+        for (int i = 0; i < 60 * 60 && !aPorte; i++)
+        {
+            Frames(1);
+            if (navetteur.Portees > 0) aPorte = true;
+        }
+        Check("le caissier va chercher les pizzas au four", aPorte);
+
+        int deposees = comptoir.Stock.Nombre;
+        for (int i = 0; i < 60 * 30 && comptoir.Stock.Nombre <= deposees; i++) Frames(1);
+        Check("il les depose sur le comptoir", comptoir.Stock.Nombre > deposees);
 
         // --- le caissier sert sans le joueur ---
         // On garnit d'abord le comptoir, sinon le test passerait faute de stock

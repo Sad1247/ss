@@ -8,7 +8,11 @@ namespace Pizzeria3D
         public static int Solde { get; private set; }
         public static event Action Change;
 
-        public static void Reinitialiser() { Solde = 0; Change?.Invoke(); }
+        public static void Reinitialiser()
+        {
+            Solde = Reglages.ArgentDepart;   // zero en dehors de la mise au point
+            Change?.Invoke();
+        }
 
         public static void Encaisser(int montant)
         {
