@@ -78,6 +78,15 @@ static class Harness3D
         return mini;
     }
 
+    /// <summary>Un objet de ce nom figure-t-il parmi les murs escamotables ?</summary>
+    static bool Escamote(MursDiscrets d, string prefixe)
+    {
+        if (d == null) return false;
+        foreach (var m in d.Murs)
+            if (m != null && m.name.StartsWith(prefixe)) return true;
+        return false;
+    }
+
     static bool TousVisibles(MursDiscrets d)
     {
         if (d == null) return false;
@@ -961,7 +970,9 @@ static class Harness3D
         var discrets = laPiece.GetComponent<MursDiscrets>();
         Check("la piece sait escamoter ses murs", discrets != null);
         Check("elle escamote ceux du cote de la camera",
-              discrets != null && discrets.Murs.Length >= 3);
+              discrets != null && discrets.Murs.Length >= 4);
+        // la vitre du pan escamote doit partir avec lui, sinon elle flotte
+        Check("la vitre du pan de droite en fait partie", Escamote(discrets, "VitreFond"));
 
         Placer(joueur, new Vector3(0f, 0f, 0f));       // bien dans la salle
         Frames(2);

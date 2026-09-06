@@ -224,7 +224,15 @@ namespace Pizzeria3D
             // cote droit, le pan de mur a droite de la porte, et le linteau.
             var discrets = go.AddComponent<MursDiscrets>();
             discrets.Joueur = joueur;
-            discrets.Murs = new[] { panDroit, Trouver(parent, "MurFondBis"), Trouver(parent, "LinteauFond") };
+            // La vitre du pan de droite part avec lui : restee seule, elle
+            // flottait au-dessus de la pelouse.
+            discrets.Murs = new[]
+            {
+                panDroit,
+                Trouver(parent, "MurFondBis"),
+                Trouver(parent, "LinteauFond"),
+                Trouver(parent, "VitreFond5"),
+            };
             discrets.Centre = centre;
             discrets.DemiX = demiX;
             discrets.DemiZ = demiZ;
