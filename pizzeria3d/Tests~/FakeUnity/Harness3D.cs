@@ -756,6 +756,7 @@ static class Harness3D
         // le geste decompose : carton au rond rouge, puis au rond vert, puis
         // une pizza rapportee du four et glissee dedans
         bool auRouge = false, auVert = false, aRapporteUnePizza = false, aGarni = false;
+        bool boiteVideAbandonnee = false;
         bool tropDePizzasNues = false;
         int porteeMax = 0, nuesMax = 0, pretesAvant = 0;
         for (int i = 0; i < 60 * 120 &&
@@ -770,6 +771,12 @@ static class Harness3D
 
             if (table.Preparation.Nombre > 0) auRouge = true;
             if (table.Assemblage.Nombre > 0) auVert = true;
+
+            // Aucune boite vide ne doit attendre toute seule : un carton ne
+            // sort qu'une fois la pizza en main, et il la recoit aussitot.
+            int cartons = table.Preparation.Nombre + table.Assemblage.Nombre;
+            if (cartons > navetteur.Pretes + (navetteur.PorteeNue ? 1 : 0))
+                boiteVideAbandonnee = true;
             if (navetteur.PorteeNue)
             {
                 aRapporteUnePizza = true;
@@ -796,6 +803,7 @@ static class Harness3D
         Check("une seule pizza a la fois, sa boite l'attend",
               !tropDePizzasNues && nuesMax == 1);
         Check("il la met dans la boite qui attendait", aGarni);
+        Check("aucune boite vide ne traine sur le plan", !boiteVideAbandonnee);
         Check("il pioche dans la reserve de cartons", reserveEntamee);
         Check("il porte des pizzas en boite en repartant", aEmballe);
 

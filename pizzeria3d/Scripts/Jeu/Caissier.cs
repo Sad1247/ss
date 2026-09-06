@@ -3,10 +3,13 @@ using UnityEngine;
 namespace Pizzeria3D
 {
     /// <summary>
-    /// L'employe embauche a la caisse. Son travail, pizza par pizza : il prend
-    /// un carton dans la reserve, le pose au rond rouge, le fait glisser au
-    /// rond vert, va chercher UNE pizza au four, revient la mettre dedans. Une
-    /// fois sa poignee de boites prete, il la porte au comptoir.
+    /// L'employe embauche a la caisse. Son travail, pizza par pizza : il va
+    /// chercher UNE pizza au four, revient au plan, sort un carton de la
+    /// reserve sur le rond rouge, le fait glisser au rond vert et y depose sa
+    /// pizza. Une fois sa poignee de boites prete, il la porte au comptoir.
+    ///
+    /// Le carton ne sort qu'une fois la pizza en main : sinon une boite vide
+    /// restait posee de cote pendant tout l'aller-retour au four.
     ///
     /// Le trajet vers le comptoir passe par un point de relais : en ligne
     /// droite il le traverserait.
@@ -76,7 +79,7 @@ namespace Pizzeria3D
             bool stockBas = Comptoir.Stock.Nombre <= Reglages.SeuilRechargeComptoir;
             if (stockBas && !Four.Sortie.EstVide)
             {
-                _etat = Etat.VersTable;
+                _etat = Etat.VersFour;               // rien a faire au plan sans pizza
                 _passeParRelais = true;
             }
         }
@@ -91,22 +94,27 @@ namespace Pizzeria3D
             if (Table == null) { Livrer(); return; }
             if (_compteurTransfert > 0f) return;
 
-            // 1. la pizza rapportee du four va dans la boite du rond vert
-            if (!_portee.EstVide)
+            // 1. les mains vides : il repart chercher une pizza, ou il livre
+            if (_portee.EstVide)
             {
-                _portee.Retirer();
-                _pleines++;
-                _compteurTransfert = Reglages.DelaiEmballage;
+                if (_pleines >= Reglages.CapacitePorteeCaissier) { Livrer(); return; }
+                if (Four == null || Four.Sortie.EstVide) { Livrer(); return; }
+                _etat = Etat.VersFour;
                 return;
             }
 
-            // 2. la poignee est complete : au comptoir
-            if (_pleines >= Reglages.CapacitePorteeCaissier) { Livrer(); return; }
+            // 2. pizza en main : un carton neuf sort sur le rond rouge
+            if (Table.Preparation.EstVide && Table.Assemblage.Nombre <= _pleines)
+            {
+                if (Table.PrendreBoite())
+                {
+                    Table.Preparation.Ajouter(true);
+                    _compteurTransfert = Reglages.DelaiEmballage;
+                }
+                return;                              // reserve vide : il attend
+            }
 
-            // 3. plus rien a cuire : il livre ce qu'il a, ou rentre bredouille
-            if (Four == null || Four.Sortie.EstVide) { Livrer(); return; }
-
-            // 4. le carton du rond rouge glisse au rond vert
+            // 3. le carton glisse du rond rouge au rond vert
             if (!Table.Preparation.EstVide)
             {
                 Table.Preparation.Retirer();
@@ -115,15 +123,10 @@ namespace Pizzeria3D
                 return;
             }
 
-            // 5. une boite vide attend au rond vert : il part chercher sa pizza
-            if (Table.Assemblage.Nombre > _pleines) { _etat = Etat.VersFour; return; }
-
-            // 6. sinon il sort un carton neuf de la reserve, sur le rond rouge
-            if (Table.PrendreBoite())
-            {
-                Table.Preparation.Ajouter(true);
-                _compteurTransfert = Reglages.DelaiEmballage;
-            }
+            // 4. la pizza entre dans la boite ouverte
+            _portee.Retirer();
+            _pleines++;
+            _compteurTransfert = Reglages.DelaiEmballage;
         }
 
         /// <summary>Emporte les boites garnies et rend celle restee vide.</summary>
