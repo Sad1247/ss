@@ -103,6 +103,13 @@ static class Harness3D
         return true;
     }
 
+    /// <summary>Le sac d'un client : il pend a ses mains, comme le personnel.</summary>
+    static Transform SacDe(Client c)
+    {
+        var mains = c.transform.Find("Corps/Mains/Sac");
+        return mains != null ? mains : c.transform.Find("Sac");
+    }
+
     /// <summary>La dalle d'achat d'un prix donne, ou null.</summary>
     static ZoneAchat ZoneDePrix(int prix)
     {
@@ -757,6 +764,11 @@ static class Harness3D
               premierClient.transform.Find("Corps") != null &&
               premierClient.transform.Find("Corps").Find("HancheG") != null);
         Check("il marche au lieu de glisser", premierClient.GetComponent<Demarche>() != null);
+        // ses boites pendent a ses mains, comme celles du personnel
+        var mainsClient = premierClient.transform.Find("Corps/Mains");
+        Check("il porte ses pizzas dans les mains",
+              mainsClient != null && SacDe(premierClient) != null &&
+              SacDe(premierClient).parent == mainsClient);
 
         // Ils flanent : le pas ne doit jamais partir a fond, sinon ils ont
         // l'air de courir vers le comptoir.
@@ -1138,11 +1150,14 @@ static class Harness3D
             Frames(1);
             foreach (var cl in TousLes<Client>())
             {
-                var sac = cl.transform.Find("Sac");
+                var sac = SacDe(cl);
                 if (sac == null) continue;
                 int boites = Compte(sac, "Boite", false);
+                int nues = Compte(sac, "Pizza", false);
                 if (boites > 0) clientEnBoite = true;
-                if (Compte(sac, "Pizza", false) > 0) sacMelange = true;
+                // melanger, c'est porter les deux : celui qui mange sur place
+                // repart avec une pizza nue, et c'est voulu
+                if (boites > 0 && nues > 0) sacMelange = true;
                 if (!ToutDroit(sac)) sacDeTravers = true;
                 sacLePlusGarni = Mathf.Max(sacLePlusGarni, boites);
             }
@@ -1159,12 +1174,20 @@ static class Harness3D
         // Une seule place : le deuxieme servi doit repartir avec ses boites.
         bool unAttable = false, deuxALaFois = false, tableRendue = false, aEteOccupee = false;
         bool assisSurLaChaise = false, poseAssise = false;
-        for (int i = 0; i < 60 * 150 && !(unAttable && tableRendue); i++)
+        // sur place : une seule pizza, et pas de carton
+        bool attableGourmand = false, attableEnBoite = false, attableAvecPizza = false;
+        int repasServis = 0;
+        // On observe sans s'arreter au premier repas : ce sont les clients
+        // suivants qui disent si la regle tient, pas le premier.
+        for (int i = 0; i < 60 * 90; i++)
         {
             Frames(1);
             int attables = 0;
             foreach (var cl in TousLes<Client>())
             {
+                // on surveille la reservation, pas seulement l'assiette :
+                // c'est des la commande que la place est retenue
+                if (cl.SurPlace && cl.Pizzas != 1) attableGourmand = true;
                 if (!cl.Attable) continue;
                 attables++;
                 unAttable = true;
@@ -1174,17 +1197,26 @@ static class Harness3D
                 if (ecart.magnitude < 0.3f) assisSurLaChaise = true;
                 var pas = cl.GetComponent<Demarche>();
                 if (pas != null && pas.Assis) poseAssise = true;
+
+                if (cl.Pizzas != 1) attableGourmand = true;
+                var sac = SacDe(cl);
+                if (sac != null && Compte(sac, "Boite", false) > 0) attableEnBoite = true;
+                if (sac != null && Compte(sac, "Pizza", false) > 0) attableAvecPizza = true;
             }
             if (attables > 1) deuxALaFois = true;
             if (!tableSalle.EstLibre) aEteOccupee = true;
-            else if (aEteOccupee) tableRendue = true;
+            else if (aEteOccupee) { tableRendue = true; aEteOccupee = false; repasServis++; }
         }
         Check("un client servi s'attable", unAttable);
+        Check("seul celui qui a commande une pizza mange sur place", !attableGourmand);
+        Check("et on la lui sert sans boite", !attableEnBoite && attableAvecPizza);
         Check("il est bien assis sur la chaise", assisSurLaChaise);
         Check("et il en a la pose", poseAssise);
         Check("jamais deux a la fois", !deuxALaFois);
         Check("la table se libere apres le repas", tableRendue);
-        Check("et le client s'en va ensuite", tableSalle.EstLibre);
+        // Elle ressert : une place rendue une seule fois pourrait n'etre
+        // qu'un client parti sans manger.
+        Check("et elle ressert au suivant", repasServis >= 2);
 
         // et le joueur encaisse en revenant marcher dessus
         int soldeAvant = Banque.Solde;

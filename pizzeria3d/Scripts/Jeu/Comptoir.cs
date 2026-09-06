@@ -92,9 +92,9 @@ namespace Pizzeria3D
             if (!premier.CommandeFinie) return;
 
             if (Stock == null || Stock.EstVide) return;
-            // le client repart avec ce qu'on lui tend : une boite si le
-            // caissier est passe par la table, la pizza nue sinon
-            if (!premier.Recevoir(Stock.SommetEmballe)) return;   // pas encore le moment
+            // Celui qui mange sur place est servi nu : on n'emballe que ce qui
+            // s'emporte. Pour les autres, une boite s'il y en a une.
+            if (!premier.Recevoir(Stock.SommetEmballe && !premier.SurPlace)) return;
             Stock.Retirer();
 
             if (premier.EstServi)

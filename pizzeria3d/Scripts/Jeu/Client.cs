@@ -6,6 +6,11 @@ namespace Pizzeria3D
     /// Un client : arrive, avance dans la file, recoit ses pizzas une a une,
     /// paie, puis s'attable si la salle a de la place — sinon il emporte ses
     /// boites et s'en va. S'il attend trop longtemps, il part sans payer.
+    ///
+    /// Seul celui qui ne commande qu'une pizza mange sur place, et il la
+    /// recoit nue : on n'emballe que ce qui s'emporte. Il retient sa place
+    /// des le debut de la commande, sinon un autre la prendrait pendant
+    /// qu'on le sert.
     /// </summary>
     public sealed class Client : MonoBehaviour
     {
@@ -21,7 +26,8 @@ namespace Pizzeria3D
         Pile _sac;
         Bulle _bulle;
         Demarche _demarche;
-        TableRepas _table;        // la table ou il mange, s'il en a trouve une
+        TableRepas _table;        // la place qu'il a retenue, s'il en a trouve une
+        bool _versLaTable;        // servi, il marche vers son siege
         bool _attable;
         float _resteRepas;
         Vector3 _cible;
@@ -87,10 +93,8 @@ namespace Pizzeria3D
             d.GenouG = membres.GenouG;   d.GenouD = membres.GenouD;
             d.EpauleG = membres.EpauleG; d.EpauleD = membres.EpauleD;
 
-            var sac = new GameObject("Sac");
-            sac.transform.SetParent(transform, false);
-            sac.transform.localPosition = new Vector3(0.55f, 1.1f, 0f);
-            _sac = sac.AddComponent<Pile>();
+            // il porte ses boites a bout de bras, comme le personnel
+            _sac = Portage.Creer(transform, "Sac");
             _sac.Max = Reglages.PizzasParClientMax;
 
             _bulle = Bulle.Creer(transform, 2.15f);
@@ -133,11 +137,15 @@ namespace Pizzeria3D
 
         void Update()
         {
+            if (_demarche != null && _sac != null) _demarche.BrasPortent = !_sac.EstVide;
             if (_attable) { Manger(); return; }
 
             Avancer();
-            // ni celui qui s'en va, ni celui qui rejoint sa table n'attend
-            if (_sEnVa || _table != null || !EstArrive) return;
+            // Ni celui qui s'en va, ni celui qui rejoint sa table n'attend.
+            // Retenir une place, en revanche, ne rend pas patient : sans cette
+            // distinction il restait au comptoir indefiniment et bloquait la
+            // file derriere lui.
+            if (_sEnVa || _versLaTable || !EstArrive) return;
 
             _patience -= Time.deltaTime;
             if (_patience <= 0f)
@@ -156,7 +164,7 @@ namespace Pizzeria3D
             if (delta.sqrMagnitude < 0.02f)
             {
                 if (_sEnVa) { Destroy(gameObject); return; }
-                if (_table != null) { Asseoir(); return; }
+                if (_versLaTable) { Asseoir(); return; }
                 EstArrive = true;
                 return;
             }
@@ -182,6 +190,7 @@ namespace Pizzeria3D
             if (_resteRepas > 0f) return;
 
             _attable = false;
+            _versLaTable = false;
             if (_demarche != null) _demarche.Assis = false;
             transform.position = new Vector3(transform.position.x, 0f, transform.position.z);
             if (_table != null) { _table.Liberer(this); _table = null; }
@@ -191,9 +200,24 @@ namespace Pizzeria3D
         /// <summary>Egrene les secondes de commande une fois le client au comptoir.</summary>
         public void Commander(float deltaTemps)
         {
+            if (!CommandeCommencee) ChoisirSaPlace();
             CommandeCommencee = true;
             if (_resteCommande > 0f) _resteCommande -= deltaTemps;
         }
+
+        /// <summary>
+        /// Retient la table s'il n'a commande qu'une pizza. C'est ici que se
+        /// decide s'il mangera sur place, donc aussi si on l'emballe.
+        /// </summary>
+        void ChoisirSaPlace()
+        {
+            if (Pizzas != 1) return;
+            var table = _comptoir != null ? _comptoir.Table : null;
+            if (table != null && table.Accueillir(this)) _table = table;
+        }
+
+        /// <summary>Vrai s'il a une place retenue : sa pizza ne sera pas emballee.</summary>
+        public bool SurPlace => _table != null;
 
         /// <summary>
         /// Prend une boite si le rythme de remise le permet. Elles s'empilent
@@ -215,16 +239,17 @@ namespace Pizzeria3D
         {
             if (_bulle != null) _bulle.Afficher(0);   // la commande n'a plus lieu d'etre
 
-            // Servi, et une place libre en salle : il s'attable. Sinon il
-            // emporte ses boites — c'est la file dehors quand ca marche bien.
-            var table = _comptoir != null ? _comptoir.Table : null;
-            if (EstServi && table != null && table.Accueillir(this))
+            // Servi avec sa place retenue : il va s'attabler.
+            if (EstServi && _table != null)
             {
-                _table = table;
-                _cible = table.Place;
+                _versLaTable = true;
+                _cible = _table.Place;
                 EstArrive = false;
                 return;
             }
+
+            // Parti sans manger — lasse d'attendre : il rend la place.
+            if (_table != null) { _table.Liberer(this); _table = null; }
             _sEnVa = true;
         }
 
