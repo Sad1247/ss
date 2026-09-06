@@ -226,8 +226,8 @@ namespace Pizzeria3D
 
             Obstacles.Ajouter(position, 3.8f, 1.4f);
 
-            // Une seule rangee de cartons, a plat, poussee dans le coin arriere
-            // gauche du plan : au milieu, elle occupait tout le meuble.
+            // Un seul tas de cartons, dans le coin arriere gauche du plan :
+            // etales cote a cote, ils occupaient tout le meuble.
             var rangee = new GameObject("Boites");
             rangee.transform.SetParent(t, false);
             rangee.transform.localPosition = new Vector3(-1.58f, 1.23f, 0.26f);

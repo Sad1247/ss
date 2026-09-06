@@ -222,30 +222,28 @@ static class Harness3D
               MemeCouleur(table.transform, "Dessus", comptoir.transform, "Dessus"));
 
         Check("des boites a pizza y attendent",
-              table != null && table.Reserve == Reglages.BoitesEnRangee);
-        Check("elles forment une seule rangee",
-              table != null && table.Boites.Sens == Pile.Disposition.Rangee &&
-              Compte(table.Boites.transform, "Boite", false) == Reglages.BoitesEnRangee);
+              table != null && table.Reserve == Reglages.BoitesEnReserve);
+        Check("elles forment un seul tas",
+              table != null && Compte(table.Boites.transform, "Boite", false) == Reglages.BoitesEnReserve);
 
-        // Une rangee, c'est cote a cote : les cartons s'ecartent en x et
-        // restent tous a la meme hauteur.
-        float hautMin = 99f, hautMax = -99f, largeurRangee = 0f;
+        // Un tas, c'est l'un sur l'autre : rien ne s'ecarte sur les cotes, et
+        // chaque carton est plus haut que le precedent.
+        float ecartLateral = 0f, hautTas = 0f;
         if (table != null)
             foreach (var b in table.Boites.transform.Enfants)
             {
-                hautMin = Mathf.Min(hautMin, b.localPosition.y);
-                hautMax = Mathf.Max(hautMax, b.localPosition.y);
-                largeurRangee = Mathf.Max(largeurRangee, b.localPosition.x);
+                ecartLateral = Mathf.Max(ecartLateral, Mathf.Abs(b.localPosition.x));
+                ecartLateral = Mathf.Max(ecartLateral, Mathf.Abs(b.localPosition.z));
+                hautTas = Mathf.Max(hautTas, b.localPosition.y);
             }
-        Check("aucun carton n'est empile sur un autre", hautMax - hautMin < 0.01f);
-        Check("ils s'alignent le long du plan", largeurRangee > Reglages.LargeurBoite);
-        Check("la rangee tient sur le plan de travail", largeurRangee < 2.4f);
+        Check("les cartons sont poses l'un sur l'autre", ecartLateral < 0.01f);
+        Check("le tas monte bien de la hauteur des cartons",
+              Mathf.Abs(hautTas - (Reglages.BoitesEnReserve - 1) * Reglages.EpaisseurBoite) < 0.01f);
+        Check("il reste plus bas que les personnages", hautTas < 0.6f);
 
-        // Elle est poussee dans un coin : au milieu, elle mangeait tout le plan.
+        // Il est pousse dans un coin : au milieu, il mangeait tout le plan.
         var coin = table != null ? table.Boites.transform.localPosition : Vector3.zero;
-        Check("la rangee est poussee dans un coin", coin.x < -1f && coin.z > 0.1f);
-        Check("elle laisse le reste du plan libre",
-              table != null && coin.x + largeurRangee + Reglages.LargeurBoite < 1.4f);
+        Check("le tas est pousse dans un coin", coin.x < -1f && coin.z > 0.1f);
         Check("les cartons sont poses bien droits",
               table != null && ToutDroit(table.Boites.transform));
         Check("le caissier vient s'y placer devant, pas dedans",
@@ -593,7 +591,7 @@ static class Harness3D
             if (navetteur.Portees > 0) aPorte = true;
             if (pasDuCaissier != null && pasDuCaissier.Allure > 0.2f) aMarche = true;
             if (navetteur.PorteeEmballee) aEmballe = true;
-            if (table.Reserve < Reglages.BoitesEnRangee) reserveEntamee = true;
+            if (table.Reserve < Reglages.BoitesEnReserve) reserveEntamee = true;
 
             var versTable = employe.transform.position - table.PointDeTravail;
             versTable.y = 0f;

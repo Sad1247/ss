@@ -70,10 +70,10 @@ namespace Pizzeria3D
         /// <summary>Secondes que met le caissier a mettre une pizza en boite.</summary>
         public const float DelaiEmballage = 0.30f;
         /// <summary>
-        /// Cartons alignes sur le plan de travail. Une seule rangee, a plat :
-        /// empiles, ils montaient plus haut qu'un homme.
+        /// Cartons en attente sur le plan de travail, en un seul tas pose dans
+        /// un coin. Trois, c'est bas : la pile reste sous la hauteur d'epaule.
         /// </summary>
-        public const int BoitesEnRangee = 3;
+        public const int BoitesEnReserve = 3;
         /// <summary>
         /// Secondes entre deux cartons livres. Court, parce que la rangee tient
         /// moins de cartons que le caissier ne porte de pizzas.

@@ -7,13 +7,13 @@ namespace Pizzeria3D
     /// du fond, derriere la caisse. Meme facture que le comptoir : caisson bleu
     /// et dessus metallique.
     ///
-    /// Il porte une rangee de cartons ou le caissier vient piocher. Elle se
-    /// regarnit toute seule, carton par carton : une table vide bloquerait le
-    /// service pour de bon.
+    /// Il porte un tas de cartons, dans un coin du plan, ou le caissier vient
+    /// piocher. Il se regarnit tout seul, carton par carton : une table vide
+    /// bloquerait le service pour de bon.
     /// </summary>
     public sealed class Emballage : MonoBehaviour
     {
-        public Pile Boites;      // la rangee posee sur le plan
+        public Pile Boites;      // le tas pose dans le coin du plan
         public Transform Poste;  // ou le caissier se place pour emballer
 
         float _compteurReappro;
@@ -25,14 +25,13 @@ namespace Pizzeria3D
             => Poste != null ? Poste.position : transform.position + new Vector3(0f, 0f, -1.4f);
 
         /// <summary>
-        /// Remplit la rangee. Appelee apres le cablage : au moment du Awake, la
+        /// Remplit le tas. Appelee apres le cablage : au moment du Awake, la
         /// pile n'est pas encore branchee.
         /// </summary>
         public void Garnir()
         {
             if (Boites == null) return;
-            Boites.Sens = Pile.Disposition.Rangee;
-            Boites.Max = Reglages.BoitesEnRangee;
+            Boites.Max = Reglages.BoitesEnReserve;
             while (!Boites.EstPleine) Boites.Ajouter(true);
         }
 
@@ -48,7 +47,7 @@ namespace Pizzeria3D
             Boites.Ajouter(true);
         }
 
-        /// <summary>Prend un carton au bout de la rangee.</summary>
+        /// <summary>Prend le carton du dessus.</summary>
         public bool PrendreBoite()
         {
             if (Boites == null || Boites.EstVide) return false;
