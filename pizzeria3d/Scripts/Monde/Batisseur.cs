@@ -35,7 +35,8 @@ namespace Pizzeria3D
             Camera(racine.transform, joueur.transform);
 
             var comptoir = Comptoir(racine.transform, joueur);
-            var four = Four(racine.transform, joueur, new Vector3(-4.2f, 0f, 3.2f), "Four1", true);
+            // adosse au mur du fond : la salle se degage devant lui
+            var four = Four(racine.transform, joueur, new Vector3(-4.2f, 0f, 5.88f), "Four1", true);
 
             // Le plan de mise en boite, adosse aux fenetres du fond, derriere
             // la caisse : le caissier y passe entre le four et le comptoir.
@@ -452,7 +453,15 @@ namespace Pizzeria3D
             var go = new GameObject(nom);
             go.transform.SetParent(parent, false);
             go.transform.position = position;
-            var t = go.transform;
+
+            // Toute la maconnerie pend a un porteur mis a l'echelle : la pile
+            // de sortie, elle, reste a taille normale, sinon les pizzas
+            // retreciraient en se posant sur la pierre.
+            const float echelle = 0.85f;
+            var maconnerie = new GameObject("Maconnerie");
+            maconnerie.transform.SetParent(go.transform, false);
+            maconnerie.transform.localScale = new Vector3(echelle, echelle, echelle);
+            var t = maconnerie.transform;
 
             // socle
             Bloc.Boite("Socle", t, new Vector3(0f, 0.45f, 0f), new Vector3(2.7f, 0.9f, 2.3f),
@@ -494,12 +503,13 @@ namespace Pizzeria3D
 
             // le corps du four et sa pierre barrent le passage ; la pile de
             // sortie reste a portee du joueur arrete devant
-            Obstacles.Ajouter(position, 2.8f, 2.4f);
-            Obstacles.Ajouter(position + new Vector3(0f, 0f, -1.62f), 2.5f, 1.3f);
+            Obstacles.Ajouter(position, 2.8f * echelle, 2.4f * echelle);
+            Obstacles.Ajouter(position + new Vector3(0f, 0f, -1.62f * echelle),
+                              2.5f * echelle, 1.3f * echelle);
 
             var pile = new GameObject("Sortie");
-            pile.transform.SetParent(t, false);
-            pile.transform.localPosition = new Vector3(0f, 1.09f, -1.72f);
+            pile.transform.SetParent(go.transform, false);
+            pile.transform.localPosition = new Vector3(0f, 1.09f * echelle, -1.72f * echelle);
 
             var f = go.AddComponent<Four>();
             f.Sortie = pile.AddComponent<Pile>();

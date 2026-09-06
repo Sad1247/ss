@@ -619,17 +619,32 @@ static class Harness3D
         Check("le joueur atteint quand meme la pierre du four",
               joueur.EstPres(four.Sortie.transform.position, Reglages.RayonRamassage));
 
-        // et il glisse le long d'un mur au lieu de s'y coller. On part a
-        // l'ouest du plan de mise en boite, sinon on demarre dedans.
-        Placer(joueur, new Vector3(-3f, 0f, 6f));
+        // Et il glisse le long d'un mur au lieu de s'y coller. On part dans le
+        // couloir entre le mur de gauche et le four, seul endroit du fond qui
+        // ne soit ni dans le four ni dans le plan de mise en boite.
+        Placer(joueur, new Vector3(-7.2f, 0f, 6f));
         var avantGlisse = joueur.transform.position;
-        PousserVers(joueur, new Vector3(0f, 0f, 9f), 1.5f);   // en biais vers le mur du fond
+        PousserVers(joueur, new Vector3(-5.8f, 0f, 9f), 1.5f);   // en biais vers le mur du fond
         // glisser, c'est avancer lateralement TOUT EN etant plaque au mur :
         // verifier le seul deplacement en x laisserait passer un joueur qui
         // n'a jamais touche le mur.
         Check("le joueur glisse le long du mur",
               Mathf.Abs(joueur.transform.position.x - avantGlisse.x) > 0.5f &&
               joueur.transform.position.z > 6.3f);
+
+        // --- taille et place du four ---
+        var maconnerie = Piece(four.transform, "Maconnerie");
+        var socleFour = maconnerie != null ? Piece(maconnerie, "Socle") : null;
+        Check("le four a rapetisse", maconnerie != null && maconnerie.localScale.x < 0.95f);
+        if (socleFour != null && murFond != null)
+        {
+            float dosDuFour = four.transform.position.z
+                            + (socleFour.localPosition.z + socleFour.localScale.z * 0.5f)
+                              * maconnerie.localScale.z;
+            float faceDuMur = murFond.transform.position.z - murFond.transform.localScale.z * 0.5f;
+            Check("il est adosse au mur du fond", faceDuMur - dosDuFour < 0.2f && dosDuFour < faceDuMur);
+        }
+        else Check("il est adosse au mur du fond", false);
 
         // --- le four produit ---
         Placer(joueur, new Vector3(0f, 0f, -6f));    // loin, pour laisser le stock monter
@@ -1058,10 +1073,15 @@ static class Harness3D
         for (int i = 0; i < 60 * 30 && comptoir.Stock.Nombre <= deposees; i++) Frames(1);
         Check("il les depose sur le comptoir", comptoir.Stock.Nombre > deposees);
         Check("ce qu'il depose est en boite", comptoir.Stock.SommetEmballe);
-        // Empilees, mais au cordeau : c'est ce qui a ete demande. On attend
-        // d'en avoir plusieurs — une pile d'une seule boite serait droite
-        // meme avec un decalage par element.
-        for (int i = 0; i < 60 * 40 && comptoir.Stock.Nombre < 3; i++) Frames(1);
+        // Empilees, mais au cordeau : c'est ce qui a ete demande. Il en faut
+        // plusieurs — une pile d'une seule boite serait droite meme avec un
+        // decalage par element. C'est le joueur qui garnit : le caissier, lui,
+        // livre au compte-gouttes, une boite par voyage, et les clients les
+        // reprennent au fur et a mesure.
+        Placer(joueur, four.Sortie.transform.position);
+        Secondes(Reglages.DureeCuisson * 5f);
+        Placer(joueur, comptoir.transform.position);
+        Secondes(3f);
         Check("le comptoir empile plusieurs boites", comptoir.Stock.Nombre >= 3);
         Check("les boites s'empilent bien droites au comptoir",
               ToutDroit(comptoir.Stock.transform));
