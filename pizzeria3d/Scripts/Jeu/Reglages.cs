@@ -38,7 +38,14 @@ namespace Pizzeria3D
         public const float PatienceClient = 30f;
         /// <summary>Temps que met un client a passer commande, tiroir ouvert.</summary>
         public const float DureeCommande = 3f;
-        public const float VitesseClient = 3.2f;
+        /// <summary>Ils flanent : c'est le personnel qui court, pas la clientele.</summary>
+        public const float VitesseClient = 2.1f;
+        /// <summary>
+        /// Allure de reference de leur demarche. Volontairement plus haute que
+        /// leur vitesse reelle : a egalite, le pas part a fond et ils ont l'air
+        /// de courir sur place.
+        /// </summary>
+        public const float AllureClient = 3.6f;
 
         // --- argent ---
         /// <summary>

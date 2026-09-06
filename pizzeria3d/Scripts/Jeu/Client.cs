@@ -76,7 +76,7 @@ namespace Pizzeria3D
 
             // ils marchent jusqu'au comptoir : sans demarche ils glisseraient
             var d = gameObject.AddComponent<Demarche>();
-            d.VitesseReference = Reglages.VitesseClient;
+            d.VitesseReference = Reglages.AllureClient;
             d.Corps = membres.Corps;
             d.HancheG = membres.HancheG; d.HancheD = membres.HancheD;
             d.GenouG = membres.GenouG;   d.GenouD = membres.GenouD;

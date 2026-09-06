@@ -571,6 +571,32 @@ static class Harness3D
               premierClient.transform.Find("Corps").Find("HancheG") != null);
         Check("il marche au lieu de glisser", premierClient.GetComponent<Demarche>() != null);
 
+        // Ils flanent : le pas ne doit jamais partir a fond, sinon ils ont
+        // l'air de courir vers le comptoir.
+        float allureClientMax = 0f, allureClientEnMarche = 0f;
+        for (int i = 0; i < 240; i++)
+        {
+            Frames(1);
+            foreach (var cl in TousLes<Client>())
+            {
+                var pas = cl.GetComponent<Demarche>();
+                if (pas == null) continue;
+                allureClientMax = Mathf.Max(allureClientMax, pas.Allure);
+                if (pas.Allure > 0.05f)
+                    allureClientEnMarche = Mathf.Max(allureClientEnMarche, pas.Allure);
+            }
+        }
+        // Le temps passe : celui qu'on observait a pu etre servi et repartir.
+        var encoreLa = TousLes<Client>();
+        Check("la file ne s'est pas videe pendant l'observation", encoreLa.Count > 0);
+        if (encoreLa.Count > 0) premierClient = encoreLa[0];
+
+        Check("les clients marchent pour de bon", allureClientEnMarche > 0.25f);
+        Check("mais ils ne courent pas", allureClientMax < 0.8f);
+        Check("ils avancent moins vite que le personnel",
+              Reglages.VitesseClient < Reglages.VitesseCaissier &&
+              Reglages.VitesseClient < Reglages.VitesseJoueur);
+
         // On doit pouvoir dire dans quel sens marche un personnage : yeux
         // devant, fesses derriere.
         var corpsClient = premierClient.transform.Find("Corps");
