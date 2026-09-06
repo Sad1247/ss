@@ -503,6 +503,41 @@ static class Harness3D
         }
         else Check("la piece va jusqu'au bout du batiment", false);
 
+        // Les deux dallages doivent se rejoindre franchement : a un cheveu
+        // pres, une marche apparait dans le beige et de l'herbe passe sous
+        // les murs.
+        var solPiece = Trouver("SolPiece");
+        if (solPiece != null && sol != null && pieceCachee != null)
+        {
+            var ps = solPiece.transform.position; var es = solPiece.transform.localScale;
+            var pg = sol.transform.position; var eg = sol.transform.localScale;
+            Check("les deux sols sont a la meme hauteur",
+                  Mathf.Abs((ps.y + es.y * 0.5f) - (pg.y + eg.y * 0.5f)) < 0.01f);
+            Check("celui de la piece rejoint celui de la salle",
+                  ps.z - es.z * 0.5f < pg.z + eg.z * 0.5f);
+            Check("et il finit au meme bord",
+                  Mathf.Abs((ps.x + es.x * 0.5f) - (pg.x + eg.x * 0.5f)) < 0.01f);
+
+            float murOuest = 99f, murEst = -99f;
+            foreach (var e in pieceCachee.transform.Enfants)
+                if (e.gameObject.name == "MurPiece")
+                {
+                    murOuest = Mathf.Min(murOuest, pieceCachee.transform.position.x
+                                                   + e.localPosition.x - e.localScale.x * 0.5f);
+                    murEst = Mathf.Max(murEst, pieceCachee.transform.position.x
+                                               + e.localPosition.x + e.localScale.x * 0.5f);
+                }
+            Check("il passe sous les murs de la piece",
+                  ps.x - es.x * 0.5f <= murOuest + 0.01f && ps.x + es.x * 0.5f >= murEst - 0.01f);
+        }
+        else
+        {
+            Check("les deux sols sont a la meme hauteur", false);
+            Check("celui de la piece rejoint celui de la salle", false);
+            Check("et il finit au meme bord", false);
+            Check("il passe sous les murs de la piece", false);
+        }
+
         Check("la piece attend, cachee",
               Trouver("PetitePiece") != null && !Trouver("PetitePiece").activeSelf);
 

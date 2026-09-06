@@ -210,8 +210,14 @@ namespace Pizzeria3D
             // voir la pelouse au raccord.
             const float demiX = 2.95f, demiZ = 2.5f;
 
-            Bloc.Boite("SolPiece", t, new Vector3(0f, -0.2f, 0f),
-                       new Vector3(demiX * 2f, 0.4f, demiZ * 2f), Bloc.Sol).SansCollision();
+            // Le dallage va jusqu'aux faces exterieures des murs, et mord sur
+            // celui de la salle : arrete aux axes, il laissait une marche de
+            // 20 cm dans le beige et un liseré d'herbe sous les murs.
+            // large de l'epaisseur des murs de part et d'autre, et mordant de
+            // 0,3 sur le dallage de la salle au sud
+            Bloc.Boite("SolPiece", t, new Vector3(0f, -0.2f, -0.15f),
+                       new Vector3(demiX * 2f + 0.4f, 0.4f, demiZ * 2f + 0.3f),
+                       Bloc.Sol).SansCollision();
 
             Mur(t, new Vector3(-demiX, 1.6f, 0f), new Vector3(0.4f, 3.2f, demiZ * 2f), centre);
             var panDroit = Mur(t, new Vector3(demiX, 1.6f, 0f), new Vector3(0.4f, 3.2f, demiZ * 2f),
