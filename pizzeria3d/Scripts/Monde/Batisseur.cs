@@ -43,6 +43,8 @@ namespace Pizzeria3D
                                     table, new Vector3(3.6f, 0f, 2.05f));
             Zone(racine.transform, joueur, caissier, new Vector3(2.5f, 0f, 3.0f),
                  Reglages.PrixCaissier, "Embaucher un caissier");
+            Zone(racine.transform, joueur, _piece, _pieceEtSaDalle,
+                 Reglages.PrixPetitePiece, "Ouvrir la petite piece");
 
             racine.AddComponent<Hud>();
             racine.AddComponent<Manette>();
@@ -50,6 +52,11 @@ namespace Pizzeria3D
         }
 
         // ------------------------------------------------------------------
+
+        // La piece du fond et l'emplacement de sa dalle, poses pendant le decor
+        // et repris au moment d'installer les zones d'achat.
+        static GameObject _piece;
+        static Vector3 _pieceEtSaDalle;
 
         static void Decor(Transform parent)
         {
@@ -64,10 +71,28 @@ namespace Pizzeria3D
 
             // Le batiment ferme deux cotes : le fond et la gauche de l'ecran.
             // Un seul pan donnait l'impression d'un decor pose sur un terrain vague.
-            // Comme le mur de gauche, il va d'un bord a l'autre du dallage.
-            Bloc.Boite("MurFond", parent, new Vector3(0f, 1.6f, 7.2f), new Vector3(17f, 3.2f, 0.6f),
-                       Bloc.MachineBis).SansCollision();
-            Obstacles.Ajouter(new Vector3(0f, 0f, 7.2f), 17f, 0.6f);
+            // Comme le mur de gauche, il va d'un bord a l'autre du dallage —
+            // mais en deux pans, car la porte doit pouvoir livrer passage.
+            const float xPorte = 4.56f, largeurPorte = 1.70f;
+            float finGauche = xPorte - largeurPorte * 0.5f;
+            float debutDroite = xPorte + largeurPorte * 0.5f;
+
+            Bloc.Boite("MurFond", parent,
+                       new Vector3((-8.5f + finGauche) * 0.5f, 1.6f, 7.2f),
+                       new Vector3(finGauche + 8.5f, 3.2f, 0.6f), Bloc.MachineBis).SansCollision();
+            Obstacles.Ajouter(new Vector3((-8.5f + finGauche) * 0.5f, 0f, 7.2f),
+                              finGauche + 8.5f, 0.6f);
+
+            Bloc.Boite("MurFondBis", parent,
+                       new Vector3((debutDroite + 8.5f) * 0.5f, 1.6f, 7.2f),
+                       new Vector3(8.5f - debutDroite, 3.2f, 0.6f), Bloc.MachineBis).SansCollision();
+            Obstacles.Ajouter(new Vector3((debutDroite + 8.5f) * 0.5f, 0f, 7.2f),
+                              8.5f - debutDroite, 0.6f);
+
+            // Le pas de la porte reste bouche tant que la piece n'est pas
+            // achetee : c'est cet obstacle-la que l'achat leve.
+            int seuil = Obstacles.Ajouter(new Vector3(xPorte, 0f, 7.2f), largeurPorte, 0.6f);
+
             for (int i = 0; i < 6; i++)
             {
                 if (i == 4) continue;              // sa place revient a la porte
@@ -75,7 +100,12 @@ namespace Pizzeria3D
                            new Vector3(1.8f, 1.5f, 0.15f), Bloc.Couleur(0xBFE8F2)).SansCollision();
             }
             // juste a cote du plan de mise en boite, qui s'arrete a x 3,5
-            Porte(parent, new Vector3(4.56f, 0f, 6.84f));
+            var gond = Porte(parent, new Vector3(xPorte, 0f, 7.2f));
+
+            // La piece derriere, et la dalle qui l'ouvre, devant la porte.
+            var piece = Piece(parent, new Vector3(xPorte, 0f, 9.7f), gond, seuil);
+            _pieceEtSaDalle = new Vector3(xPorte, 0f, 5.6f);
+            _piece = piece;
 
             // Le mur va d'un bout a l'autre du dallage : il s'arretait 1,2 avant
             // le bord, et la pizzeria semblait ouverte sur le vide.
@@ -104,11 +134,11 @@ namespace Pizzeria3D
         }
 
         /// <summary>
-        /// La porte vitree de la pizzeria, plaquee sur la face interieure du
-        /// mur du fond, a cote du plan de mise en boite. Elle descend jusqu'au
-        /// sol — c'est ce qui la distingue d'une fenetre de plus.
+        /// La porte vitree du mur du fond, a cote du plan de mise en boite.
+        /// Le vantail pend a un gond : c'est lui qui pivote quand la piece
+        /// s'ouvre. Renvoie ce gond.
         /// </summary>
-        static void Porte(Transform parent, Vector3 position)
+        static Transform Porte(Transform parent, Vector3 position)
         {
             var go = new GameObject("Porte");
             go.transform.SetParent(parent, false);
@@ -118,18 +148,72 @@ namespace Pizzeria3D
             var blanc = Bloc.Couleur(0xF4F1EA);
             var vitre = Bloc.Couleur(0xBFE8F2);
 
-            Bloc.Boite("Chambranle", t, new Vector3(0f, 1.15f, 0f), new Vector3(1.60f, 2.30f, 0.16f),
-                       blanc).SansCollision();
-            Bloc.Boite("Battant", t, new Vector3(0f, 1.12f, -0.04f), new Vector3(1.36f, 2.06f, 0.10f),
-                       vitre).SansCollision();
-            // la barre de poussee, en travers du battant
-            Bloc.Boite("Barre", t, new Vector3(0f, 1.05f, -0.09f), new Vector3(1.10f, 0.10f, 0.06f),
-                       blanc).SansCollision();
-            Bloc.Boite("Poignee", t, new Vector3(-0.50f, 1.05f, -0.12f), new Vector3(0.16f, 0.14f, 0.08f),
-                       Bloc.Metal).SansCollision();
+            Bloc.Boite("Chambranle", t, new Vector3(0f, 1.15f, -0.36f),
+                       new Vector3(1.80f, 2.30f, 0.16f), blanc).SansCollision();
+
+            var gond = new GameObject("Gond");
+            gond.transform.SetParent(t, false);
+            gond.transform.localPosition = new Vector3(0.72f, 0f, -0.40f);
+
+            Bloc.Boite("Battant", gond.transform, new Vector3(-0.70f, 1.12f, 0f),
+                       new Vector3(1.36f, 2.06f, 0.10f), vitre).SansCollision();
+            Bloc.Boite("Barre", gond.transform, new Vector3(-0.70f, 1.05f, -0.06f),
+                       new Vector3(1.10f, 0.10f, 0.06f), blanc).SansCollision();
+            Bloc.Boite("Poignee", gond.transform, new Vector3(-1.22f, 1.05f, -0.09f),
+                       new Vector3(0.16f, 0.14f, 0.08f), Bloc.Metal).SansCollision();
+
             // le seuil, cote salle
-            Bloc.Boite("Seuil", t, new Vector3(0f, 0.02f, -0.28f), new Vector3(1.60f, 0.04f, 0.50f),
-                       Bloc.SolBordure).SansCollision();
+            Bloc.Boite("Seuil", t, new Vector3(0f, 0.02f, -0.62f),
+                       new Vector3(1.70f, 0.04f, 0.50f), Bloc.SolBordure).SansCollision();
+
+            return gond.transform;
+        }
+
+        /// <summary>
+        /// La petite piece derriere la porte : dallage, trois pans de mur, et
+        /// de quoi s'asseoir. Elle reste cachee jusqu'a l'achat.
+        /// </summary>
+        static GameObject Piece(Transform parent, Vector3 centre, Transform gond, int seuil)
+        {
+            var go = new GameObject("PetitePiece");
+            go.transform.SetParent(parent, false);
+            go.transform.position = centre;
+            var t = go.transform;
+
+            const float demiX = 2.16f, demiZ = 2.15f;
+
+            Bloc.Boite("SolPiece", t, new Vector3(0f, -0.2f, 0f),
+                       new Vector3(demiX * 2f, 0.4f, demiZ * 2f + 0.6f), Bloc.Sol).SansCollision();
+
+            Mur(t, new Vector3(-demiX, 1.6f, 0.3f), new Vector3(0.4f, 3.2f, demiZ * 2f + 0.6f), centre);
+            Mur(t, new Vector3(demiX, 1.6f, 0.3f), new Vector3(0.4f, 3.2f, demiZ * 2f + 0.6f), centre);
+            Mur(t, new Vector3(0f, 1.6f, demiZ + 0.3f), new Vector3(demiX * 2f + 0.4f, 3.2f, 0.4f), centre);
+
+            // un coin repas, pour qu'elle serve a quelque chose a l'oeil
+            Bloc.Boite("TablePiece", t, new Vector3(0f, 0.72f, 0.6f), new Vector3(1.5f, 0.12f, 1.0f),
+                       Bloc.Metal).SansCollision();
+            foreach (float cx in new[] { -0.62f, 0.62f })
+                foreach (float cz in new[] { 0.24f, 0.96f })
+                    Bloc.Boite("PiedTable", t, new Vector3(cx, 0.33f, cz),
+                               new Vector3(0.10f, 0.66f, 0.10f), Bloc.Taupe).SansCollision();
+            foreach (float cx in new[] { -1.35f, 1.35f })
+                Bloc.Boite("Tabouret", t, new Vector3(cx, 0.24f, 0.6f),
+                           new Vector3(0.55f, 0.48f, 0.55f), Bloc.Machine).SansCollision();
+
+            var p = go.AddComponent<PetitePiece>();
+            p.Passage = seuil;
+            p.Gond = gond;
+            p.DemiTerrainZ = centre.z + demiZ - 0.3f;
+
+            go.SetActive(false);
+            return go;
+        }
+
+        /// <summary>Un pan de mur de la piece, avec sa collision.</summary>
+        static void Mur(Transform parent, Vector3 local, Vector3 taille, Vector3 centre)
+        {
+            Bloc.Boite("MurPiece", parent, local, taille, Bloc.MachineBis).SansCollision();
+            Obstacles.Ajouter(centre + new Vector3(local.x, 0f, local.z), taille.x, taille.z);
         }
 
         /// <summary>

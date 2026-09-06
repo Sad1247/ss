@@ -34,20 +34,38 @@ namespace Pizzeria3D
             _terrainZ = demiZ;
         }
 
-        public static void Ajouter(Vector3 centre, float largeurX, float largeurZ)
+        /// <summary>Pose un mur et renvoie son numero, pour pouvoir le lever.</summary>
+        public static int Ajouter(Vector3 centre, float largeurX, float largeurZ)
         {
             _boites.Add(new Boite
             {
                 xMin = centre.x - largeurX * 0.5f, xMax = centre.x + largeurX * 0.5f,
                 zMin = centre.z - largeurZ * 0.5f, zMax = centre.z + largeurZ * 0.5f,
             });
+            return _boites.Count - 1;
         }
+
+        /// <summary>
+        /// Leve un obstacle pose plus tot — le seuil d'une porte qu'on ouvre.
+        /// La boite est videe plutot que retiree : les numeros deja distribues
+        /// resteraient sinon accroches au mauvais mur.
+        /// </summary>
+        public static void Ouvrir(int numero)
+        {
+            if (numero < 0 || numero >= _boites.Count) return;
+            _boites[numero] = new Boite { xMin = 0f, xMax = 0f, zMin = 0f, zMax = 0f };
+        }
+
+        /// <summary>Le rectangle ou le joueur peut aller, pour l'agrandir.</summary>
+        public static float DemiTerrainX => _terrainX;
+        public static float DemiTerrainZ => _terrainZ;
 
         public static bool Bloque(Vector3 p, float rayon)
         {
             for (int i = 0; i < _boites.Count; i++)
             {
                 var b = _boites[i];
+                if (b.xMax <= b.xMin) continue;      // obstacle leve
                 if (p.x > b.xMin - rayon && p.x < b.xMax + rayon &&
                     p.z > b.zMin - rayon && p.z < b.zMax + rayon) return true;
             }

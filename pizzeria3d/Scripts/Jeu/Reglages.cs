@@ -63,6 +63,8 @@ namespace Pizzeria3D
 
         // --- zone d'achat ---
         public const int PrixCaissier = 250;
+        /// <summary>La piece qui s'ouvre derriere la porte du fond.</summary>
+        public const int PrixPetitePiece = 400;
         public const float DebitAchat = 45f;        // euros par seconde en restant dessus
 
         // --- pile de pizzas ---

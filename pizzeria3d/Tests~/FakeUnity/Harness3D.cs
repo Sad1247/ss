@@ -78,6 +78,13 @@ static class Harness3D
         return mini;
     }
 
+    /// <summary>La dalle d'achat d'un prix donne, ou null.</summary>
+    static ZoneAchat ZoneDePrix(int prix)
+    {
+        foreach (var z in TousLes<ZoneAchat>()) if (z.Prix == prix) return z;
+        return null;
+    }
+
     /// <summary>Un enfant direct par son nom, ou null.</summary>
     static Transform Piece(Transform parent, string nom)
     {
@@ -287,11 +294,15 @@ static class Harness3D
         }
 
         var murFond = Trouver("MurFond");
-        Check("le mur du fond est monte", murFond != null && sol != null);
-        if (murFond != null && sol != null)
+        var murFondBis = Trouver("MurFondBis");
+        Check("le mur du fond est monte", murFond != null && murFondBis != null && sol != null);
+        if (murFond != null && murFondBis != null && sol != null)
         {
+            // deux pans, et entre eux le pas de la porte : on mesure donc
+            // l'etendue de leur reunion
             float murGauche2 = murFond.transform.position.x - murFond.transform.localScale.x * 0.5f;
-            float murDroite  = murFond.transform.position.x + murFond.transform.localScale.x * 0.5f;
+            float murDroite  = murFondBis.transform.position.x
+                             + murFondBis.transform.localScale.x * 0.5f;
             float solGauche  = sol.transform.position.x - sol.transform.localScale.x * 0.5f;
             float solDroite  = sol.transform.position.x + sol.transform.localScale.x * 0.5f;
             Check("il court d'un bord a l'autre du dallage",
@@ -331,7 +342,8 @@ static class Harness3D
             Check("elle descend jusqu'au sol", Mathf.Abs(bas) < 0.05f);
             Check("elle est plus haute qu'une fenetre", chambranle.localScale.y > 1.8f);
             Check("elle est plaquee sur la face interieure du mur",
-                  porte.transform.position.z < murFond.transform.position.z);
+                  porte.transform.position.z + chambranle.localPosition.z
+                      < murFond.transform.position.z);
             Check("aucune vitre ne lui passe dessus",
                   EcartX("VitreFond", porte.transform.position.x) > 1.5f);
 
@@ -348,6 +360,28 @@ static class Harness3D
             Check("elle est plaquee sur la face interieure du mur", false);
             Check("aucune vitre ne lui passe dessus", false);
             Check("elle jouxte le plan de mise en boite", false);
+        }
+
+        Check("on ne passe pas la porte avant de l'avoir payee",
+              porte != null && Obstacles.Bloque(porte.transform.position, Reglages.RayonJoueur));
+        Check("la piece attend, cachee",
+              Trouver("PetitePiece") != null && !Trouver("PetitePiece").activeSelf);
+
+        var dallePiece = ZoneDePrix(Reglages.PrixPetitePiece);
+        Check("une dalle a 400 attend devant la porte",
+              dallePiece != null && dallePiece.Restant == Reglages.PrixPetitePiece);
+        if (dallePiece != null && porte != null)
+        {
+            var d = dallePiece.transform.position;
+            Check("elle est devant la porte, cote salle",
+                  Mathf.Abs(d.x - porte.transform.position.x) < 0.6f &&
+                  d.z < porte.transform.position.z && porte.transform.position.z - d.z < 2.5f);
+            Check("le joueur peut s'y tenir", !Obstacles.Bloque(d, Reglages.RayonJoueur));
+        }
+        else
+        {
+            Check("elle est devant la porte, cote salle", false);
+            Check("le joueur peut s'y tenir", false);
         }
 
         // La pile de cartons de la cour masquait ce mur : elle a ete retiree.
@@ -826,6 +860,34 @@ static class Harness3D
         Check("le caissier apparait une fois paye", employe != null && employe.activeSelf);
         Check("le comptoir sait qu'un caissier tient la caisse", comptoir.CaissierPresent);
         Check("la dalle d'embauche disparait", zoneCaissier.gameObject.Detruit);
+
+        // --- achat de la petite piece ---
+        var avantPiece = Trouver("PetitePiece");
+        float terrainAvant = Obstacles.DemiTerrainZ;
+        var gondAvant = avantPiece != null ? avantPiece.GetComponent<PetitePiece>().Gond : null;
+        float angleAvant = gondAvant != null ? gondAvant.localRotation.y : 0f;
+
+        Banque.Encaisser(Reglages.PrixPetitePiece);
+        Placer(joueur, dallePiece.transform.position);
+        Secondes(Reglages.PrixPetitePiece / Reglages.DebitAchat + 2f);
+
+        var laPiece = Trouver("PetitePiece");
+        Check("la piece s'ouvre une fois payee", laPiece != null && laPiece.activeSelf);
+        Check("la dalle de la piece disparait", dallePiece.gameObject.Detruit);
+        Check("le pas de la porte se libere",
+              porte != null && !Obstacles.Bloque(porte.transform.position, Reglages.RayonJoueur));
+        Check("le terrain s'etend jusqu'au fond de la piece",
+              Obstacles.DemiTerrainZ > terrainAvant + 2f);
+        Check("le vantail s'ouvre",
+              gondAvant != null && Mathf.Abs(gondAvant.localRotation.y - angleAvant) > 0.1f);
+
+        // et l'on peut vraiment y entrer
+        var dansLaPiece = new Vector3(porte.transform.position.x, 0f,
+                                      laPiece.transform.position.z);
+        Check("on peut se tenir dans la piece",
+              !Obstacles.Bloque(dansLaPiece, Reglages.RayonJoueur));
+        Check("mais pas traverser ses murs",
+              Obstacles.Bloque(dansLaPiece + new Vector3(2.2f, 0f, 0f), Reglages.RayonJoueur));
 
         // --- le caissier fait la navette jusqu'au four ---
         var navetteur = employe.GetComponent<Caissier>();
