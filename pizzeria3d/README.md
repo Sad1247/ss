@@ -68,6 +68,7 @@ Scripts/Jeu/
   Billet.cs     la liasse au sol, puis son vol vers le joueur
   ZoneAchat.cs  la dalle verte : l'argent s'ecoule, l'objet apparait
   PetitePiece.cs la piece du fond : ouvre la porte, libere le pas, etend le terrain
+  MursDiscrets.cs escamote les murs qui cachent le joueur entre dans la piece
   Caissier.cs   l'employe : une pizza, son carton, sa boite, puis le comptoir
   Emballage.cs  le plan : reserve de cartons, rond rouge, rond vert, poste
   Banque.cs     la caisse
@@ -87,7 +88,7 @@ Scripts/Monde/
 
 Tests~/FakeUnity/            (ignore par Unity : le ~ final)
   FakeUnity3D.cs  faux runtime Unity (hierarchie, transforms, entrees, cycle de vie)
-  Harness3D.cs    171 verifications qui jouent la boucle complete
+  Harness3D.cs    177 verifications qui jouent la boucle complete
 ```
 
 ## Verifier sans Unity
@@ -126,7 +127,7 @@ partie. Le remettre a 0.
 
 ## Ce qui est verifie, et ce qui ne l'est pas
 
-La logique tourne : les 171 verifications ci-dessus s'executent hors editeur.
+La logique tourne : les 177 verifications ci-dessus s'executent hors editeur.
 Le **rendu 3D n'a jamais ete affiche** — positions, echelles, cadrage de la
 camera et couleurs ont ete poses sans jamais etre vus. C'est la premiere chose
 a corriger a l'oeil au lancement.

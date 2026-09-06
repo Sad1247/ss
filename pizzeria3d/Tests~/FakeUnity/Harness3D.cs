@@ -78,6 +78,22 @@ static class Harness3D
         return mini;
     }
 
+    static bool TousVisibles(MursDiscrets d)
+    {
+        if (d == null) return false;
+        foreach (var m in d.Murs)
+            if (m == null || !m.GetComponent<MeshRenderer>().enabled) return false;
+        return true;
+    }
+
+    static bool AucunVisible(MursDiscrets d)
+    {
+        if (d == null) return false;
+        foreach (var m in d.Murs)
+            if (m == null || m.GetComponent<MeshRenderer>().enabled) return false;
+        return true;
+    }
+
     /// <summary>La dalle d'achat d'un prix donne, ou null.</summary>
     static ZoneAchat ZoneDePrix(int prix)
     {
@@ -929,6 +945,27 @@ static class Harness3D
               !Obstacles.Bloque(dansLaPiece, Reglages.RayonJoueur));
         Check("mais pas traverser ses murs",
               Obstacles.Bloque(dansLaPiece + new Vector3(2.2f, 0f, 0f), Reglages.RayonJoueur));
+
+        // --- les murs qui cachent la piece s'escamotent ---
+        // La vue est fixe : sans cela, le joueur passe la porte et disparait
+        // derriere le mur, on joue a l'aveugle.
+        var discrets = laPiece.GetComponent<MursDiscrets>();
+        Check("la piece sait escamoter ses murs", discrets != null);
+        Check("elle escamote ceux du cote de la camera",
+              discrets != null && discrets.Murs.Length >= 3);
+
+        Placer(joueur, new Vector3(0f, 0f, 0f));       // bien dans la salle
+        Frames(2);
+        Check("depuis la salle, les murs sont bien la", TousVisibles(discrets));
+
+        Placer(joueur, dansLaPiece);
+        Frames(2);
+        Check("une fois dedans, ils s'effacent", AucunVisible(discrets));
+        Check("mais la piece reste, elle", laPiece.activeSelf);
+
+        Placer(joueur, new Vector3(0f, 0f, 0f));
+        Frames(2);
+        Check("et ils reviennent quand on ressort", TousVisibles(discrets));
 
         // --- le caissier fait la navette jusqu'au four ---
         var navetteur = employe.GetComponent<Caissier>();

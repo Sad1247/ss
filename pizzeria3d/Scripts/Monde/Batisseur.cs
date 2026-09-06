@@ -24,10 +24,14 @@ namespace Pizzeria3D
             Obstacles.Reinitialiser();
 
             var racine = new GameObject("Pizzeria");
+
+            // Le joueur est monte avant le decor : la petite piece a besoin de
+            // lui pour savoir quand escamoter ses murs.
+            var joueur = Pizzaiolo(racine.transform);
+            _joueur = joueur;
+
             Decor(racine.transform);
             Lumiere(racine.transform);
-
-            var joueur = Pizzaiolo(racine.transform);
             Camera(racine.transform, joueur.transform);
 
             var comptoir = Comptoir(racine.transform, joueur);
@@ -57,6 +61,14 @@ namespace Pizzeria3D
         // et repris au moment d'installer les zones d'achat.
         static GameObject _piece;
         static Vector3 _pieceEtSaDalle;
+        static Joueur _joueur;
+
+        /// <summary>Un objet du decor deja pose, par son nom.</summary>
+        static GameObject Trouver(Transform parent, string nom)
+        {
+            var t = parent.Find(nom);
+            return t != null ? t.gameObject : null;
+        }
 
         static void Decor(Transform parent)
         {
@@ -111,7 +123,7 @@ namespace Pizzeria3D
             var gond = Porte(parent, new Vector3(xPorte, 0f, 7.2f));
 
             // La piece derriere, et la dalle qui l'ouvre, devant la porte.
-            var piece = Piece(parent, new Vector3(xPorte, 0f, 9.7f), gond, seuil);
+            var piece = Piece(parent, new Vector3(xPorte, 0f, 9.7f), gond, seuil, _joueur);
             _pieceEtSaDalle = new Vector3(xPorte, 0f, 5.6f);
             _piece = piece;
 
@@ -186,7 +198,8 @@ namespace Pizzeria3D
         /// La petite piece derriere la porte : dallage, trois pans de mur, et
         /// de quoi s'asseoir. Elle reste cachee jusqu'a l'achat.
         /// </summary>
-        static GameObject Piece(Transform parent, Vector3 centre, Transform gond, int seuil)
+        static GameObject Piece(Transform parent, Vector3 centre, Transform gond, int seuil,
+                                Joueur joueur)
         {
             var go = new GameObject("PetitePiece");
             go.transform.SetParent(parent, false);
@@ -202,7 +215,8 @@ namespace Pizzeria3D
                        new Vector3(demiX * 2f, 0.4f, demiZ * 2f), Bloc.Sol).SansCollision();
 
             Mur(t, new Vector3(-demiX, 1.6f, 0f), new Vector3(0.4f, 3.2f, demiZ * 2f), centre);
-            Mur(t, new Vector3(demiX, 1.6f, 0f), new Vector3(0.4f, 3.2f, demiZ * 2f), centre);
+            var panDroit = Mur(t, new Vector3(demiX, 1.6f, 0f), new Vector3(0.4f, 3.2f, demiZ * 2f),
+                               centre);
             Mur(t, new Vector3(0f, 1.6f, demiZ - 0.2f), new Vector3(demiX * 2f + 0.4f, 3.2f, 0.4f),
                 centre);
 
@@ -222,15 +236,25 @@ namespace Pizzeria3D
             p.Gond = gond;
             p.DemiTerrainZ = centre.z + demiZ - 0.85f;
 
+            // Les pans qui s'interposent entre la camera et la piece : le
+            // cote droit, le pan de mur a droite de la porte, et le linteau.
+            var discrets = go.AddComponent<MursDiscrets>();
+            discrets.Joueur = joueur;
+            discrets.Murs = new[] { panDroit, Trouver(parent, "MurFondBis"), Trouver(parent, "LinteauFond") };
+            discrets.Centre = centre;
+            discrets.DemiX = demiX;
+            discrets.DemiZ = demiZ;
+
             go.SetActive(false);
             return go;
         }
 
         /// <summary>Un pan de mur de la piece, avec sa collision.</summary>
-        static void Mur(Transform parent, Vector3 local, Vector3 taille, Vector3 centre)
+        static GameObject Mur(Transform parent, Vector3 local, Vector3 taille, Vector3 centre)
         {
-            Bloc.Boite("MurPiece", parent, local, taille, Bloc.MachineBis).SansCollision();
+            var pan = Bloc.Boite("MurPiece", parent, local, taille, Bloc.MachineBis).SansCollision();
             Obstacles.Ajouter(centre + new Vector3(local.x, 0f, local.z), taille.x, taille.z);
+            return pan;
         }
 
         /// <summary>
