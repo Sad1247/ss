@@ -4,7 +4,8 @@ namespace Pizzeria3D
 {
     /// <summary>
     /// Un client : arrive, avance dans la file, recoit ses pizzas une a une,
-    /// paie, puis s'en va. S'il attend trop longtemps, il part sans payer.
+    /// paie, puis s'attable si la salle a de la place — sinon il emporte ses
+    /// boites et s'en va. S'il attend trop longtemps, il part sans payer.
     /// </summary>
     public sealed class Client : MonoBehaviour
     {
@@ -19,6 +20,10 @@ namespace Pizzeria3D
         Comptoir _comptoir;
         Pile _sac;
         Bulle _bulle;
+        Demarche _demarche;
+        TableRepas _table;        // la table ou il mange, s'il en a trouve une
+        bool _attable;
+        float _resteRepas;
         Vector3 _cible;
         bool _sEnVa;
         int _recues;
@@ -75,7 +80,7 @@ namespace Pizzeria3D
             var membres = Personnage.Construire(transform, a);
 
             // ils marchent jusqu'au comptoir : sans demarche ils glisseraient
-            var d = gameObject.AddComponent<Demarche>();
+            var d = _demarche = gameObject.AddComponent<Demarche>();
             d.VitesseReference = Reglages.AllureClient;
             d.Corps = membres.Corps;
             d.HancheG = membres.HancheG; d.HancheD = membres.HancheD;
@@ -128,8 +133,11 @@ namespace Pizzeria3D
 
         void Update()
         {
+            if (_attable) { Manger(); return; }
+
             Avancer();
-            if (_sEnVa || !EstArrive) return;
+            // ni celui qui s'en va, ni celui qui rejoint sa table n'attend
+            if (_sEnVa || _table != null || !EstArrive) return;
 
             _patience -= Time.deltaTime;
             if (_patience <= 0f)
@@ -148,10 +156,36 @@ namespace Pizzeria3D
             if (delta.sqrMagnitude < 0.02f)
             {
                 if (_sEnVa) { Destroy(gameObject); return; }
+                if (_table != null) { Asseoir(); return; }
                 EstArrive = true;
                 return;
             }
             transform.position += delta.normalized * Reglages.VitesseClient * Time.deltaTime;
+        }
+
+        /// <summary>Il s'installe : cale sur la chaise, tourne vers le plateau.</summary>
+        void Asseoir()
+        {
+            _attable = true;
+            _resteRepas = Reglages.DureeRepas;
+
+            var place = _table.Place;
+            transform.position = new Vector3(place.x, Reglages.HauteurAssise, place.z);
+            transform.rotation = Quaternion.LookRotation(_table.VersLaTable(place), Vector3.up);
+            if (_demarche != null) _demarche.Assis = true;
+        }
+
+        /// <summary>Le repas s'egrene, puis il rend la place et sort.</summary>
+        void Manger()
+        {
+            _resteRepas -= Time.deltaTime;
+            if (_resteRepas > 0f) return;
+
+            _attable = false;
+            if (_demarche != null) _demarche.Assis = false;
+            transform.position = new Vector3(transform.position.x, 0f, transform.position.z);
+            if (_table != null) { _table.Liberer(this); _table = null; }
+            _sEnVa = true;
         }
 
         /// <summary>Egrene les secondes de commande une fois le client au comptoir.</summary>
@@ -179,9 +213,23 @@ namespace Pizzeria3D
 
         public void Partir()
         {
-            _sEnVa = true;
             if (_bulle != null) _bulle.Afficher(0);   // la commande n'a plus lieu d'etre
+
+            // Servi, et une place libre en salle : il s'attable. Sinon il
+            // emporte ses boites — c'est la file dehors quand ca marche bien.
+            var table = _comptoir != null ? _comptoir.Table : null;
+            if (EstServi && table != null && table.Accueillir(this))
+            {
+                _table = table;
+                _cible = table.Place;
+                EstArrive = false;
+                return;
+            }
+            _sEnVa = true;
         }
+
+        /// <summary>Vrai tant qu'il mange, assis a la table de la salle.</summary>
+        public bool Attable => _attable;
 
         /// <summary>Ce qu'il reste a lui remettre, tel qu'affiche dans sa bulle.</summary>
         public int Restant => Pizzas - _recues;

@@ -460,6 +460,31 @@ static class Harness3D
         Check("ni d'obstacle a sa place",
               !Obstacles.Bloque(new Vector3(-7f, 0f, 5.6f), Reglages.RayonJoueur));
 
+        // --- la table de la salle ---
+        var tableSalle = UnityEngine.Object.FindObjectOfType<TableRepas>();
+        Check("une table est dressee dans la salle", tableSalle != null);
+        if (tableSalle != null)
+        {
+            var plateau = CouleurDe(tableSalle.transform, "Plateau");
+            Check("son plateau est rouge", plateau.r > plateau.g + 0.3f && plateau.r > plateau.b + 0.3f);
+            Check("elle a deux chaises", Compte(tableSalle.transform, "Chaise", true) == 2);
+            Check("elle offre une place assise", tableSalle.Siege != null);
+            Check("elle est libre au depart", tableSalle.EstLibre);
+            Check("on ne la traverse pas",
+                  Obstacles.Bloque(tableSalle.transform.position, Reglages.RayonJoueur));
+            Check("elle ne gene pas la file",
+                  Mathf.Abs(tableSalle.transform.position.x - comptoir.PlaceDeLaFile(0).x) > 2f);
+        }
+        else
+        {
+            Check("son plateau est rouge", false);
+            Check("elle a deux chaises", false);
+            Check("elle offre une place assise", false);
+            Check("elle est libre au depart", false);
+            Check("on ne la traverse pas", false);
+            Check("elle ne gene pas la file", false);
+        }
+
         // --- la table de mise en boite ---
         Check("un plan de mise en boite est monte", table != null);
         Check("il est derriere la caisse",
@@ -1129,6 +1154,37 @@ static class Harness3D
 
         Check("le caissier sert les clients sans le joueur",
               TousLes<Billet>().Count > liassesAvant || comptoir.Stock.Nombre < servisAvant);
+
+        // --- les clients servis passent a table ---
+        // Une seule place : le deuxieme servi doit repartir avec ses boites.
+        bool unAttable = false, deuxALaFois = false, tableRendue = false, aEteOccupee = false;
+        bool assisSurLaChaise = false, poseAssise = false;
+        for (int i = 0; i < 60 * 150 && !(unAttable && tableRendue); i++)
+        {
+            Frames(1);
+            int attables = 0;
+            foreach (var cl in TousLes<Client>())
+            {
+                if (!cl.Attable) continue;
+                attables++;
+                unAttable = true;
+
+                var ecart = cl.transform.position - tableSalle.Place;
+                ecart.y = 0f;
+                if (ecart.magnitude < 0.3f) assisSurLaChaise = true;
+                var pas = cl.GetComponent<Demarche>();
+                if (pas != null && pas.Assis) poseAssise = true;
+            }
+            if (attables > 1) deuxALaFois = true;
+            if (!tableSalle.EstLibre) aEteOccupee = true;
+            else if (aEteOccupee) tableRendue = true;
+        }
+        Check("un client servi s'attable", unAttable);
+        Check("il est bien assis sur la chaise", assisSurLaChaise);
+        Check("et il en a la pose", poseAssise);
+        Check("jamais deux a la fois", !deuxALaFois);
+        Check("la table se libere apres le repas", tableRendue);
+        Check("et le client s'en va ensuite", tableSalle.EstLibre);
 
         // et le joueur encaisse en revenant marcher dessus
         int soldeAvant = Banque.Solde;

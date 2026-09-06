@@ -51,6 +51,9 @@ namespace Pizzeria3D
             Zone(racine.transform, joueur, _piece, _pieceEtSaDalle,
                  Reglages.PrixPetitePiece, "Ouvrir la petite piece");
 
+            // La table de la salle : les clients servis viennent y manger.
+            comptoir.Table = Salle(racine.transform, new Vector3(-2.6f, 0f, -3.2f));
+
             racine.AddComponent<Hud>();
             racine.AddComponent<Manette>();
             Debug.Log("Pizzeria : scene prete. Maintiens le clic et glisse pour te deplacer.");
@@ -517,6 +520,60 @@ namespace Pizzeria3D
 
             go.SetActive(actif);
             return go;
+        }
+
+        /// <summary>
+        /// La table de la salle et ses deux chaises : plateau rouge arrondi sur
+        /// un pied central, assises bleues, montants sombres. Un seul couvert
+        /// est reellement servi — la seconde chaise est la pour l'allure.
+        /// </summary>
+        static TableRepas Salle(Transform parent, Vector3 position)
+        {
+            var go = new GameObject("TableSalle");
+            go.transform.SetParent(parent, false);
+            go.transform.position = position;
+            var t = go.transform;
+
+            var rouge = Bloc.Couleur(0xE2503A);
+            var sombre = Bloc.Couleur(0x2B303A);
+            var assise = Bloc.Couleur(0x3D8BE0);
+
+            Bloc.Galet("Plateau", t, new Vector3(0f, 0.78f, 0f), new Vector3(1.35f, 0.30f, 1.35f),
+                       rouge).SansCollision();
+            Bloc.Boite("Pied", t, new Vector3(0f, 0.36f, 0f), new Vector3(0.34f, 0.72f, 0.34f),
+                       sombre).SansCollision();
+            Bloc.Boite("Socle", t, new Vector3(0f, 0.06f, 0f), new Vector3(0.72f, 0.12f, 0.72f),
+                       sombre).SansCollision();
+
+            var siege = Chaise(t, new Vector3(-1.20f, 0f, 0f), 90f, sombre, assise);
+            Chaise(t, new Vector3(1.20f, 0f, 0f), -90f, sombre, assise);
+
+            Obstacles.Ajouter(position, 2.9f, 1.5f);
+
+            var table = go.AddComponent<TableRepas>();
+            table.Siege = siege;
+            return table;
+        }
+
+        /// <summary>Une chaise : quatre montants, une assise, un dossier.</summary>
+        static Transform Chaise(Transform parent, Vector3 local, float cap, Color bois, Color assise)
+        {
+            var go = new GameObject("Chaise");
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = local;
+            go.transform.localRotation = Quaternion.Euler(0f, cap, 0f);
+            var t = go.transform;
+
+            Bloc.Boite("Assise", t, new Vector3(0f, 0.46f, 0f), new Vector3(0.52f, 0.08f, 0.52f),
+                       assise).SansCollision();
+            foreach (float x in new[] { -0.21f, 0.21f })
+                foreach (float z in new[] { -0.21f, 0.21f })
+                    Bloc.Boite("PiedChaise", t, new Vector3(x, 0.23f, z),
+                               new Vector3(0.08f, 0.46f, 0.08f), bois).SansCollision();
+            Bloc.Boite("Dossier", t, new Vector3(0f, 0.78f, -0.24f), new Vector3(0.52f, 0.56f, 0.08f),
+                       bois).SansCollision();
+
+            return t;
         }
 
         /// <summary>

@@ -32,6 +32,13 @@ namespace Pizzeria3D
         /// </summary>
         public bool BrasPortent;
 
+        /// <summary>
+        /// Assis a table : cuisses a l'horizontale, tibias vers le sol. La
+        /// demarche s'arrete entierement, sinon le pas repasserait par-dessus
+        /// la pose a l'image suivante.
+        /// </summary>
+        public bool Assis;
+
         Vector3 _precedente;
         float _phase;
         float _allure;          // 0 a l'arret, 1 a pleine vitesse
@@ -49,6 +56,8 @@ namespace Pizzeria3D
             var delta = transform.position - _precedente;
             delta.y = 0f;
             _precedente = transform.position;
+
+            if (Assis) { Asseoir(); return; }
 
             float vitesse = delta.magnitude / dt;
             float voulue = Mathf.Clamp01(vitesse / VitesseReference);
@@ -92,6 +101,25 @@ namespace Pizzeria3D
             // Le buste penche dans le sens de la marche. Le cap, lui, est
             // porte par la racine du personnage : les deux ne se genent pas.
             Corps.localRotation = Quaternion.Euler(Inclinaison * _allure, 0f, 0f);
+        }
+
+        /// <summary>La pose assise : jambes pliees, buste droit, rien qui bouge.</summary>
+        void Asseoir()
+        {
+            _allure = 0f;
+            _phase = 0f;
+            Tourner(HancheG, -78f);
+            Tourner(HancheD, -78f);
+            Tourner(GenouG, 78f);
+            Tourner(GenouD, 78f);
+            Tourner(EpauleG, -12f);
+            Tourner(EpauleD, -12f);
+
+            if (Corps == null) return;
+            var p = Corps.localPosition;
+            p.y = 0f;
+            Corps.localPosition = p;
+            Corps.localRotation = Quaternion.identity;
         }
 
         float Flexion(float phase)

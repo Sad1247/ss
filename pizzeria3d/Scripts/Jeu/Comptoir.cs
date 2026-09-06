@@ -15,6 +15,8 @@ namespace Pizzeria3D
         public Transform PointFile;          // premiere place de la file
         public Transform Sortie;             // ou les clients s'en vont
         public Caisse Caisse;
+        /// <summary>La table de la salle, ou les clients servis s'attablent.</summary>
+        public TableRepas Table;
 
         /// <summary>Vrai des qu'un employe tient la caisse a la place du joueur.</summary>
         public bool CaissierPresent;
