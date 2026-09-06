@@ -41,7 +41,7 @@ namespace Pizzeria3D
             // joueur qui longe le comptoir.
             var caissier = Caissier(racine.transform, comptoir, four.GetComponent<Four>(),
                                     table, new Vector3(3.6f, 0f, 2.05f));
-            Zone(racine.transform, joueur, caissier, new Vector3(2.5f, 0f, 2.2f),
+            Zone(racine.transform, joueur, caissier, new Vector3(2.5f, 0f, 3.0f),
                  Reglages.PrixCaissier, "Embaucher un caissier");
 
             racine.AddComponent<Hud>();

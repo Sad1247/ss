@@ -236,8 +236,11 @@ static class Harness3D
         // pouvoir s'y placer : une dalle collee au comptoir serait injouable.
         var dalle = zoneCaissier != null ? zoneCaissier.transform.position : Vector3.zero;
         var tiroir = caisse != null ? caisse.transform.position : Vector3.zero;
-        Check("elle est juste derriere le tiroir-caisse",
-              Mathf.Abs(dalle.x - tiroir.x) < 0.6f && dalle.z > tiroir.z && dalle.z - tiroir.z < 2.2f);
+        // Derriere le tiroir, mais assez en retrait pour ne pas etre mangee par
+        // le comptoir a l'ecran : la vue isometrique cache ce qui le longe.
+        Check("elle est derriere le tiroir-caisse, en retrait",
+              Mathf.Abs(dalle.x - tiroir.x) < 0.6f &&
+              dalle.z - tiroir.z > 2f && dalle.z - tiroir.z < 3f);
         // Resoudre ne repousse pas hors d'un obstacle, il refuse d'y entrer :
         // c'est donc Bloque qu'il faut interroger, sinon le test ne dit rien.
         Check("le joueur peut se tenir dessus", !Obstacles.Bloque(dalle, Reglages.RayonJoueur));
