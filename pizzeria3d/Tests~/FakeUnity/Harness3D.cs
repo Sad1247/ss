@@ -439,12 +439,17 @@ static class Harness3D
             Check("le joueur peut s'y tenir", false);
         }
 
-        // La pile de cartons de la cour masquait ce mur : elle a ete retiree.
+        // La cour a ete debarrassee : la pile de cartons masquait le mur du
+        // fond, la palette trainait au sol. Ni l'une ni l'autre ne doit
+        // laisser d'obstacle invisible derriere elle.
         Check("plus de pile de cartons dans la cour",
               Trouver("Caisse0") == null && Trouver("Caisse1") == null && Trouver("Caisse2") == null);
         Check("et plus d'obstacle invisible a sa place",
               Obstacles.Resoudre(new Vector3(6.6f, 0f, 4.2f), new Vector3(0f, 0f, 0.6f),
                                  Reglages.RayonJoueur).z > 4.7f);
+        Check("plus de palette au sol", Trouver("Palette") == null);
+        Check("ni d'obstacle a sa place",
+              !Obstacles.Bloque(new Vector3(-7f, 0f, 5.6f), Reglages.RayonJoueur));
 
         // --- la table de mise en boite ---
         Check("un plan de mise en boite est monte", table != null);

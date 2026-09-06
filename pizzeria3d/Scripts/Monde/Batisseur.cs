@@ -136,11 +136,8 @@ namespace Pizzeria3D
                 Bloc.Boite("VitreGauche" + i, parent, new Vector3(-7.65f, 1.9f, -6.4f + i * 2.9f),
                            new Vector3(0.15f, 1.5f, 1.8f), Bloc.Couleur(0xBFE8F2)).SansCollision();
 
-            // De quoi remplir la cour sans encombrer le passage : la pile de
-            // cartons qui se dressait a droite masquait le mur du fond.
-            Bloc.Boite("Palette", parent, new Vector3(-7f, 0.2f, 5.6f), new Vector3(2.2f, 0.4f, 2.2f),
-                       Bloc.Metal).SansCollision();
-            Obstacles.Ajouter(new Vector3(-7f, 0f, 5.6f), 2.2f, 2.2f);
+            // La cour reste degagee : la palette et la pile de cartons qui s'y
+            // trouvaient encombraient le sol sans rien apporter.
 
             float[] xs = { -12f, -9.5f, 11.5f, 13f, -13.5f };
             float[] zs = { 9.5f, -6.5f, 8f, -3.5f, 2f };
