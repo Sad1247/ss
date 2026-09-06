@@ -408,11 +408,13 @@ static class Harness3D
 
         // Les genoux plient pendant le pas, et JAMAIS a l'envers : une jambe
         // qui se casse vers l'avant se remarque tout de suite.
-        float flexionMax = 0f;
+        float flexionMax = 0f, pencheMax = 0f;
         bool genouALEnvers = false;
+        var buste = joueur.transform.Find("Corps");
         for (int i = 0; i < 120; i++)
         {
             Frames(1);
+            if (buste != null) pencheMax = Mathf.Max(pencheMax, buste.localRotation.x);
             foreach (var genou in new[] { demarche.GenouG, demarche.GenouD })
             {
                 if (genou == null) continue;
@@ -425,10 +427,21 @@ static class Harness3D
         Check("les genoux plient quand il marche", flexionMax > 0.05f);
         Check("et jamais a l'envers", !genouALEnvers);
 
+        // Le buste penche dans le sens de la marche, et c'est la racine qui
+        // porte le cap : si les deux etaient sur le meme objet, l'inclinaison
+        // ecraserait la direction du regard a chaque image. On releve le
+        // maximum sur la course : arrive au bord du dallage, il s'arrete et
+        // se redresse.
+        Check("le buste penche vers l'avant en marchant", pencheMax > 0.02f);
+        Check("le cap est porte par la racine, pas par le buste",
+              Mathf.Abs(joueur.transform.rotation.y) > 0.001f &&
+              Mathf.Abs(buste.localRotation.y) < 0.001f);
+
         Input.Boutons[0] = false;
         Frames(2);
         Secondes(0.8f);
         Check("le balancement s'arrete quand il s'arrete", demarche.Allure < 0.05f);
+        Check("et il se redresse", buste != null && buste.localRotation.x < 0.01f);
         Check("la manette disparait au relachement", !manette.EstVisible);
         Check("et sa direction retombe a zero",
               manette.Direction.x == 0f && manette.Direction.y == 0f);

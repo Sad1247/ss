@@ -25,7 +25,6 @@ namespace Pizzeria3D
         public Vector3 Relais;
 
         Pile _portee;
-        Transform _corps;
         Demarche _demarche;
         Etat _etat = Etat.Poste;
         bool _passeParRelais;
@@ -47,7 +46,6 @@ namespace Pizzeria3D
 
         void Awake()
         {
-            _corps = transform.Find("Corps");
             _demarche = GetComponent<Demarche>();
             _portee = Portage.Creer(transform, "PilePortee");
             _portee.Max = Reglages.CapacitePorteeCaissier;
@@ -194,10 +192,9 @@ namespace Pizzeria3D
 
             var pas = delta.normalized * Reglages.VitesseCaissier * Time.deltaTime;
             transform.position += pas;
-            if (_corps != null)
-                _corps.rotation = Quaternion.Slerp(_corps.rotation,
-                                                   Quaternion.LookRotation(delta.normalized, Vector3.up),
-                                                   Reglages.VitesseRotation * Time.deltaTime);
+            transform.rotation = Quaternion.Slerp(transform.rotation,
+                                                  Quaternion.LookRotation(delta.normalized, Vector3.up),
+                                                  Reglages.VitesseRotation * Time.deltaTime);
             return false;
         }
 

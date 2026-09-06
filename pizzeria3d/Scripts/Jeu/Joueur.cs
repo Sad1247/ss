@@ -11,7 +11,6 @@ namespace Pizzeria3D
     {
         public Pile Portee;
 
-        Transform _corps;
         Demarche _demarche;
         float _compteurTransfert;
 
@@ -19,7 +18,6 @@ namespace Pizzeria3D
 
         void Awake()
         {
-            _corps = transform.Find("Corps");
             _demarche = GetComponent<Demarche>();
             if (Portee == null) Portee = Portage.Creer(transform, "PilePortee");
             Portee.Max = Reglages.CapacitePortee;
@@ -64,12 +62,11 @@ namespace Pizzeria3D
         {
             if (pas.sqrMagnitude <= 0f) return;
             transform.position = Obstacles.Resoudre(transform.position, pas, Reglages.RayonJoueur);
-            if (_corps != null)
-            {
-                var cible = Quaternion.LookRotation(pas.normalized, Vector3.up);
-                _corps.rotation = Quaternion.Slerp(_corps.rotation, cible,
-                                                   Reglages.VitesseRotation * Time.deltaTime);
-            }
+            // Le cap est porte par la racine, pas par le buste : la demarche
+            // penche le buste vers l'avant, et les deux se marcheraient dessus.
+            var cible = Quaternion.LookRotation(pas.normalized, Vector3.up);
+            transform.rotation = Quaternion.Slerp(transform.rotation, cible,
+                                                  Reglages.VitesseRotation * Time.deltaTime);
         }
 
         public bool PretPourTransfert => _compteurTransfert <= 0f;

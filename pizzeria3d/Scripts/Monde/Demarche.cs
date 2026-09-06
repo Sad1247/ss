@@ -14,9 +14,15 @@ namespace Pizzeria3D
         public Transform GenouG, GenouD;
 
         /// <summary>Amplitude du balancement, en degres, a pleine vitesse.</summary>
-        public float Amplitude = 42f;
+        public float Amplitude = 56f;
         /// <summary>Flexion maximale du genou, en degres, a pleine vitesse.</summary>
-        public float Genou = 58f;
+        public float Genou = 34f;
+        /// <summary>
+        /// Inclinaison du buste vers l'avant, en degres, a pleine vitesse.
+        /// C'est elle qui donne l'elan : jambes seules, le personnage avance
+        /// tout droit comme un automate.
+        /// </summary>
+        public float Inclinaison = 13f;
         public float VitesseReference = 6f;
 
         /// <summary>
@@ -49,7 +55,8 @@ namespace Pizzeria3D
             // lissage : sans lui, la moindre saccade ferait tressauter les jambes
             _allure = Mathf.Lerp(_allure, voulue, Mathf.Clamp01(dt * 10f));
 
-            if (_allure > 0.02f) _phase += dt * (4f + _allure * 7f);
+            // cadence : le pas est court et rapide, comme dans la reference
+            if (_allure > 0.02f) _phase += dt * (5f + _allure * 9f);
             else _phase = Mathf.Lerp(_phase, 0f, Mathf.Clamp01(dt * 8f));
 
             float angle = Mathf.Sin(_phase) * Amplitude * _allure;
@@ -69,17 +76,22 @@ namespace Pizzeria3D
             }
             else
             {
-                Tourner(EpauleG, -angle * 0.75f);
-                Tourner(EpauleD, angle * 0.75f);
+                // les bras suivent de loin : ce sont les jambes qui marchent
+                Tourner(EpauleG, -angle * 0.45f);
+                Tourner(EpauleD, angle * 0.45f);
             }
 
             if (Corps == null) return;
             var p = Corps.localPosition;
             // rebond au pas quand il marche, respiration quand il attend
             p.y = _allure > 0.02f
-                ? Mathf.Abs(Mathf.Sin(_phase)) * 0.05f * _allure
+                ? Mathf.Abs(Mathf.Sin(_phase)) * 0.07f * _allure
                 : Mathf.Sin(Time.time * 1.6f) * 0.02f;
             Corps.localPosition = p;
+
+            // Le buste penche dans le sens de la marche. Le cap, lui, est
+            // porte par la racine du personnage : les deux ne se genent pas.
+            Corps.localRotation = Quaternion.Euler(Inclinaison * _allure, 0f, 0f);
         }
 
         float Flexion(float phase)
