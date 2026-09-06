@@ -971,6 +971,10 @@ static class Harness3D
         Frames(2);
         Check("une fois dedans, ils s'effacent", AucunVisible(discrets));
         Check("mais la piece reste, elle", laPiece.activeSelf);
+        Check("elle est vide de tout mobilier",
+              Compte(laPiece.transform, "Table", false) == 0 &&
+              Compte(laPiece.transform, "Tabouret", false) == 0 &&
+              Compte(laPiece.transform, "Pied", false) == 0);
 
         Placer(joueur, new Vector3(0f, 0f, 0f));
         Frames(2);

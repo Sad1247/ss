@@ -213,16 +213,7 @@ namespace Pizzeria3D
             Mur(t, new Vector3(0f, 1.6f, demiZ - 0.2f), new Vector3(demiX * 2f + 0.4f, 3.2f, 0.4f),
                 centre);
 
-            // un coin repas, pour qu'elle serve a quelque chose a l'oeil
-            Bloc.Boite("TablePiece", t, new Vector3(0f, 0.72f, 0.6f), new Vector3(1.5f, 0.12f, 1.0f),
-                       Bloc.Metal).SansCollision();
-            foreach (float cx in new[] { -0.62f, 0.62f })
-                foreach (float cz in new[] { 0.24f, 0.96f })
-                    Bloc.Boite("PiedTable", t, new Vector3(cx, 0.33f, cz),
-                               new Vector3(0.10f, 0.66f, 0.10f), Bloc.Taupe).SansCollision();
-            foreach (float cx in new[] { -1.35f, 1.35f })
-                Bloc.Boite("Tabouret", t, new Vector3(cx, 0.24f, 0.6f),
-                           new Vector3(0.55f, 0.48f, 0.55f), Bloc.Machine).SansCollision();
+            // La piece reste vide : c'est un espace a amenager, pas un coin repas.
 
             var p = go.AddComponent<PetitePiece>();
             p.Passage = seuil;
