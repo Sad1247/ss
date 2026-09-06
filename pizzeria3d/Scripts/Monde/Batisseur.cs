@@ -63,11 +63,12 @@ namespace Pizzeria3D
 
             // Le batiment ferme deux cotes : le fond et la gauche de l'ecran.
             // Un seul pan donnait l'impression d'un decor pose sur un terrain vague.
-            Bloc.Boite("MurFond", parent, new Vector3(-1f, 1.6f, 7.2f), new Vector3(14.6f, 3.2f, 0.6f),
+            // Comme le mur de gauche, il va d'un bord a l'autre du dallage.
+            Bloc.Boite("MurFond", parent, new Vector3(0f, 1.6f, 7.2f), new Vector3(17f, 3.2f, 0.6f),
                        Bloc.MachineBis).SansCollision();
-            Obstacles.Ajouter(new Vector3(-1f, 0f, 7.2f), 14.6f, 0.6f);
-            for (int i = 0; i < 4; i++)
-                Bloc.Boite("VitreFond" + i, parent, new Vector3(-5.4f + i * 2.9f, 1.9f, 6.85f),
+            Obstacles.Ajouter(new Vector3(0f, 0f, 7.2f), 17f, 0.6f);
+            for (int i = 0; i < 6; i++)
+                Bloc.Boite("VitreFond" + i, parent, new Vector3(-7.6f + i * 3.04f, 1.9f, 6.85f),
                            new Vector3(1.8f, 1.5f, 0.15f), Bloc.Couleur(0xBFE8F2)).SansCollision();
 
             // Le mur va d'un bout a l'autre du dallage : il s'arretait 1,2 avant
@@ -79,13 +80,8 @@ namespace Pizzeria3D
                 Bloc.Boite("VitreGauche" + i, parent, new Vector3(-7.65f, 1.9f, -6.4f + i * 2.9f),
                            new Vector3(0.15f, 1.5f, 1.8f), Bloc.Couleur(0xBFE8F2)).SansCollision();
 
-            // De quoi remplir la cour : sans ces caisses et ces arbustes, le sol
-            // parait vide et la scene ne ressemble a rien.
-            for (int i = 0; i < 3; i++)
-                Bloc.Boite("Caisse" + i, parent, new Vector3(6.6f, 0.45f + i * 0.9f, 5.4f - i * 0.15f),
-                           new Vector3(1.5f, 0.9f, 1.5f), Bloc.Carton).SansCollision();
-            Obstacles.Ajouter(new Vector3(6.6f, 0f, 5.4f), 1.5f, 1.5f);
-
+            // De quoi remplir la cour sans encombrer le passage : la pile de
+            // cartons qui se dressait a droite masquait le mur du fond.
             Bloc.Boite("Palette", parent, new Vector3(-7f, 0.2f, 5.6f), new Vector3(2.2f, 0.4f, 2.2f),
                        Bloc.Metal).SansCollision();
             Obstacles.Ajouter(new Vector3(-7f, 0f, 5.6f), 2.2f, 2.2f);

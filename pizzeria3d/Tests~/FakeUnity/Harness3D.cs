@@ -48,17 +48,17 @@ static class Harness3D
     /// Les vitres portant ce prefixe couvrent-elles le mur d'un bout a
     /// l'autre ? On verifie qu'aucun troncon nu de plus de 4 ne subsiste.
     /// </summary>
-    static bool Fenetres(string prefixe, float debut, float fin)
+    static bool Fenetres(string prefixe, float debut, float fin, bool surX = false)
     {
-        var z = new List<float>();
+        var pos = new List<float>();
         foreach (var o in UnityEngine.Object.Tous)
             if (o is GameObject go && !go.Detruit && go.name.StartsWith(prefixe))
-                z.Add(go.transform.position.z);
-        if (z.Count == 0) return false;
+                pos.Add(surX ? go.transform.position.x : go.transform.position.z);
+        if (pos.Count == 0) return false;
 
-        z.Sort();
+        pos.Sort();
         float precedent = debut;
-        foreach (var v in z)
+        foreach (var v in pos)
         {
             if (v - precedent > 4f) return false;
             precedent = v;
@@ -249,14 +249,40 @@ static class Harness3D
             float solFin   = sol.transform.position.z + sol.transform.localScale.z * 0.5f;
             Check("il court jusqu'au bout du dallage",
                   murDebut <= solDebut + 0.01f && murFin >= solFin - 0.01f);
-            Check("il est vitre sur toute sa longueur",
+            Check("le mur de gauche est vitre sur toute sa longueur",
                   Fenetres("VitreGauche", murDebut, murFin));
         }
         else
         {
             Check("il court jusqu'au bout du dallage", false);
+            Check("le mur de gauche est vitre sur toute sa longueur", false);
+        }
+
+        var murFond = Trouver("MurFond");
+        Check("le mur du fond est monte", murFond != null && sol != null);
+        if (murFond != null && sol != null)
+        {
+            float murGauche2 = murFond.transform.position.x - murFond.transform.localScale.x * 0.5f;
+            float murDroite  = murFond.transform.position.x + murFond.transform.localScale.x * 0.5f;
+            float solGauche  = sol.transform.position.x - sol.transform.localScale.x * 0.5f;
+            float solDroite  = sol.transform.position.x + sol.transform.localScale.x * 0.5f;
+            Check("il court d'un bord a l'autre du dallage",
+                  murGauche2 <= solGauche + 0.01f && murDroite >= solDroite - 0.01f);
+            Check("il est vitre sur toute sa longueur",
+                  Fenetres("VitreFond", murGauche2, murDroite, true));
+        }
+        else
+        {
+            Check("il court d'un bord a l'autre du dallage", false);
             Check("il est vitre sur toute sa longueur", false);
         }
+
+        // La pile de cartons de la cour masquait ce mur : elle a ete retiree.
+        Check("plus de pile de cartons dans la cour",
+              Trouver("Caisse0") == null && Trouver("Caisse1") == null && Trouver("Caisse2") == null);
+        Check("et plus d'obstacle invisible a sa place",
+              Obstacles.Resoudre(new Vector3(6.6f, 0f, 4.2f), new Vector3(0f, 0f, 0.6f),
+                                 Reglages.RayonJoueur).z > 4.7f);
 
         // --- la table de mise en boite ---
         Check("un plan de mise en boite est monte", table != null);
