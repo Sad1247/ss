@@ -11,9 +11,12 @@ namespace Pizzeria3D
     public sealed class Demarche : MonoBehaviour
     {
         public Transform Corps, HancheG, HancheD, EpauleG, EpauleD;
+        public Transform GenouG, GenouD;
 
         /// <summary>Amplitude du balancement, en degres, a pleine vitesse.</summary>
         public float Amplitude = 42f;
+        /// <summary>Flexion maximale du genou, en degres, a pleine vitesse.</summary>
+        public float Genou = 58f;
         public float VitesseReference = 6f;
 
         /// <summary>
@@ -53,6 +56,12 @@ namespace Pizzeria3D
             Tourner(HancheG, angle);
             Tourner(HancheD, -angle);
 
+            // Le genou ne plie que vers l'arriere, et surtout quand la jambe
+            // part derriere puis revient : plier dans l'autre sens donnerait
+            // une jambe cassee a l'envers.
+            Tourner(GenouG, Flexion(_phase));
+            Tourner(GenouD, Flexion(_phase + Mathf.PI));
+
             if (BrasPortent)
             {
                 Tourner(EpauleG, Personnage.AngleBrasPortant);
@@ -72,6 +81,9 @@ namespace Pizzeria3D
                 : Mathf.Sin(Time.time * 1.6f) * 0.02f;
             Corps.localPosition = p;
         }
+
+        float Flexion(float phase)
+            => Genou * _allure * Mathf.Clamp01(Mathf.Sin(phase - 0.6f));
 
         static void Tourner(Transform pivot, float angle)
         {

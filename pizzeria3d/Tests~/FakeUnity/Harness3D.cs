@@ -44,7 +44,6 @@ static class Harness3D
         return n;
     }
 
-    /// <summary>Couleur du haut d'un client, pour verifier la variete.</summary>
     /// <summary>Aucun enfant pose de travers ? Une boite carree ne pardonne pas.</summary>
     static bool ToutDroit(Transform parent)
     {
@@ -77,6 +76,7 @@ static class Harness3D
         return Color.black;
     }
 
+    /// <summary>Couleur du haut d'un client, pour verifier la variete.</summary>
     static Color CouleurHaut(Client c)
     {
         foreach (var e in c.transform.Enfants)
@@ -291,6 +291,25 @@ static class Harness3D
         Frames(10);
         Check("le pas avance", demarche.Phase > phaseAvant);
 
+        // Les genoux plient pendant le pas, et JAMAIS a l'envers : une jambe
+        // qui se casse vers l'avant se remarque tout de suite.
+        float flexionMax = 0f;
+        bool genouALEnvers = false;
+        for (int i = 0; i < 120; i++)
+        {
+            Frames(1);
+            foreach (var genou in new[] { demarche.GenouG, demarche.GenouD })
+            {
+                if (genou == null) continue;
+                // x du quaternion : positif quand le pivot tourne vers l'arriere
+                float x = genou.localRotation.x;
+                if (x < -0.002f) genouALEnvers = true;
+                flexionMax = Mathf.Max(flexionMax, x);
+            }
+        }
+        Check("les genoux plient quand il marche", flexionMax > 0.05f);
+        Check("et jamais a l'envers", !genouALEnvers);
+
         Input.Boutons[0] = false;
         Frames(2);
         Secondes(0.8f);
@@ -341,6 +360,17 @@ static class Harness3D
         Placer(joueur, new Vector3(0f, 0f, -6f));    // loin, pour laisser le stock monter
         Secondes(Reglages.DureeCuisson * 3.5f + 1f);
         Check("le four produit des pizzas", four.Sortie.Nombre >= 3);
+
+        // Cadence mesuree en secondes reelles, pas en multiples du reglage :
+        // sinon le test suivrait n'importe quel ralentissement. La fenetre est
+        // longue pour que le reste de cuisson en cours ne fausse pas le compte.
+        four.Sortie.Vider();
+        Secondes(62f);
+        Check("il en sort au moins dix en une minute", four.Sortie.Nombre >= 10);
+
+        // on remet le four dans l'etat attendu par la suite des essais
+        four.Sortie.Vider();
+        Secondes(Reglages.DureeCuisson * 3.5f + 1f);
 
         // --- ramassage ---
         Placer(joueur, four.Sortie.transform.position);
@@ -425,6 +455,16 @@ static class Harness3D
             // les mains pendent aux epaules, pas au buste
             if (e.gameObject.name.StartsWith("Epaule")) mains += Compte(e, "Main", true);
         }
+        // --- les genoux ---
+        var hancheClient = corpsClient.Find("HancheG");
+        var genouClient = hancheClient != null ? hancheClient.Find("Genou") : null;
+        Check("la jambe est coupee au genou", genouClient != null);
+        Check("la cuisse pend a la hanche",
+              hancheClient != null && Compte(hancheClient, "Cuisse", true) == 1);
+        Check("le mollet et la chaussure pendent au genou",
+              genouClient != null && Compte(genouClient, "Mollet", true) == 1 &&
+              Compte(genouClient, "Chaussure", true) == 1);
+
         Check("il a un visage", oeil != null);
         Check("les yeux regardent devant", oeil != null && oeil.localPosition.z > 0.1f);
         Check("il a des fesses", fesse != null);
@@ -585,9 +625,11 @@ static class Harness3D
         // s'arreter au premier ratait la marche quand le caissier portait deja
         // une pizza a la premiere image.
         bool aPorte = false, aMarche = false, aEmballe = false, aTouche = false, reserveEntamee = false;
+        int porteeMax = 0;
         for (int i = 0; i < 60 * 90 && !(aPorte && aMarche && aEmballe && aTouche); i++)
         {
             Frames(1);
+            porteeMax = Mathf.Max(porteeMax, navetteur.Portees);
             if (navetteur.Portees > 0) aPorte = true;
             if (pasDuCaissier != null && pasDuCaissier.Allure > 0.2f) aMarche = true;
             if (navetteur.PorteeEmballee) aEmballe = true;
@@ -598,6 +640,10 @@ static class Harness3D
             if (versTable.magnitude < 0.8f) aTouche = true;
         }
         Check("le caissier va chercher les pizzas au four", aPorte);
+        // Trois en main, pas davantage : la valeur est ecrite en clair ici,
+        // sinon le test suivrait le reglage au lieu de le tenir.
+        Check("il n'en prend que trois a la fois",
+              porteeMax == 3 && porteeMax == Reglages.CapacitePorteeCaissier);
         Check("il marche pour de bon, membres animes", aMarche);
         Check("il fait un detour par le plan de mise en boite", aTouche);
         Check("il pioche dans la reserve de cartons", reserveEntamee);

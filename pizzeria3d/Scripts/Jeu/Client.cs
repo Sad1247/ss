@@ -79,6 +79,7 @@ namespace Pizzeria3D
             d.VitesseReference = Reglages.VitesseClient;
             d.Corps = membres.Corps;
             d.HancheG = membres.HancheG; d.HancheD = membres.HancheD;
+            d.GenouG = membres.GenouG;   d.GenouD = membres.GenouD;
             d.EpauleG = membres.EpauleG; d.EpauleD = membres.EpauleD;
 
             var sac = new GameObject("Sac");

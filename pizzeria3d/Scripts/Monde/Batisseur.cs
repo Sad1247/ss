@@ -177,6 +177,7 @@ namespace Pizzeria3D
             d.VitesseReference = vitesseMax;   // pas ample a sa propre allure
             d.Corps = m.Corps;
             d.HancheG = m.HancheG; d.HancheD = m.HancheD;
+            d.GenouG = m.GenouG;   d.GenouD = m.GenouD;
             d.EpauleG = m.EpauleG; d.EpauleD = m.EpauleD;
         }
 

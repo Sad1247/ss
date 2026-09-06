@@ -32,6 +32,7 @@ namespace Pizzeria3D
         {
             public Transform Corps;
             public Transform HancheG, HancheD;
+            public Transform GenouG, GenouD;
             public Transform EpauleG, EpauleD;
             /// <summary>Point de portage, a hauteur des paumes bras tendus devant.</summary>
             public Transform Mains;
@@ -67,11 +68,25 @@ namespace Pizzeria3D
 
             m.HancheG = Pivot("HancheG", t, new Vector3(-ecartJambes, 0.78f, 0f));
             m.HancheD = Pivot("HancheD", t, new Vector3(ecartJambes, 0.78f, 0f));
-            foreach (var hanche in new[] { m.HancheG, m.HancheD })
+
+            // La jambe est coupee en deux au genou. D'un seul tenant, elle
+            // balayait le sol comme un baton : c'est le genou qui fait
+            // reconnaitre une marche.
+            for (int i = 0; i < 2; i++)
             {
-                Bloc.Capsule("Jambe", hanche, new Vector3(0f, -0.36f, 0f),
-                             new Vector3(grosseurJambe, 0.30f, grosseurJambe), a.Pantalon).SansCollision();
-                Bloc.Galet("Chaussure", hanche, new Vector3(0f, -0.69f, 0.06f),
+                var hanche = i == 0 ? m.HancheG : m.HancheD;
+
+                Bloc.Capsule("Cuisse", hanche, new Vector3(0f, -0.20f, 0f),
+                             new Vector3(grosseurJambe, 0.17f, grosseurJambe), a.Pantalon)
+                    .SansCollision();
+
+                var genou = Pivot("Genou", hanche, new Vector3(0f, -0.40f, 0f));
+                if (i == 0) m.GenouG = genou; else m.GenouD = genou;
+
+                Bloc.Capsule("Mollet", genou, new Vector3(0f, -0.15f, 0f),
+                             new Vector3(grosseurJambe * 0.92f, 0.16f, grosseurJambe * 0.92f),
+                             a.Pantalon).SansCollision();
+                Bloc.Galet("Chaussure", genou, new Vector3(0f, -0.29f, 0.06f),
                            new Vector3(0.28f, 0.18f, 0.40f), a.Chaussures).SansCollision();
             }
 

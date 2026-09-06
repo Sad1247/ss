@@ -14,7 +14,7 @@ namespace Pizzeria3D
         public const float DelaiTransfert = 0.09f;  // secondes entre deux pizzas
 
         // --- four ---
-        public const float DureeCuisson = 7f;       // une pizza toutes les N secondes
+        public const float DureeCuisson = 6.2f;     // une pizza toutes les N secondes
         public const int StockFourMax = 12;
 
         // --- comptoir ---
@@ -22,7 +22,8 @@ namespace Pizzeria3D
 
         // --- caissier ---
         public const float VitesseCaissier = 3.3f;
-        public const int CapacitePorteeCaissier = 6;
+        /// <summary>Ce que le caissier prend au four en un voyage.</summary>
+        public const int CapacitePorteeCaissier = 3;
         /// <summary>En dessous, il part chercher des pizzas au four.</summary>
         public const int SeuilRechargeComptoir = 4;
 
