@@ -44,6 +44,28 @@ static class Harness3D
         return n;
     }
 
+    /// <summary>
+    /// Les vitres portant ce prefixe couvrent-elles le mur d'un bout a
+    /// l'autre ? On verifie qu'aucun troncon nu de plus de 4 ne subsiste.
+    /// </summary>
+    static bool Fenetres(string prefixe, float debut, float fin)
+    {
+        var z = new List<float>();
+        foreach (var o in UnityEngine.Object.Tous)
+            if (o is GameObject go && !go.Detruit && go.name.StartsWith(prefixe))
+                z.Add(go.transform.position.z);
+        if (z.Count == 0) return false;
+
+        z.Sort();
+        float precedent = debut;
+        foreach (var v in z)
+        {
+            if (v - precedent > 4f) return false;
+            precedent = v;
+        }
+        return fin - precedent <= 4f;
+    }
+
     /// <summary>Un enfant direct par son nom, ou null.</summary>
     static Transform Piece(Transform parent, string nom)
     {
@@ -212,6 +234,29 @@ static class Harness3D
         Check("le caissier n'est pas encore la",
               Trouver("Caissier") != null && !Trouver("Caissier").activeSelf && !comptoir.CaissierPresent);
         Check("le tiroir-caisse est ferme au depart", caisse != null && !caisse.EstOuverte);
+
+        // --- le decor ferme bien ---
+        // Un mur qui s'arrete avant le bord du dallage laisse voir le vide :
+        // on compare donc les deux etendues, pas l'allure generale.
+        var murGauche = Trouver("MurGauche");
+        var sol = Trouver("Sol");
+        Check("le mur de gauche est monte", murGauche != null && sol != null);
+        if (murGauche != null && sol != null)
+        {
+            float murDebut = murGauche.transform.position.z - murGauche.transform.localScale.z * 0.5f;
+            float murFin   = murGauche.transform.position.z + murGauche.transform.localScale.z * 0.5f;
+            float solDebut = sol.transform.position.z - sol.transform.localScale.z * 0.5f;
+            float solFin   = sol.transform.position.z + sol.transform.localScale.z * 0.5f;
+            Check("il court jusqu'au bout du dallage",
+                  murDebut <= solDebut + 0.01f && murFin >= solFin - 0.01f);
+            Check("il est vitre sur toute sa longueur",
+                  Fenetres("VitreGauche", murDebut, murFin));
+        }
+        else
+        {
+            Check("il court jusqu'au bout du dallage", false);
+            Check("il est vitre sur toute sa longueur", false);
+        }
 
         // --- la table de mise en boite ---
         Check("un plan de mise en boite est monte", table != null);

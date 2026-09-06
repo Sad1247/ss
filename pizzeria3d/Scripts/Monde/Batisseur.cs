@@ -70,11 +70,13 @@ namespace Pizzeria3D
                 Bloc.Boite("VitreFond" + i, parent, new Vector3(-5.4f + i * 2.9f, 1.9f, 6.85f),
                            new Vector3(1.8f, 1.5f, 0.15f), Bloc.Couleur(0xBFE8F2)).SansCollision();
 
-            Bloc.Boite("MurGauche", parent, new Vector3(-8.0f, 1.6f, 0.6f), new Vector3(0.6f, 3.2f, 13.8f),
+            // Le mur va d'un bout a l'autre du dallage : il s'arretait 1,2 avant
+            // le bord, et la pizzeria semblait ouverte sur le vide.
+            Bloc.Boite("MurGauche", parent, new Vector3(-8.0f, 1.6f, 0f), new Vector3(0.6f, 3.2f, 15f),
                        Bloc.MachineBis).SansCollision();
-            Obstacles.Ajouter(new Vector3(-8.0f, 0f, 0.6f), 0.6f, 13.8f);
-            for (int i = 0; i < 4; i++)
-                Bloc.Boite("VitreGauche" + i, parent, new Vector3(-7.65f, 1.9f, -4.6f + i * 2.9f),
+            Obstacles.Ajouter(new Vector3(-8.0f, 0f, 0f), 0.6f, 15f);
+            for (int i = 0; i < 5; i++)
+                Bloc.Boite("VitreGauche" + i, parent, new Vector3(-7.65f, 1.9f, -6.4f + i * 2.9f),
                            new Vector3(0.15f, 1.5f, 1.8f), Bloc.Couleur(0xBFE8F2)).SansCollision();
 
             // De quoi remplir la cour : sans ces caisses et ces arbustes, le sol
