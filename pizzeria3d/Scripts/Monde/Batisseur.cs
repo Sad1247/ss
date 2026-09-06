@@ -451,10 +451,9 @@ namespace Pizzeria3D
         }
 
         /// <summary>
-        /// Le four a pizza : socle de pierre claire avec sa reserve de buches,
-        /// facade rouge percee d'une bouche noire, coupole bleue et cheminee
-        /// fumante. La pierre du four, devant, sert de plan de sortie : c'est
-        /// la que les pizzas s'empilent.
+        /// Four a bois traditionnel : socle en briques, coupole, arche de pierre
+        /// claire, foyer allume et cheminee. La pierre du four, devant, sert de
+        /// plan de sortie : c'est la que les pizzas s'empilent.
         /// </summary>
         static GameObject Four(Transform parent, Joueur joueur, Vector3 position, string nom, bool actif)
         {
@@ -463,69 +462,43 @@ namespace Pizzeria3D
             go.transform.position = position;
             var t = go.transform;
 
-            var pierre = Bloc.Couleur(0xDCDCD4);
-            var pierreOmbre = Bloc.Couleur(0xBCBCB2);
-            var rouge = Bloc.Couleur(0xE2452F);
-            var rougeOmbre = Bloc.Couleur(0xC03521);
-            var bleu = Bloc.Couleur(0x2F72E0);
-            var noir = Bloc.Couleur(0x191412);
-            var acier = Bloc.Couleur(0x8E8E88);
-            var bois = Bloc.Couleur(0x9A6636);
+            // socle
+            Bloc.Boite("Socle", t, new Vector3(0f, 0.45f, 0f), new Vector3(2.7f, 0.9f, 2.3f),
+                       Bloc.Brique).SansCollision();
+            Bloc.Boite("Corniche", t, new Vector3(0f, 0.94f, 0f), new Vector3(2.9f, 0.14f, 2.5f),
+                       Bloc.Pierre).SansCollision();
+            Bloc.Bille("Aeration", t, new Vector3(0f, 0.45f, -1.17f), 0.22f, Bloc.Foyer).SansCollision();
 
-            // --- le socle et sa reserve de buches ---
-            Bloc.Boite("Socle", t, new Vector3(0f, 0.55f, 0f), new Vector3(2.6f, 1.10f, 2.2f),
-                       pierre).SansCollision();
-            Bloc.Boite("Corniche", t, new Vector3(0f, 1.14f, 0f), new Vector3(2.8f, 0.14f, 2.4f),
-                       pierreOmbre).SansCollision();
+            // coupole : une demi-sphere, sa moitie basse disparait dans le socle
+            Bloc.Galet("Coupole", t, new Vector3(0f, 1.0f, 0.1f), new Vector3(2.5f, 2.3f, 2.3f),
+                       Bloc.BriqueClaire).SansCollision();
 
-            Bloc.Boite("Niche", t, new Vector3(0f, 0.52f, -1.06f), new Vector3(1.9f, 0.74f, 0.14f),
-                       noir).SansCollision();
-            // les buches vues en bout, rangees dans la niche
-            float[] bx = { -0.62f, -0.20f, 0.22f, 0.64f, -0.40f, 0.02f, 0.44f };
-            float[] by = { 0.30f, 0.30f, 0.30f, 0.30f, 0.62f, 0.62f, 0.62f };
-            for (int i = 0; i < bx.Length; i++)
-            {
-                Bloc.Rondelle("Buche" + i, t, new Vector3(bx[i], by[i], -1.10f), 0.34f, 0.10f, bois)
-                    .SansCollision();
-                Bloc.Rondelle("CoeurBuche" + i, t, new Vector3(bx[i], by[i], -1.13f), 0.20f, 0.06f,
-                              Bloc.Couleur(0xC79055)).SansCollision();
-            }
-
-            // --- la facade rouge et sa bouche ---
-            Bloc.Boite("Facade", t, new Vector3(0f, 1.95f, -0.78f), new Vector3(2.50f, 1.50f, 0.64f),
-                       rouge).SansCollision();
-            Bloc.Boite("Seuil", t, new Vector3(0f, 1.24f, -0.78f), new Vector3(2.60f, 0.16f, 0.72f),
-                       rougeOmbre).SansCollision();
-
-            Bloc.Rondelle("Bouche", t, new Vector3(0f, 1.95f, -1.12f), 1.55f, 0.16f, noir)
+            // bouche : arche claire, cerne sombre, foyer
+            Bloc.Rondelle("Arche", t, new Vector3(0f, 1.5f, -1.02f), 1.75f, 0.24f, Bloc.Pierre)
                 .SansCollision();
-            Bloc.Boite("BasBouche", t, new Vector3(0f, 1.62f, -1.12f), new Vector3(1.55f, 0.68f, 0.14f),
-                       noir).SansCollision();
-            // la petite plaque emaillee, en haut de la bouche
-            Bloc.Boite("Plaque", t, new Vector3(0f, 2.22f, -1.16f), new Vector3(0.56f, 0.18f, 0.08f),
-                       Bloc.Couleur(0x35A8C4)).SansCollision();
-            // les braises au fond : elles justifient la fumee
-            Bloc.Galet("Braises", t, new Vector3(0f, 1.38f, -1.08f), new Vector3(0.9f, 0.16f, 0.18f),
+            Bloc.Rondelle("Cerne", t, new Vector3(0f, 1.47f, -1.10f), 1.35f, 0.18f, Bloc.PierreOmbre)
+                .SansCollision();
+            Bloc.Rondelle("Foyer", t, new Vector3(0f, 1.45f, -1.16f), 1.1f, 0.14f, Bloc.Foyer)
+                .SansCollision();
+            Bloc.Galet("Braises", t, new Vector3(0f, 1.2f, -1.22f), new Vector3(0.7f, 0.42f, 0.28f),
                        Bloc.Braise).SansCollision();
+            Bloc.Galet("Flamme", t, new Vector3(0f, 1.42f, -1.24f), new Vector3(0.34f, 0.42f, 0.22f),
+                       Bloc.Flamme).SansCollision();
 
-            // --- la coupole bleue ---
-            Bloc.Galet("Coupole", t, new Vector3(0f, 1.55f, 0.15f), new Vector3(2.00f, 1.75f, 1.90f),
-                       bleu).SansCollision();
-
-            // --- la cheminee ---
-            Bloc.Forme(PrimitiveType.Cylinder, "Cheminee", t, new Vector3(0f, 2.95f, 0.35f),
-                       new Vector3(0.42f, 0.55f, 0.42f), acier).SansCollision();
-            Bloc.Disque("Couronne", t, new Vector3(0f, 3.46f, 0.35f), 0.56f, 0.18f, pierreOmbre)
+            // cheminee
+            Bloc.Forme(PrimitiveType.Cylinder, "Cheminee", t, new Vector3(0f, 2.35f, 0.5f),
+                       new Vector3(0.5f, 0.5f, 0.5f), Bloc.Brique).SansCollision();
+            Bloc.Disque("Couronne", t, new Vector3(0f, 2.86f, 0.5f), 0.66f, 0.22f, Bloc.Pierre)
                 .SansCollision();
 
             var fumee = new GameObject("Fumee");
             fumee.transform.SetParent(t, false);
-            fumee.transform.localPosition = new Vector3(0f, 3.60f, 0.35f);
+            fumee.transform.localPosition = new Vector3(0f, 3.0f, 0.5f);
             fumee.AddComponent<Fumee>();
 
             // pierre du four : le plan ou les pizzas sortent
             Bloc.Boite("PierreDuFour", t, new Vector3(0f, 1.0f, -1.62f), new Vector3(2.5f, 0.16f, 1.3f),
-                       pierre).SansCollision();
+                       Bloc.Pierre).SansCollision();
 
             // le corps du four et sa pierre barrent le passage ; la pile de
             // sortie reste a portee du joueur arrete devant
