@@ -16,7 +16,11 @@ namespace Pizzeria3D
         /// <summary>Le gond du vantail, qui pivote a l'ouverture.</summary>
         public Transform Gond;
         public float DemiTerrainZ = 11.3f;
-        public float AngleOuvert = -105f;
+        /// <summary>
+        /// Positif : le vantail rentre dans la piece. Vers la salle, il venait
+        /// se planter en travers du passage, blanc et bien visible.
+        /// </summary>
+        public float AngleOuvert = 96f;
 
         void OnEnable()
         {

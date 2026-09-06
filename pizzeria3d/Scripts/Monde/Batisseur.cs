@@ -99,6 +99,14 @@ namespace Pizzeria3D
                 Bloc.Boite("VitreFond" + i, parent, new Vector3(-7.6f + i * 3.04f, 1.9f, 6.85f),
                            new Vector3(1.8f, 1.5f, 0.15f), Bloc.Couleur(0xBFE8F2)).SansCollision();
             }
+            // Le pan de mur au-dessus de la porte. Sans lui, la coupure du mur
+            // montait jusqu'au toit et l'on voyait la pelouse par-dessus.
+            const float hauteurPorte = 2.38f;
+            Bloc.Boite("LinteauFond", parent,
+                       new Vector3(xPorte, (hauteurPorte + 3.2f) * 0.5f, 7.2f),
+                       new Vector3(largeurPorte, 3.2f - hauteurPorte, 0.6f), Bloc.MachineBis)
+                .SansCollision();
+
             // juste a cote du plan de mise en boite, qui s'arrete a x 3,5
             var gond = Porte(parent, new Vector3(xPorte, 0f, 7.2f));
 
@@ -135,8 +143,10 @@ namespace Pizzeria3D
 
         /// <summary>
         /// La porte vitree du mur du fond, a cote du plan de mise en boite.
-        /// Le vantail pend a un gond : c'est lui qui pivote quand la piece
-        /// s'ouvre. Renvoie ce gond.
+        /// Le cadre est fait de deux montants et d'une imposte — un panneau
+        /// plein bouchait l'ouverture, et c'est ce blanc qu'on voyait a la
+        /// place du passage. Le vantail pend a un gond et s'ouvre du cote de
+        /// la piece. Renvoie ce gond.
         /// </summary>
         static Transform Porte(Transform parent, Vector3 position)
         {
@@ -148,12 +158,15 @@ namespace Pizzeria3D
             var blanc = Bloc.Couleur(0xF4F1EA);
             var vitre = Bloc.Couleur(0xBFE8F2);
 
-            Bloc.Boite("Chambranle", t, new Vector3(0f, 1.15f, -0.36f),
-                       new Vector3(1.80f, 2.30f, 0.16f), blanc).SansCollision();
+            foreach (float cote in new[] { -1f, 1f })
+                Bloc.Boite("Jambage", t, new Vector3(cote * 0.82f, 1.15f, -0.30f),
+                           new Vector3(0.16f, 2.38f, 0.20f), blanc).SansCollision();
+            Bloc.Boite("Imposte", t, new Vector3(0f, 2.30f, -0.30f),
+                       new Vector3(1.80f, 0.16f, 0.20f), blanc).SansCollision();
 
             var gond = new GameObject("Gond");
             gond.transform.SetParent(t, false);
-            gond.transform.localPosition = new Vector3(0.72f, 0f, -0.40f);
+            gond.transform.localPosition = new Vector3(0.72f, 0f, -0.26f);
 
             Bloc.Boite("Battant", gond.transform, new Vector3(-0.70f, 1.12f, 0f),
                        new Vector3(1.36f, 2.06f, 0.10f), vitre).SansCollision();
@@ -162,9 +175,9 @@ namespace Pizzeria3D
             Bloc.Boite("Poignee", gond.transform, new Vector3(-1.22f, 1.05f, -0.09f),
                        new Vector3(0.16f, 0.14f, 0.08f), Bloc.Metal).SansCollision();
 
-            // le seuil, cote salle
-            Bloc.Boite("Seuil", t, new Vector3(0f, 0.02f, -0.62f),
-                       new Vector3(1.70f, 0.04f, 0.50f), Bloc.SolBordure).SansCollision();
+            // le seuil, en travers du passage
+            Bloc.Boite("Seuil", t, new Vector3(0f, 0.02f, 0f),
+                       new Vector3(1.70f, 0.04f, 0.62f), Bloc.SolBordure).SansCollision();
 
             return gond.transform;
         }
@@ -180,14 +193,18 @@ namespace Pizzeria3D
             go.transform.position = centre;
             var t = go.transform;
 
-            const float demiX = 2.16f, demiZ = 2.15f;
+            // Les pans de cote descendent jusqu'au mur du fond, qui est a
+            // 2,5 d'ici : un jour de quelques centimetres suffisait a laisser
+            // voir la pelouse au raccord.
+            const float demiX = 2.16f, demiZ = 2.5f;
 
             Bloc.Boite("SolPiece", t, new Vector3(0f, -0.2f, 0f),
-                       new Vector3(demiX * 2f, 0.4f, demiZ * 2f + 0.6f), Bloc.Sol).SansCollision();
+                       new Vector3(demiX * 2f, 0.4f, demiZ * 2f), Bloc.Sol).SansCollision();
 
-            Mur(t, new Vector3(-demiX, 1.6f, 0.3f), new Vector3(0.4f, 3.2f, demiZ * 2f + 0.6f), centre);
-            Mur(t, new Vector3(demiX, 1.6f, 0.3f), new Vector3(0.4f, 3.2f, demiZ * 2f + 0.6f), centre);
-            Mur(t, new Vector3(0f, 1.6f, demiZ + 0.3f), new Vector3(demiX * 2f + 0.4f, 3.2f, 0.4f), centre);
+            Mur(t, new Vector3(-demiX, 1.6f, 0f), new Vector3(0.4f, 3.2f, demiZ * 2f), centre);
+            Mur(t, new Vector3(demiX, 1.6f, 0f), new Vector3(0.4f, 3.2f, demiZ * 2f), centre);
+            Mur(t, new Vector3(0f, 1.6f, demiZ - 0.2f), new Vector3(demiX * 2f + 0.4f, 3.2f, 0.4f),
+                centre);
 
             // un coin repas, pour qu'elle serve a quelque chose a l'oeil
             Bloc.Boite("TablePiece", t, new Vector3(0f, 0.72f, 0.6f), new Vector3(1.5f, 0.12f, 1.0f),
@@ -203,7 +220,7 @@ namespace Pizzeria3D
             var p = go.AddComponent<PetitePiece>();
             p.Passage = seuil;
             p.Gond = gond;
-            p.DemiTerrainZ = centre.z + demiZ - 0.3f;
+            p.DemiTerrainZ = centre.z + demiZ - 0.85f;
 
             go.SetActive(false);
             return go;

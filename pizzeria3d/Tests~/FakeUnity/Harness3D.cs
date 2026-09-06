@@ -336,13 +336,30 @@ static class Harness3D
         Check("une porte est posee dans le mur du fond", porte != null && murFond != null);
         if (porte != null && murFond != null && table != null)
         {
-            var chambranle = Piece(porte.transform, "Chambranle");
-            float bas = porte.transform.position.y + chambranle.localPosition.y
-                      - chambranle.localScale.y * 0.5f;
+            var jambage = Piece(porte.transform, "Jambage");
+            var imposte = Piece(porte.transform, "Imposte");
+            Check("son cadre a deux montants et une imposte",
+                  Compte(porte.transform, "Jambage", true) == 2 && imposte != null);
+
+            float bas = porte.transform.position.y + jambage.localPosition.y
+                      - jambage.localScale.y * 0.5f;
             Check("elle descend jusqu'au sol", Mathf.Abs(bas) < 0.05f);
-            Check("elle est plus haute qu'une fenetre", chambranle.localScale.y > 1.8f);
+            Check("elle est plus haute qu'une fenetre", jambage.localScale.y > 1.8f);
+
+            // Le cadre ne doit rien boucher : un panneau plein a la place du
+            // passage, c'est le blanc qu'on voyait au lieu de la piece.
+            bool passageLibre = true;
+            foreach (var e in porte.transform.Enfants)
+            {
+                if (e.gameObject.name == "Gond") continue;
+                bool auMilieu = Mathf.Abs(e.localPosition.x) < 0.6f;
+                bool aHauteurDePassage = e.localPosition.y > 0.2f && e.localPosition.y < 2.2f;
+                if (auMilieu && aHauteurDePassage) passageLibre = false;
+            }
+            Check("le cadre laisse le passage libre", passageLibre);
+
             Check("elle est plaquee sur la face interieure du mur",
-                  porte.transform.position.z + chambranle.localPosition.z
+                  porte.transform.position.z + jambage.localPosition.z
                       < murFond.transform.position.z);
             Check("aucune vitre ne lui passe dessus",
                   EcartX("VitreFond", porte.transform.position.x) > 1.5f);
@@ -352,14 +369,32 @@ static class Harness3D
             Check("elle jouxte le plan de mise en boite",
                   porte.transform.position.x > bordDuPlan &&
                   porte.transform.position.x - bordDuPlan < 1.5f);
+
+            // Le pan de mur au-dessus : la coupure montait jusqu'au toit.
+            var linteau = Trouver("LinteauFond");
+            float basLinteau = linteau != null
+                ? linteau.transform.position.y - linteau.transform.localScale.y * 0.5f : -9f;
+            float hautLinteau = linteau != null
+                ? linteau.transform.position.y + linteau.transform.localScale.y * 0.5f : -9f;
+            float hautMur = murFond.transform.position.y + murFond.transform.localScale.y * 0.5f;
+            Check("un linteau ferme le mur au-dessus de la porte", linteau != null);
+            Check("il repose sur le haut de la porte",
+                  Mathf.Abs(basLinteau - (porte.transform.position.y + imposte.localPosition.y
+                                          + imposte.localScale.y * 0.5f)) < 0.2f);
+            Check("et il monte jusqu'au haut du mur", Mathf.Abs(hautLinteau - hautMur) < 0.05f);
         }
         else
         {
+            Check("son cadre a deux montants et une imposte", false);
             Check("elle descend jusqu'au sol", false);
             Check("elle est plus haute qu'une fenetre", false);
+            Check("le cadre laisse le passage libre", false);
             Check("elle est plaquee sur la face interieure du mur", false);
             Check("aucune vitre ne lui passe dessus", false);
             Check("elle jouxte le plan de mise en boite", false);
+            Check("un linteau ferme le mur au-dessus de la porte", false);
+            Check("il repose sur le haut de la porte", false);
+            Check("et il monte jusqu'au haut du mur", false);
         }
 
         Check("on ne passe pas la porte avant de l'avoir payee",
@@ -880,6 +915,12 @@ static class Harness3D
               Obstacles.DemiTerrainZ > terrainAvant + 2f);
         Check("le vantail s'ouvre",
               gondAvant != null && Mathf.Abs(gondAvant.localRotation.y - angleAvant) > 0.1f);
+        // Il doit rentrer dans la piece : vers la salle, il se plantait en
+        // travers du passage, blanc et bien visible.
+        var battant = gondAvant != null ? Piece(gondAvant, "Battant") : null;
+        float zBattant = battant != null
+            ? gondAvant.localPosition.z + (gondAvant.localRotation * battant.localPosition).z : -9f;
+        Check("il s'ouvre du cote de la piece", zBattant > 0.3f);
 
         // et l'on peut vraiment y entrer
         var dansLaPiece = new Vector3(porte.transform.position.x, 0f,
