@@ -52,6 +52,56 @@ namespace Pizzeria3D
             return m;
         }
 
+        static readonly System.Collections.Generic.Dictionary<int, Material> _vitrages =
+            new System.Collections.Generic.Dictionary<int, Material>();
+
+        /// <summary>
+        /// Une peinture translucide, pour les vitres. En URP, un materiau
+        /// n'est pas transparent parce que sa couleur a un alpha : il faut lui
+        /// dire de passer en surface transparente, choisir le melange, cesser
+        /// d'ecrire dans le tampon de profondeur et rejoindre la file de rendu
+        /// des transparents. A defaut, la vitre resterait opaque.
+        /// </summary>
+        public static Material Vitrage(Color couleur, float opacite)
+        {
+            int cle = ((int)(couleur.r * 255) << 16) | ((int)(couleur.g * 255) << 8)
+                    | (int)(couleur.b * 255) | ((int)(opacite * 255) << 24);
+            if (_vitrages.TryGetValue(cle, out var connu) && connu != null) return connu;
+
+            var m = new Material(Shader());
+            m.color = new Color(couleur.r, couleur.g, couleur.b, opacite);
+
+            // URP
+            m.SetFloat("_Surface", 1f);              // 0 opaque, 1 transparent
+            m.SetFloat("_Blend", 0f);                // melange alpha classique
+            // built-in Standard, si le projet n'est pas en URP : le meme
+            // reglage s'y appelle autrement, et sans lui la vitre reste opaque
+            m.SetFloat("_Mode", 3f);
+            m.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            m.SetFloat("_DstBlend", (float)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            m.SetFloat("_ZWrite", 0f);
+            m.SetFloat("_AlphaClip", 0f);
+            m.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            m.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+            m.SetShaderPassEnabled("ShadowCaster", false);   // une vitre ne porte pas d'ombre
+            m.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+
+            if (m.HasProperty("_Smoothness")) m.SetFloat("_Smoothness", 0.35f);
+            if (m.HasProperty("_Metallic")) m.SetFloat("_Metallic", 0f);
+
+            _vitrages[cle] = m;
+            return m;
+        }
+
+        /// <summary>Une vitre : une boite peinte d'un vitrage translucide.</summary>
+        public static GameObject Verre(string nom, Transform parent, Vector3 pos, Vector3 taille,
+                                       Color couleur, float opacite = 0.32f)
+        {
+            var go = Boite(nom, parent, pos, taille, couleur);
+            go.GetComponent<Renderer>().sharedMaterial = Vitrage(couleur, opacite);
+            return go;
+        }
+
         public static GameObject Forme(PrimitiveType type, string nom, Transform parent,
                                        Vector3 position, Vector3 taille, Color couleur)
         {

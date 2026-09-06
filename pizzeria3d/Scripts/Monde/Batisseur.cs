@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Pizzeria3D
@@ -78,6 +79,65 @@ namespace Pizzeria3D
         static Vector3 _pieceEtSaDalle;
         static Joueur _joueur;
 
+        /// <summary>Une ouverture dans un mur : porte ou baie vitree.</summary>
+        struct Baie
+        {
+            public float Centre, Largeur, Bas, Haut;
+            public Baie(float centre, float largeur, float bas, float haut)
+            {
+                Centre = centre; Largeur = largeur; Bas = bas; Haut = haut;
+            }
+        }
+
+        /// <summary>
+        /// Monte un mur perce d'ouvertures : des trumeaux entre les baies, une
+        /// allege sous chacune et un linteau au-dessus. Un mur plein derriere
+        /// une vitre ne laisse rien voir — c'est le trou qui fait la fenetre,
+        /// pas le verre.
+        /// </summary>
+        static List<GameObject> MurPerce(string nom, Transform parent, bool selonX, float fixe,
+                                         float debut, float fin, float hauteur, float epaisseur,
+                                         Color couleur, List<Baie> baies)
+        {
+            var pans = new List<GameObject>();
+            float curseur = debut;
+            int n = 0;
+
+            foreach (var baie in baies)
+            {
+                float g = baie.Centre - baie.Largeur * 0.5f;
+                float d = baie.Centre + baie.Largeur * 0.5f;
+
+                if (g - curseur > 0.01f)
+                    pans.Add(Pan(nom + n++, parent, selonX, fixe, curseur, g, 0f, hauteur,
+                                 epaisseur, couleur));
+                if (baie.Bas > 0.01f)
+                    pans.Add(Pan(nom + "Allege" + n, parent, selonX, fixe, g, d, 0f, baie.Bas,
+                                 epaisseur, couleur));
+                if (hauteur - baie.Haut > 0.01f)
+                    pans.Add(Pan(nom + "Linteau" + n, parent, selonX, fixe, g, d, baie.Haut, hauteur,
+                                 epaisseur, couleur));
+                curseur = d;
+            }
+            if (fin - curseur > 0.01f)
+                pans.Add(Pan(nom + n, parent, selonX, fixe, curseur, fin, 0f, hauteur,
+                             epaisseur, couleur));
+            return pans;
+        }
+
+        /// <summary>Un morceau de mur, entre deux abscisses et deux hauteurs.</summary>
+        static GameObject Pan(string nom, Transform parent, bool selonX, float fixe,
+                              float a, float b, float bas, float haut, float epaisseur, Color couleur)
+        {
+            var centre = selonX
+                ? new Vector3((a + b) * 0.5f, (bas + haut) * 0.5f, fixe)
+                : new Vector3(fixe, (bas + haut) * 0.5f, (a + b) * 0.5f);
+            var taille = selonX
+                ? new Vector3(b - a, haut - bas, epaisseur)
+                : new Vector3(epaisseur, haut - bas, b - a);
+            return Bloc.Boite(nom, parent, centre, taille, couleur).SansCollision();
+        }
+
         /// <summary>Un objet du decor deja pose, par son nom.</summary>
         static GameObject Trouver(Transform parent, string nom)
         {
@@ -97,42 +157,44 @@ namespace Pizzeria3D
                        Bloc.SolBordure).SansCollision();
 
             // Le batiment ferme deux cotes : le fond et la gauche de l'ecran.
-            // Un seul pan donnait l'impression d'un decor pose sur un terrain vague.
-            // Comme le mur de gauche, il va d'un bord a l'autre du dallage —
-            // mais en deux pans, car la porte doit pouvoir livrer passage.
-            const float xPorte = 4.56f, largeurPorte = 1.70f;
+            // Un seul pan donnait l'impression d'un decor pose sur un terrain
+            // vague. Les murs sont perces : sans trou derriere elles, les
+            // vitres n'auraient rien laisse voir.
+            const float xPorte = 4.56f, largeurPorte = 1.70f, hauteurPorte = 2.38f;
+            const float basBaie = 1.15f, hautBaie = 2.65f, largeurBaie = 1.8f;
             float finGauche = xPorte - largeurPorte * 0.5f;
             float debutDroite = xPorte + largeurPorte * 0.5f;
 
-            Bloc.Boite("MurFond", parent,
-                       new Vector3((-8.5f + finGauche) * 0.5f, 1.6f, 7.2f),
-                       new Vector3(finGauche + 8.5f, 3.2f, 0.6f), Bloc.MachineBis).SansCollision();
-            Obstacles.Ajouter(new Vector3((-8.5f + finGauche) * 0.5f, 0f, 7.2f),
-                              finGauche + 8.5f, 0.6f);
-
-            Bloc.Boite("MurFondBis", parent,
-                       new Vector3((debutDroite + 8.5f) * 0.5f, 1.6f, 7.2f),
-                       new Vector3(8.5f - debutDroite, 3.2f, 0.6f), Bloc.MachineBis).SansCollision();
-            Obstacles.Ajouter(new Vector3((debutDroite + 8.5f) * 0.5f, 0f, 7.2f),
-                              8.5f - debutDroite, 0.6f);
-
-            // Le pas de la porte reste bouche tant que la piece n'est pas
-            // achetee : c'est cet obstacle-la que l'achat leve.
-            int seuil = Obstacles.Ajouter(new Vector3(xPorte, 0f, 7.2f), largeurPorte, 0.6f);
-
+            var baiesFond = new List<Baie>();
             for (int i = 0; i < 6; i++)
             {
                 if (i == 4) continue;              // sa place revient a la porte
-                Bloc.Boite("VitreFond" + i, parent, new Vector3(-7.6f + i * 3.04f, 1.9f, 6.85f),
-                           new Vector3(1.8f, 1.5f, 0.15f), Bloc.Couleur(0xBFE8F2)).SansCollision();
+                baiesFond.Add(new Baie(-7.6f + i * 3.04f, largeurBaie, basBaie, hautBaie));
+                Bloc.Verre("VitreFond" + i, parent, new Vector3(-7.6f + i * 3.04f, 1.9f, 6.85f),
+                           new Vector3(largeurBaie, hautBaie - basBaie, 0.15f),
+                           Bloc.Couleur(0xBFE8F2)).SansCollision();
             }
-            // Le pan de mur au-dessus de la porte. Sans lui, la coupure du mur
-            // montait jusqu'au toit et l'on voyait la pelouse par-dessus.
-            const float hauteurPorte = 2.38f;
-            Bloc.Boite("LinteauFond", parent,
-                       new Vector3(xPorte, (hauteurPorte + 3.2f) * 0.5f, 7.2f),
-                       new Vector3(largeurPorte, 3.2f - hauteurPorte, 0.6f), Bloc.MachineBis)
-                .SansCollision();
+            baiesFond.Add(new Baie(xPorte, largeurPorte, 0f, hauteurPorte));
+            baiesFond.Sort((a, b) => a.Centre.CompareTo(b.Centre));
+
+            var pansFond = MurPerce("MurFond", parent, true, 7.2f, -8.5f, 8.5f, 3.2f, 0.6f,
+                                    Bloc.MachineBis, baiesFond);
+
+            // Ceux qui se dressent entre la camera et la piece : a droite de la
+            // porte, plus le linteau au-dessus d'elle.
+            var cachentLaPiece = new List<GameObject>();
+            foreach (var pan in pansFond)
+                if (pan.transform.localPosition.x > xPorte - 0.01f) cachentLaPiece.Add(pan);
+            cachentLaPiece.Add(Trouver(parent, "VitreFond5"));
+
+            // Les deux pans du mur, de part et d'autre de la porte, barrent le
+            // passage ; le pas de la porte, lui, a son obstacle a part : c'est
+            // celui-la que l'achat de la piece leve.
+            Obstacles.Ajouter(new Vector3((-8.5f + finGauche) * 0.5f, 0f, 7.2f),
+                              finGauche + 8.5f, 0.6f);
+            Obstacles.Ajouter(new Vector3((debutDroite + 8.5f) * 0.5f, 0f, 7.2f),
+                              8.5f - debutDroite, 0.6f);
+            int seuil = Obstacles.Ajouter(new Vector3(xPorte, 0f, 7.2f), largeurPorte, 0.6f);
 
             // juste a cote du plan de mise en boite, qui s'arrete a x 3,5
             var gond = Porte(parent, new Vector3(xPorte, 0f, 7.2f));
@@ -140,18 +202,24 @@ namespace Pizzeria3D
             // La piece derriere, et la dalle qui l'ouvre, devant la porte.
             // Elle occupe tout le coin du batiment : son pan droit rejoint le
             // bout du mur du fond, sinon ce dernier depassait dans le vide.
-            var piece = Piece(parent, new Vector3(5.35f, 0f, 9.7f), gond, seuil, _joueur);
+            var piece = Piece(parent, new Vector3(5.35f, 0f, 9.7f), gond, seuil, _joueur,
+                              cachentLaPiece);
             _pieceEtSaDalle = new Vector3(xPorte, 0f, 5.6f);
             _piece = piece;
 
             // Le mur va d'un bout a l'autre du dallage : il s'arretait 1,2 avant
             // le bord, et la pizzeria semblait ouverte sur le vide.
-            Bloc.Boite("MurGauche", parent, new Vector3(-8.0f, 1.6f, 0f), new Vector3(0.6f, 3.2f, 15f),
-                       Bloc.MachineBis).SansCollision();
-            Obstacles.Ajouter(new Vector3(-8.0f, 0f, 0f), 0.6f, 15f);
+            var baiesGauche = new List<Baie>();
             for (int i = 0; i < 5; i++)
-                Bloc.Boite("VitreGauche" + i, parent, new Vector3(-7.65f, 1.9f, -6.4f + i * 2.9f),
-                           new Vector3(0.15f, 1.5f, 1.8f), Bloc.Couleur(0xBFE8F2)).SansCollision();
+            {
+                baiesGauche.Add(new Baie(-6.4f + i * 2.9f, largeurBaie, basBaie, hautBaie));
+                Bloc.Verre("VitreGauche" + i, parent, new Vector3(-7.65f, 1.9f, -6.4f + i * 2.9f),
+                           new Vector3(0.15f, hautBaie - basBaie, largeurBaie),
+                           Bloc.Couleur(0xBFE8F2)).SansCollision();
+            }
+            MurPerce("MurGauche", parent, false, -8.0f, -7.5f, 7.5f, 3.2f, 0.6f,
+                     Bloc.MachineBis, baiesGauche);
+            Obstacles.Ajouter(new Vector3(-8.0f, 0f, 0f), 0.6f, 15f);
 
             // La cour reste degagee : la palette et la pile de cartons qui s'y
             // trouvaient encombraient le sol sans rien apporter.
@@ -194,7 +262,7 @@ namespace Pizzeria3D
             gond.transform.SetParent(t, false);
             gond.transform.localPosition = new Vector3(0.72f, 0f, -0.26f);
 
-            Bloc.Boite("Battant", gond.transform, new Vector3(-0.70f, 1.12f, 0f),
+            Bloc.Verre("Battant", gond.transform, new Vector3(-0.70f, 1.12f, 0f),
                        new Vector3(1.36f, 2.06f, 0.10f), vitre).SansCollision();
             Bloc.Boite("Barre", gond.transform, new Vector3(-0.70f, 1.05f, -0.06f),
                        new Vector3(1.10f, 0.10f, 0.06f), blanc).SansCollision();
@@ -209,7 +277,7 @@ namespace Pizzeria3D
         /// de quoi s'asseoir. Elle reste cachee jusqu'a l'achat.
         /// </summary>
         static GameObject Piece(Transform parent, Vector3 centre, Transform gond, int seuil,
-                                Joueur joueur)
+                                Joueur joueur, List<GameObject> cachent)
         {
             var go = new GameObject("PetitePiece");
             go.transform.SetParent(parent, false);
@@ -243,19 +311,14 @@ namespace Pizzeria3D
             p.Gond = gond;
             p.DemiTerrainZ = centre.z + demiZ - 0.85f;
 
-            // Les pans qui s'interposent entre la camera et la piece : le
-            // cote droit, le pan de mur a droite de la porte, et le linteau.
+            // Les pans qui s'interposent entre la camera et la piece : son
+            // cote droit, et tout ce qui borde la porte cote salle — vitres
+            // comprises, sinon elles flottent seules au-dessus de la pelouse.
             var discrets = go.AddComponent<MursDiscrets>();
             discrets.Joueur = joueur;
-            // La vitre du pan de droite part avec lui : restee seule, elle
-            // flottait au-dessus de la pelouse.
-            discrets.Murs = new[]
-            {
-                panDroit,
-                Trouver(parent, "MurFondBis"),
-                Trouver(parent, "LinteauFond"),
-                Trouver(parent, "VitreFond5"),
-            };
+            var aEffacer = new List<GameObject> { panDroit };
+            aEffacer.AddRange(cachent);
+            discrets.Murs = aEffacer.ToArray();
             discrets.Centre = centre;
             discrets.DemiX = demiX;
             discrets.DemiZ = demiZ;

@@ -385,9 +385,20 @@ namespace UnityEngine
     {
         public Color color;
         public Texture mainTexture;
+        public int renderQueue;
+
+        readonly Dictionary<string, float> _reglages = new Dictionary<string, float>();
+        readonly List<string> _motsCles = new List<string>();
+
         public Material(Shader s) { }
         public bool HasProperty(string nom) => true;
-        public void SetFloat(string nom, float v) { }
+        public void SetFloat(string nom, float v) => _reglages[nom] = v;
+        public float GetFloat(string nom) => _reglages.TryGetValue(nom, out var v) ? v : 0f;
+        public void SetInt(string nom, int v) => _reglages[nom] = v;
+        public void EnableKeyword(string nom) { if (!_motsCles.Contains(nom)) _motsCles.Add(nom); }
+        public void DisableKeyword(string nom) => _motsCles.Remove(nom);
+        public bool IsKeywordEnabled(string nom) => _motsCles.Contains(nom);
+        public void SetShaderPassEnabled(string passe, bool actif) { }
     }
 
     public class Renderer : Behaviour { public Material sharedMaterial, material; }
@@ -429,7 +440,17 @@ namespace UnityEngine
         public static Color ambientLight;
     }
 
-    namespace Rendering { public enum AmbientMode { Skybox, Trilight, Flat, Custom } }
+    namespace Rendering
+    {
+        public enum AmbientMode { Skybox, Trilight, Flat, Custom }
+
+        public enum BlendMode { Zero, One, DstColor, SrcColor, OneMinusDstColor, SrcAlpha,
+                                OneMinusSrcColor, DstAlpha, OneMinusDstAlpha, SrcAlphaSaturate,
+                                OneMinusSrcAlpha }
+
+        public enum RenderQueue { Background = 1000, Geometry = 2000, AlphaTest = 2450,
+                                  GeometryLast = 2500, Transparent = 3000, Overlay = 4000 }
+    }
 
     public class Camera : Behaviour
     {

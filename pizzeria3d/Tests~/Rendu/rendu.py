@@ -56,11 +56,12 @@ def main(source, sortie, largeur=1100, hauteur=900, zoom=None,
             continue
         p = tuple(float(v) for v in pos.split())
         s = tuple(float(v) for v in taille.split())
-        objets.append((nom, forme, p, s, float(ry), int(coul, 16)))
+        alpha = int(coul[6:8], 16) / 255 if len(coul) == 8 else 1.0
+        objets.append((nom, forme, p, s, float(ry), int(coul[:6], 16), alpha))
 
     # cadrage
     pts = []
-    for _, _, p, s, ry, _ in objets:
+    for _, _, p, s, ry, _, _a in objets:
         coins, _f = boite(p, s, ry)
         pts += [(dot(c, RIGHT), dot(c, UP)) for c in coins]
     if centre:
@@ -80,13 +81,29 @@ def main(source, sortie, largeur=1100, hauteur=900, zoom=None,
 
     # peintre : du plus loin au plus proche
     dessins = []
-    for nom, forme, p, s, ry, coul in objets:
+    for nom, forme, p, s, ry, coul, alpha in objets:
         coins, faces = boite(p, s, ry)
         prof = max(dot(c, FWD) for c in coins)
-        dessins.append((prof, nom, forme, coins, faces, coul))
+        dessins.append((prof, nom, forme, coins, faces, coul, alpha))
     dessins.sort(key=lambda o: -o[0])
 
-    for _prof, nom, forme, coins, faces, coul in dessins:
+    for _prof, nom, forme, coins, faces, coul, alpha in dessins:
+        # une vitre se peint par-dessus, en laissant voir le fond
+        if alpha < 0.99:
+            calque = Image.new("RGBA", img.size, (0, 0, 0, 0))
+            dc = ImageDraw.Draw(calque)
+            for i, f in enumerate(faces):
+                pts3 = [coins[k] for k in f]
+                if dot(normale(pts3), FWD) >= 0:
+                    continue
+                r, g, b = teinte(coul, (.72, 1.0, .86, .86, .93, .93)[i])
+                dc.polygon([ecran(c) for c in pts3], fill=(r, g, b, int(alpha * 255)))
+            img = Image.alpha_composite(img.convert("RGBA"), calque).convert("RGB")
+            d = ImageDraw.Draw(img)
+            ecran = lambda c: (largeur / 2 + (dot(c, RIGHT) - cx) * zoom,
+                               hauteur / 2 - (dot(c, UP) - cy) * zoom)
+            continue
+
         if forme in ("Sphere", "Capsule", "Cylinder"):
             xs = [ecran(c)[0] for c in coins]
             ys = [ecran(c)[1] for c in coins]

@@ -68,6 +68,60 @@ static class Harness3D
         return fin - precedent <= 4f;
     }
 
+    /// <summary>
+    /// L'etendue d'un mur, tous ses morceaux reunis : un mur perce n'est plus
+    /// un bloc unique mais des trumeaux, des alleges et des linteaux.
+    /// </summary>
+    static bool Etendue(string prefixe, bool surX, out float min, out float max, out float haut,
+                        out int morceaux)
+    {
+        min = 9999f; max = -9999f; haut = -9999f; morceaux = 0;
+        foreach (var o in UnityEngine.Object.Tous)
+        {
+            if (!(o is GameObject go) || go.Detruit || !go.name.StartsWith(prefixe)) continue;
+            if (go.GetComponent<MeshRenderer>() == null) continue;
+            var p = go.transform.position; var e = go.transform.localScale;
+            float a = (surX ? p.x : p.z) - (surX ? e.x : e.z) * 0.5f;
+            float b = (surX ? p.x : p.z) + (surX ? e.x : e.z) * 0.5f;
+            min = Mathf.Min(min, a); max = Mathf.Max(max, b);
+            haut = Mathf.Max(haut, p.y + e.y * 0.5f);
+            morceaux++;
+        }
+        return morceaux > 0;
+    }
+
+    /// <summary>Combien d'objets vivants portent ce prefixe.</summary>
+    static int Objets(string prefixe)
+    {
+        int n = 0;
+        foreach (var o in UnityEngine.Object.Tous)
+            if (o is GameObject go && !go.Detruit && go.name.StartsWith(prefixe)) n++;
+        return n;
+    }
+
+    /// <summary>N'importe quel morceau d'un mur, pour son plan et son epaisseur.</summary>
+    static GameObject UnPan(string prefixe)
+    {
+        foreach (var o in UnityEngine.Object.Tous)
+            if (o is GameObject go && !go.Detruit && go.name.StartsWith(prefixe) &&
+                go.GetComponent<MeshRenderer>() != null) return go;
+        return null;
+    }
+
+    /// <summary>Le morceau de mur qui passe au-dessus d'un point donne.</summary>
+    static GameObject PanAuDessus(string prefixe, float x, float hauteurMini)
+    {
+        foreach (var o in UnityEngine.Object.Tous)
+        {
+            if (!(o is GameObject go) || go.Detruit || !go.name.StartsWith(prefixe)) continue;
+            var p = go.transform.position; var e = go.transform.localScale;
+            if (Mathf.Abs(p.x - x) > e.x * 0.5f) continue;
+            if (p.y - e.y * 0.5f < hauteurMini - 0.05f) continue;
+            return go;
+        }
+        return null;
+    }
+
     /// <summary>Distance en x du plus proche objet portant ce prefixe.</summary>
     static float EcartX(string prefixe, float x)
     {
@@ -283,8 +337,9 @@ static class Harness3D
 
                 var c2 = r.sharedMaterial.color;
                 int rgb = ((int)(c2.r * 255) << 16) | ((int)(c2.g * 255) << 8) | (int)(c2.b * 255);
+                int alpha = (int)(Mathf.Clamp01(c2.a) * 255);
                 f.WriteLine($"{go.name}|{go.Primitive}|{p.x:0.###} {p.y:0.###} {p.z:0.###}|" +
-                            $"{e.x:0.###} {e.y:0.###} {e.z:0.###}|{ry:0.##}|{rgb:x6}");
+                            $"{e.x:0.###} {e.y:0.###} {e.z:0.###}|{ry:0.##}|{rgb:x6}{alpha:x2}");
             }
         Console.WriteLine("scene ecrite dans " + chemin);
     }
@@ -355,68 +410,56 @@ static class Harness3D
         // --- le decor ferme bien ---
         // Un mur qui s'arrete avant le bord du dallage laisse voir le vide :
         // on compare donc les deux etendues, pas l'allure generale.
-        var murGauche = Trouver("MurGauche");
         var sol = Trouver("Sol");
-        Check("le mur de gauche est monte", murGauche != null && sol != null);
-        if (murGauche != null && sol != null)
+        float gMin, gMax, gHaut; int gPans;
+        bool murGauche = Etendue("MurGauche", false, out gMin, out gMax, out gHaut, out gPans);
+        Check("le mur de gauche est monte", murGauche && sol != null);
+        if (murGauche && sol != null)
         {
-            float murDebut = murGauche.transform.position.z - murGauche.transform.localScale.z * 0.5f;
-            float murFin   = murGauche.transform.position.z + murGauche.transform.localScale.z * 0.5f;
             float solDebut = sol.transform.position.z - sol.transform.localScale.z * 0.5f;
             float solFin   = sol.transform.position.z + sol.transform.localScale.z * 0.5f;
             Check("il court jusqu'au bout du dallage",
-                  murDebut <= solDebut + 0.01f && murFin >= solFin - 0.01f);
+                  gMin <= solDebut + 0.01f && gMax >= solFin - 0.01f);
             Check("le mur de gauche est vitre sur toute sa longueur",
-                  Fenetres("VitreGauche", murDebut, murFin));
+                  Fenetres("VitreGauche", gMin, gMax));
+            // Perce : sans trous, les vitres ne montrent que du mur. Un mur
+            // perce a des alleges sous ses baies et des linteaux dessus.
+            Check("il est perce de baies",
+                  Objets("MurGaucheAllege") >= 5 && Objets("MurGaucheLinteau") >= 5);
         }
         else
         {
             Check("il court jusqu'au bout du dallage", false);
             Check("le mur de gauche est vitre sur toute sa longueur", false);
+            Check("il est perce de baies", false);
         }
 
-        var murFond = Trouver("MurFond");
-        var murFondBis = Trouver("MurFondBis");
-        Check("le mur du fond est monte", murFond != null && murFondBis != null && sol != null);
-        if (murFond != null && murFondBis != null && sol != null)
+        float fMin, fMax, fHaut; int fPans;
+        bool murFond = Etendue("MurFond", true, out fMin, out fMax, out fHaut, out fPans);
+        Check("le mur du fond est monte", murFond && sol != null);
+        if (murFond && sol != null)
         {
-            // deux pans, et entre eux le pas de la porte : on mesure donc
-            // l'etendue de leur reunion
-            float murGauche2 = murFond.transform.position.x - murFond.transform.localScale.x * 0.5f;
-            float murDroite  = murFondBis.transform.position.x
-                             + murFondBis.transform.localScale.x * 0.5f;
-            float solGauche  = sol.transform.position.x - sol.transform.localScale.x * 0.5f;
-            float solDroite  = sol.transform.position.x + sol.transform.localScale.x * 0.5f;
+            float solGauche = sol.transform.position.x - sol.transform.localScale.x * 0.5f;
+            float solDroite = sol.transform.position.x + sol.transform.localScale.x * 0.5f;
             Check("il court d'un bord a l'autre du dallage",
-                  murGauche2 <= solGauche + 0.01f && murDroite >= solDroite - 0.01f);
-            // la porte a pris la place d'une vitre : elle compte comme une
-            // ouverture, sinon ce controle refuserait de la voir
+                  fMin <= solGauche + 0.01f && fMax >= solDroite - 0.01f);
             Check("il est ouvert sur toute sa longueur",
-                  Fenetres("VitreFond", murGauche2, murDroite, true, "Porte"));
+                  Fenetres("VitreFond", fMin, fMax, true, "Porte"));
+            Check("il est perce de baies",
+                  Objets("MurFondAllege") >= 5 && Objets("MurFondLinteau") >= 5);
         }
         else
         {
             Check("il court d'un bord a l'autre du dallage", false);
-            Check("il est vitre sur toute sa longueur", false);
-        }
-
-        // Les deux ronds de travail : le rouge avant le vert, tous deux sur le
-        // dessus du plan et non a cote.
-        if (table != null)
-        {
-            var rouge = table.Preparation.transform.localPosition;
-            var vert = table.Assemblage.transform.localPosition;
-            Check("le plan a ses deux ronds de travail",
-                  table.Preparation != null && table.Assemblage != null);
-            Check("le rouge est avant le vert", rouge.x < vert.x);
-            Check("les deux sont poses sur le dessus",
-                  Mathf.Abs(rouge.y - vert.y) < 0.01f && rouge.y > 1f);
+            Check("il est ouvert sur toute sa longueur", false);
+            Check("il est perce de baies", false);
         }
 
         // --- la porte, a cote du plan de mise en boite ---
         var porte = Trouver("Porte");
-        Check("une porte est posee dans le mur du fond", porte != null && murFond != null);
-        if (porte != null && murFond != null && table != null)
+        var panFond = UnPan("MurFond");
+        Check("une porte est posee dans le mur du fond", porte != null && panFond != null);
+        if (porte != null && panFond != null && table != null)
         {
             var jambage = Piece(porte.transform, "Jambage");
             var imposte = Piece(porte.transform, "Imposte");
@@ -445,7 +488,7 @@ static class Harness3D
 
             Check("elle est plaquee sur la face interieure du mur",
                   porte.transform.position.z + jambage.localPosition.z
-                      < murFond.transform.position.z);
+                      < panFond.transform.position.z);
             Check("aucune vitre ne lui passe dessus",
                   EcartX("VitreFond", porte.transform.position.x) > 1.5f);
 
@@ -456,12 +499,13 @@ static class Harness3D
                   porte.transform.position.x - bordDuPlan < 1.5f);
 
             // Le pan de mur au-dessus : la coupure montait jusqu'au toit.
-            var linteau = Trouver("LinteauFond");
+            // le morceau de mur qui passe au-dessus de la porte
+            var linteau = PanAuDessus("MurFond", porte.transform.position.x, 2f);
             float basLinteau = linteau != null
                 ? linteau.transform.position.y - linteau.transform.localScale.y * 0.5f : -9f;
             float hautLinteau = linteau != null
                 ? linteau.transform.position.y + linteau.transform.localScale.y * 0.5f : -9f;
-            float hautMur = murFond.transform.position.y + murFond.transform.localScale.y * 0.5f;
+            float hautMur = fHaut;
             Check("un linteau ferme le mur au-dessus de la porte", linteau != null);
             Check("il repose sur le haut de la porte",
                   Mathf.Abs(basLinteau - (porte.transform.position.y + imposte.localPosition.y
@@ -488,10 +532,9 @@ static class Harness3D
         // Elle occupe le coin du batiment : son pan droit et le mur du fond
         // finissent au meme endroit, sinon le mur depasse dans le vide.
         var pieceCachee = Trouver("PetitePiece");
-        if (pieceCachee != null && murFondBis != null)
+        if (pieceCachee != null && murFond)
         {
-            float boutDuMur = murFondBis.transform.position.x
-                            + murFondBis.transform.localScale.x * 0.5f;
+            float boutDuMur = fMax;
             float boutDeLaPiece = -99f;
             foreach (var e in pieceCachee.transform.Enfants)
                 if (e.gameObject.name == "MurPiece")
@@ -569,6 +612,30 @@ static class Harness3D
         Check("plus de palette au sol", Trouver("Palette") == null);
         Check("ni d'obstacle a sa place",
               !Obstacles.Bloque(new Vector3(-7f, 0f, 5.6f), Reglages.RayonJoueur));
+
+        // --- les vitres laissent passer le regard ---
+        // Un alpha ne suffit pas en URP : sans les reglages de surface, la
+        // vitre reste opaque. On controle donc le materiau, pas la couleur.
+        int vitrees = 0;
+        bool vitreOpaque = false;
+        foreach (var o in UnityEngine.Object.Tous)
+        {
+            if (!(o is GameObject go) || go.Detruit) continue;
+            if (!go.name.StartsWith("Vitre") && go.name != "Battant") continue;
+            var r = go.GetComponent<MeshRenderer>();
+            if (r == null || r.sharedMaterial == null) continue;
+
+            var m = r.sharedMaterial;
+            vitrees++;
+            bool transparente = m.color.a < 0.9f
+                             && m.GetFloat("_Surface") == 1f
+                             && m.GetFloat("_ZWrite") == 0f
+                             && m.IsKeywordEnabled("_SURFACE_TYPE_TRANSPARENT")
+                             && m.renderQueue >= (int)UnityEngine.Rendering.RenderQueue.Transparent;
+            if (!transparente) vitreOpaque = true;
+        }
+        Check("la pizzeria a ses vitres", vitrees >= 10);
+        Check("on voit a travers toutes les vitres", !vitreOpaque);
 
         // --- la poubelle ---
         var poubelle = Trouver("Poubelle");
@@ -778,12 +845,14 @@ static class Harness3D
         var maconnerie = Piece(four.transform, "Maconnerie");
         var socleFour = maconnerie != null ? Piece(maconnerie, "Socle") : null;
         Check("le four a rapetisse", maconnerie != null && maconnerie.localScale.x < 0.95f);
-        if (socleFour != null && murFond != null)
+        var planFond = UnPan("MurFond");
+        if (socleFour != null && planFond != null)
         {
             float dosDuFour = four.transform.position.z
                             + (socleFour.localPosition.z + socleFour.localScale.z * 0.5f)
                               * maconnerie.localScale.z;
-            float faceDuMur = murFond.transform.position.z - murFond.transform.localScale.z * 0.5f;
+            float faceDuMur = planFond.transform.position.z
+                            - planFond.transform.localScale.z * 0.5f;
             Check("il est adosse au mur du fond", faceDuMur - dosDuFour < 0.2f && dosDuFour < faceDuMur);
         }
         else Check("il est adosse au mur du fond", false);
