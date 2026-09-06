@@ -78,8 +78,12 @@ namespace Pizzeria3D
                        Bloc.MachineBis).SansCollision();
             Obstacles.Ajouter(new Vector3(-8.0f, 0f, 0f), 0.6f, 15f);
             for (int i = 0; i < 5; i++)
+            {
+                if (i == 2) continue;              // sa place revient a la porte
                 Bloc.Boite("VitreGauche" + i, parent, new Vector3(-7.65f, 1.9f, -6.4f + i * 2.9f),
                            new Vector3(0.15f, 1.5f, 1.8f), Bloc.Couleur(0xBFE8F2)).SansCollision();
+            }
+            Porte(parent, new Vector3(-7.66f, 0f, -0.6f));
 
             // De quoi remplir la cour sans encombrer le passage : la pile de
             // cartons qui se dressait a droite masquait le mur du fond.
@@ -96,6 +100,35 @@ namespace Pizzeria3D
                 Bloc.Bille("Feuillage" + i, parent, new Vector3(xs[i], 1.8f, zs[i]), 2.2f,
                            Bloc.Couleur(0x4FA83A)).SansCollision();
             }
+        }
+
+        /// <summary>
+        /// La porte vitree de la pizzeria, plaquee sur la face interieure du
+        /// mur. Elle descend jusqu'au sol — c'est ce qui la distingue d'une
+        /// fenetre de plus.
+        /// </summary>
+        static void Porte(Transform parent, Vector3 position)
+        {
+            var go = new GameObject("Porte");
+            go.transform.SetParent(parent, false);
+            go.transform.position = position;
+            var t = go.transform;
+
+            var blanc = Bloc.Couleur(0xF4F1EA);
+            var vitre = Bloc.Couleur(0xBFE8F2);
+
+            Bloc.Boite("Chambranle", t, new Vector3(0f, 1.15f, 0f), new Vector3(0.16f, 2.30f, 1.60f),
+                       blanc).SansCollision();
+            Bloc.Boite("Battant", t, new Vector3(0.04f, 1.12f, 0f), new Vector3(0.10f, 2.06f, 1.36f),
+                       vitre).SansCollision();
+            // la barre de poussee, en travers du battant
+            Bloc.Boite("Barre", t, new Vector3(0.09f, 1.05f, 0f), new Vector3(0.06f, 0.10f, 1.10f),
+                       blanc).SansCollision();
+            Bloc.Boite("Poignee", t, new Vector3(0.12f, 1.05f, 0.50f), new Vector3(0.08f, 0.14f, 0.16f),
+                       Bloc.Metal).SansCollision();
+            // le seuil, cote salle
+            Bloc.Boite("Seuil", t, new Vector3(0.28f, 0.02f, 0f), new Vector3(0.50f, 0.04f, 1.60f),
+                       Bloc.SolBordure).SansCollision();
         }
 
         /// <summary>

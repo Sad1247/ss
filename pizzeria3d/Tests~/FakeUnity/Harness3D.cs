@@ -48,11 +48,13 @@ static class Harness3D
     /// Les vitres portant ce prefixe couvrent-elles le mur d'un bout a
     /// l'autre ? On verifie qu'aucun troncon nu de plus de 4 ne subsiste.
     /// </summary>
-    static bool Fenetres(string prefixe, float debut, float fin, bool surX = false)
+    static bool Fenetres(string prefixe, float debut, float fin, bool surX = false,
+                         string aussi = null)
     {
         var pos = new List<float>();
         foreach (var o in UnityEngine.Object.Tous)
-            if (o is GameObject go && !go.Detruit && go.name.StartsWith(prefixe))
+            if (o is GameObject go && !go.Detruit &&
+                (go.name.StartsWith(prefixe) || (aussi != null && go.name == aussi)))
                 pos.Add(surX ? go.transform.position.x : go.transform.position.z);
         if (pos.Count == 0) return false;
 
@@ -64,6 +66,16 @@ static class Harness3D
             precedent = v;
         }
         return fin - precedent <= 4f;
+    }
+
+    /// <summary>Distance en z du plus proche objet portant ce prefixe.</summary>
+    static float Ecart(string prefixe, float z)
+    {
+        float mini = 999f;
+        foreach (var o in UnityEngine.Object.Tous)
+            if (o is GameObject go && !go.Detruit && go.name.StartsWith(prefixe))
+                mini = Mathf.Min(mini, Mathf.Abs(go.transform.position.z - z));
+        return mini;
     }
 
     /// <summary>Un enfant direct par son nom, ou null.</summary>
@@ -265,13 +277,38 @@ static class Harness3D
             float solFin   = sol.transform.position.z + sol.transform.localScale.z * 0.5f;
             Check("il court jusqu'au bout du dallage",
                   murDebut <= solDebut + 0.01f && murFin >= solFin - 0.01f);
-            Check("le mur de gauche est vitre sur toute sa longueur",
-                  Fenetres("VitreGauche", murDebut, murFin));
+            // la porte compte comme une ouverture : elle a pris la place d'une
+            // vitre, elle ne doit pas laisser un pan aveugle derriere elle
+            Check("le mur de gauche est ouvert sur toute sa longueur",
+                  Fenetres("VitreGauche", murDebut, murFin, false, "Porte"));
         }
         else
         {
             Check("il court jusqu'au bout du dallage", false);
-            Check("le mur de gauche est vitre sur toute sa longueur", false);
+            Check("le mur de gauche est ouvert sur toute sa longueur", false);
+        }
+
+        // --- la porte ---
+        var porte = Trouver("Porte");
+        Check("une porte est posee dans le mur de gauche", porte != null);
+        if (porte != null && murGauche != null)
+        {
+            var chambranle = Piece(porte.transform, "Chambranle");
+            float bas = porte.transform.position.y + chambranle.localPosition.y
+                      - chambranle.localScale.y * 0.5f;
+            Check("elle descend jusqu'au sol", Mathf.Abs(bas) < 0.05f);
+            Check("elle est plus haute qu'une fenetre", chambranle.localScale.y > 1.8f);
+            Check("elle est plaquee sur la face interieure du mur",
+                  porte.transform.position.x > murGauche.transform.position.x);
+            Check("aucune vitre ne lui passe dessus",
+                  Ecart("VitreGauche", porte.transform.position.z) > 1.5f);
+        }
+        else
+        {
+            Check("elle descend jusqu'au sol", false);
+            Check("elle est plus haute qu'une fenetre", false);
+            Check("elle est plaquee sur la face interieure du mur", false);
+            Check("aucune vitre ne lui passe dessus", false);
         }
 
         var murFond = Trouver("MurFond");
