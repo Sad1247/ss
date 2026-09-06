@@ -1177,6 +1177,9 @@ static class Harness3D
         // sur place : une seule pizza, et pas de carton
         bool attableGourmand = false, attableEnBoite = false, attableAvecPizza = false;
         int repasServis = 0;
+        bool pizzaEntiere = false, orduresLaissees = false;
+        bool mainsPleinesEnMangeant = false, vuMangerALaTable = false;
+        var vueEntamee = new bool[Reglages.QuartiersParPizza + 1];
         // On observe sans s'arreter au premier repas : ce sont les clients
         // suivants qui disent si la regle tient, pas le premier.
         for (int i = 0; i < 60 * 90; i++)
@@ -1188,6 +1191,15 @@ static class Harness3D
                 // on surveille la reservation, pas seulement l'assiette :
                 // c'est des la commande que la place est retenue
                 if (cl.SurPlace && cl.Pizzas != 1) attableGourmand = true;
+
+                // Ce qu'on lui a servi se juge AVANT qu'il ne s'attable :
+                // une fois assis, sa pizza est passee dans l'assiette.
+                if (cl.SurPlace && !cl.Attable)
+                {
+                    var main = SacDe(cl);
+                    if (main != null && Compte(main, "Boite", false) > 0) attableEnBoite = true;
+                    if (main != null && Compte(main, "Pizza", false) > 0) attableAvecPizza = true;
+                }
                 if (!cl.Attable) continue;
                 attables++;
                 unAttable = true;
@@ -1198,12 +1210,22 @@ static class Harness3D
                 var pas = cl.GetComponent<Demarche>();
                 if (pas != null && pas.Assis) poseAssise = true;
 
+                // en mangeant, il a les mains vides : sa pizza est dans
+                // l'assiette, pas restee accrochee a ses paumes
+                var paumes = SacDe(cl);
+                if (paumes != null && paumes.childCount > 0) mainsPleinesEnMangeant = true;
+                if (tableSalle.Quartiers > 0) vuMangerALaTable = true;
+
                 if (cl.Pizzas != 1) attableGourmand = true;
-                var sac = SacDe(cl);
-                if (sac != null && Compte(sac, "Boite", false) > 0) attableEnBoite = true;
-                if (sac != null && Compte(sac, "Pizza", false) > 0) attableAvecPizza = true;
             }
             if (attables > 1) deuxALaFois = true;
+
+            // la pizza posee sur la table, puis mangee part par part
+            int reste = tableSalle.Quartiers;
+            if (reste == Reglages.QuartiersParPizza) pizzaEntiere = true;
+            if (reste > 0 && reste < Reglages.QuartiersParPizza) vueEntamee[reste] = true;
+            if (tableSalle.ADesOrdures) orduresLaissees = true;
+
             if (!tableSalle.EstLibre) aEteOccupee = true;
             else if (aEteOccupee) { tableRendue = true; aEteOccupee = false; repasServis++; }
         }
@@ -1213,6 +1235,12 @@ static class Harness3D
         Check("il est bien assis sur la chaise", assisSurLaChaise);
         Check("et il en a la pose", poseAssise);
         Check("jamais deux a la fois", !deuxALaFois);
+        Check("il pose sa pizza entiere sur la table", pizzaEntiere);
+        Check("elle est bien dans l'assiette, plus dans ses mains",
+              vuMangerALaTable && !mainsPleinesEnMangeant);
+        Check("elle s'en va part par part",
+              vueEntamee[3] && vueEntamee[2] && vueEntamee[1]);
+        Check("et il ne laisse que des restes", orduresLaissees);
         Check("la table se libere apres le repas", tableRendue);
         // Elle ressert : une place rendue une seule fois pourrait n'etre
         // qu'un client parti sans manger.

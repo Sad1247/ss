@@ -19,6 +19,7 @@ namespace Pizzeria3D
 
         static Material _pate, _garniture;
         static Mesh _disque;
+        static Mesh[] _quartiers;
         static Sprite _icone;
 
         /// <summary>La meme garniture, en sprite, pour l'interface.</summary>
@@ -78,6 +79,82 @@ namespace Pizzeria3D
                 _garniture = Bloc.Peinture(Color.white);
                 _garniture.mainTexture = Texture();
             }
+        }
+
+        /// <summary>
+        /// Un quartier de pizza posee a plat : le quart numero <paramref
+        /// name="quartier"/> d'une pizza entiere, pate et garniture. C'est ce
+        /// qui permet de la manger part par part au lieu de la faire
+        /// disparaitre d'un bloc.
+        /// </summary>
+        public static GameObject Quartier(Transform parent, int quartier)
+        {
+            Preparer();
+            if (_quartiers == null) _quartiers = new Mesh[4];
+            if (_quartiers[quartier] == null)
+                _quartiers[quartier] = Secteur(Segments, quartier * 0.25f, (quartier + 1) * 0.25f);
+
+            var racine = new GameObject("Quartier" + quartier);
+            racine.transform.SetParent(parent, false);
+
+            // la pate, en secteur elle aussi, pour que la tranche doree suive
+            var pate = new GameObject("PatePart", typeof(MeshFilter), typeof(MeshRenderer));
+            pate.transform.SetParent(racine.transform, false);
+            float rayonPate = Reglages.DiametrePizza * 0.5f;
+            pate.transform.localScale = new Vector3(rayonPate, 1f, rayonPate);
+            pate.GetComponent<MeshFilter>().sharedMesh = _quartiers[quartier];
+            pate.GetComponent<MeshRenderer>().sharedMaterial = _pate;
+
+            var dessus = new GameObject("GarniturePart", typeof(MeshFilter), typeof(MeshRenderer));
+            dessus.transform.SetParent(racine.transform, false);
+            dessus.transform.localPosition = new Vector3(0f, Reglages.EpaisseurPizza * 0.4f, 0f);
+            float rayonGarniture = Reglages.DiametrePizza * 0.42f;
+            dessus.transform.localScale = new Vector3(rayonGarniture, 1f, rayonGarniture);
+            dessus.GetComponent<MeshFilter>().sharedMesh = _quartiers[quartier];
+            dessus.GetComponent<MeshRenderer>().sharedMaterial = _garniture;
+
+            return racine;
+        }
+
+        /// <summary>
+        /// Secteur de disque, de <paramref name="debut"/> a <paramref
+        /// name="fin"/> de tour. Les UV restent ceux du disque entier : chaque
+        /// part porte donc sa propre portion de garniture.
+        /// </summary>
+        static Mesh Secteur(int segments, float debut, float fin)
+        {
+            int pas = Mathf.Max(2, Mathf.CeilToInt(segments * (fin - debut)));
+            var sommets = new Vector3[pas + 2];
+            var uv = new Vector2[pas + 2];
+            var normales = new Vector3[pas + 2];
+
+            sommets[0] = Vector3.zero;
+            uv[0] = new Vector2(0.5f, 0.5f);
+            normales[0] = Vector3.up;
+
+            for (int i = 0; i <= pas; i++)
+            {
+                float a = (debut + (fin - debut) * i / pas) * Mathf.PI * 2f;
+                float c = Mathf.Cos(a), s = Mathf.Sin(a);
+                sommets[i + 1] = new Vector3(c, 0f, s);
+                uv[i + 1] = new Vector2(0.5f + c * 0.5f, 0.5f + s * 0.5f);
+                normales[i + 1] = Vector3.up;
+            }
+
+            var tri = new int[pas * 3];
+            for (int i = 0; i < pas; i++)
+            {
+                tri[i * 3] = 0;
+                tri[i * 3 + 1] = i + 2;
+                tri[i * 3 + 2] = i + 1;
+            }
+
+            var m = new Mesh { name = "QuartierPizza" };
+            m.vertices = sommets;
+            m.uv = uv;
+            m.normals = normales;
+            m.triangles = tri;
+            return m;
         }
 
         /// <summary>Disque plat de rayon 1, face vers le haut, texture centree.</summary>

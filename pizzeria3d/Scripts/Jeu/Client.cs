@@ -30,6 +30,7 @@ namespace Pizzeria3D
         bool _versLaTable;        // servi, il marche vers son siege
         bool _attable;
         float _resteRepas;
+        int _quartiersManges;
         Vector3 _cible;
         bool _sEnVa;
         int _recues;
@@ -171,7 +172,10 @@ namespace Pizzeria3D
             transform.position += delta.normalized * Reglages.VitesseClient * Time.deltaTime;
         }
 
-        /// <summary>Il s'installe : cale sur la chaise, tourne vers le plateau.</summary>
+        /// <summary>
+        /// Il s'installe : cale sur la chaise, tourne vers le plateau, et sa
+        /// pizza quitte ses mains pour l'assiette.
+        /// </summary>
         void Asseoir()
         {
             _attable = true;
@@ -181,19 +185,39 @@ namespace Pizzeria3D
             transform.position = new Vector3(place.x, Reglages.HauteurAssise, place.z);
             transform.rotation = Quaternion.LookRotation(_table.VersLaTable(place), Vector3.up);
             if (_demarche != null) _demarche.Assis = true;
+
+            if (_sac != null) _sac.Vider();     // elle passe de ses mains a la table
+            _table.PoserPizza();
         }
 
-        /// <summary>Le repas s'egrene, puis il rend la place et sort.</summary>
+        /// <summary>
+        /// Le repas s'egrene, une part a la fois : la pizza fond dans
+        /// l'assiette au lieu de disparaitre d'un bloc. A la fin il ne laisse
+        /// que des restes, rend la place et sort.
+        /// </summary>
         void Manger()
         {
             _resteRepas -= Time.deltaTime;
+
+            // une part avalee a chaque quart du repas ecoule
+            float part = Reglages.DureeRepas / Reglages.QuartiersParPizza;
+            int avalees = Reglages.QuartiersParPizza
+                        - Mathf.CeilToInt(Mathf.Max(0f, _resteRepas) / part);
+            while (_table != null && _quartiersManges < avalees && _table.CroquerUnQuartier())
+                _quartiersManges++;
+
             if (_resteRepas > 0f) return;
 
             _attable = false;
             _versLaTable = false;
             if (_demarche != null) _demarche.Assis = false;
             transform.position = new Vector3(transform.position.x, 0f, transform.position.z);
-            if (_table != null) { _table.Liberer(this); _table = null; }
+            if (_table != null)
+            {
+                _table.LaisserOrdures();
+                _table.Liberer(this);
+                _table = null;
+            }
             _sEnVa = true;
         }
 

@@ -182,6 +182,9 @@ namespace UnityEngine
             p?.Enfants.Add(this);
         }
 
+        public int childCount => Enfants.Count;
+        public Transform GetChild(int i) => Enfants[i];
+
         /// <summary>Comme Unity : accepte un chemin "Corps/Mains", pas seulement un nom.</summary>
         public Transform Find(string chemin)
         {

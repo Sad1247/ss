@@ -550,8 +550,14 @@ namespace Pizzeria3D
 
             Obstacles.Ajouter(position, 2.9f, 1.5f);
 
+            // l'assiette se pose sur le plateau, pas au pied de la table
+            var plateau = new GameObject("Assiette");
+            plateau.transform.SetParent(t, false);
+            plateau.transform.localPosition = new Vector3(0f, 0.90f, 0f);
+
             var table = go.AddComponent<TableRepas>();
             table.Siege = siege;
+            table.Plateau = plateau.transform;
             return table;
         }
 

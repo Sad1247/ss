@@ -42,6 +42,8 @@ namespace Pizzeria3D
         public const float VitesseClient = 2.1f;
         /// <summary>Temps qu'un client passe attable, une fois servi.</summary>
         public const float DureeRepas = 9f;
+        /// <summary>En combien de parts se mange une pizza sur place.</summary>
+        public const int QuartiersParPizza = 4;
         /// <summary>De combien il descend pour s'asseoir sur la chaise.</summary>
         public const float HauteurAssise = -0.25f;
         /// <summary>
