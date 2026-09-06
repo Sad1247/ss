@@ -509,7 +509,7 @@ namespace Pizzeria3D
                        Bloc.Braise).SansCollision();
 
             // --- la coupole bleue ---
-            Bloc.Galet("Coupole", t, new Vector3(0f, 1.60f, 0.15f), new Vector3(2.30f, 2.05f, 2.15f),
+            Bloc.Galet("Coupole", t, new Vector3(0f, 1.55f, 0.15f), new Vector3(2.00f, 1.75f, 1.90f),
                        bleu).SansCollision();
 
             // --- la cheminee ---

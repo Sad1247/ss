@@ -632,6 +632,11 @@ static class Harness3D
         var chemineeT = Piece(four.transform, "Cheminee");
         Check("la coupole coiffe la facade",
               coupoleT != null && facadeT != null && coupoleT.localPosition.z > facadeT.localPosition.z);
+        // Elle doit rester en retrait de la facade : plus large, elle deborde
+        // de chaque cote et le four parait coiffe d'une bulle.
+        Check("elle ne deborde pas de la facade",
+              coupoleT != null && facadeT != null &&
+              coupoleT.localScale.x < facadeT.localScale.x - 0.3f);
         Check("la bouche s'ouvre par-devant", boucheT != null && boucheT.localPosition.z < -0.9f);
         Check("la cheminee est tout en haut",
               chemineeT != null && coupoleT != null &&
