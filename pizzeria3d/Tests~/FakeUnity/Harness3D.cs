@@ -613,6 +613,33 @@ static class Harness3D
               Mathf.Abs(joueur.transform.position.x - avantGlisse.x) > 0.5f &&
               joueur.transform.position.z > 6.3f);
 
+        // --- l'allure du four ---
+        // Les couleurs sont ce qui le distingue au premier coup d'oeil :
+        // coupole bleue, facade rouge, socle de pierre claire, bouche noire.
+        var coupole = CouleurDe(four.transform, "Coupole");
+        var facade = CouleurDe(four.transform, "Facade");
+        var socleFour = CouleurDe(four.transform, "Socle");
+        var bouche = CouleurDe(four.transform, "Bouche");
+        Check("le four a une coupole bleue", coupole.b > coupole.r + 0.2f && coupole.b > coupole.g);
+        Check("une facade rouge", facade.r > facade.g + 0.3f && facade.r > facade.b + 0.3f);
+        Check("un socle de pierre claire",
+              socleFour.r > 0.7f && Mathf.Abs(socleFour.r - socleFour.b) < 0.1f);
+        Check("et une bouche sombre", bouche.r + bouche.g + bouche.b < 0.4f);
+
+        var coupoleT = Piece(four.transform, "Coupole");
+        var facadeT = Piece(four.transform, "Facade");
+        var boucheT = Piece(four.transform, "Bouche");
+        var chemineeT = Piece(four.transform, "Cheminee");
+        Check("la coupole coiffe la facade",
+              coupoleT != null && facadeT != null && coupoleT.localPosition.z > facadeT.localPosition.z);
+        Check("la bouche s'ouvre par-devant", boucheT != null && boucheT.localPosition.z < -0.9f);
+        Check("la cheminee est tout en haut",
+              chemineeT != null && coupoleT != null &&
+              chemineeT.localPosition.y > coupoleT.localPosition.y + 1f);
+        Check("elle fume toujours", Piece(four.transform, "Fumee") != null);
+        Check("des buches sont rangees dans le socle",
+              Compte(four.transform, "Buche", false) >= 4);
+
         // --- le four produit ---
         Placer(joueur, new Vector3(0f, 0f, -6f));    // loin, pour laisser le stock monter
         Secondes(Reglages.DureeCuisson * 3.5f + 1f);
