@@ -44,6 +44,14 @@ static class Harness3D
         return n;
     }
 
+    /// <summary>Un enfant direct par son nom, ou null.</summary>
+    static Transform Piece(Transform parent, string nom)
+    {
+        if (parent == null) return null;
+        foreach (var e in parent.Enfants) if (e.gameObject.name == nom) return e;
+        return null;
+    }
+
     /// <summary>Aucun enfant pose de travers ? Une boite carree ne pardonne pas.</summary>
     static bool ToutDroit(Transform parent)
     {
@@ -464,6 +472,19 @@ static class Harness3D
         Check("le mollet et la chaussure pendent au genou",
               genouClient != null && Compte(genouClient, "Mollet", true) == 1 &&
               Compte(genouClient, "Chaussure", true) == 1);
+
+        // Pas de trou a l'articulation : la cuisse doit descendre jusqu'au
+        // pivot et le mollet remonter par-dessus, sinon la jambe s'ouvre en
+        // deux des que le genou plie.
+        var cuisse = Piece(hancheClient, "Cuisse");
+        var mollet = Piece(genouClient, "Mollet");
+        Check("la cuisse descend jusqu'au genou",
+              cuisse != null && genouClient != null &&
+              cuisse.localPosition.y - cuisse.localScale.y <= genouClient.localPosition.y + 0.001f);
+        Check("le mollet remonte par-dessus le genou",
+              mollet != null && mollet.localPosition.y + mollet.localScale.y >= -0.001f);
+        Check("une rotule bouche l'articulation",
+              genouClient != null && Compte(genouClient, "Rotule", true) == 1);
 
         Check("il a un visage", oeil != null);
         Check("les yeux regardent devant", oeil != null && oeil.localPosition.z > 0.1f);

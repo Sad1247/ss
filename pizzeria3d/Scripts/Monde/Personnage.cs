@@ -76,15 +76,22 @@ namespace Pizzeria3D
             {
                 var hanche = i == 0 ? m.HancheG : m.HancheD;
 
+                // La cuisse descend JUSQU'AU pivot du genou et le mollet
+                // remonte par-dessus : sans ce recouvrement, la jambe s'ouvrait
+                // en deux des que le genou pliait.
                 Bloc.Capsule("Cuisse", hanche, new Vector3(0f, -0.20f, 0f),
-                             new Vector3(grosseurJambe, 0.17f, grosseurJambe), a.Pantalon)
+                             new Vector3(grosseurJambe, 0.21f, grosseurJambe), a.Pantalon)
                     .SansCollision();
 
                 var genou = Pivot("Genou", hanche, new Vector3(0f, -0.40f, 0f));
                 if (i == 0) m.GenouG = genou; else m.GenouD = genou;
 
-                Bloc.Capsule("Mollet", genou, new Vector3(0f, -0.15f, 0f),
-                             new Vector3(grosseurJambe * 0.92f, 0.16f, grosseurJambe * 0.92f),
+                // la rotule bouche l'articulation quel que soit l'angle
+                Bloc.Bille("Rotule", genou, Vector3.zero, grosseurJambe * 1.02f, a.Pantalon)
+                    .SansCollision();
+
+                Bloc.Capsule("Mollet", genou, new Vector3(0f, -0.16f, 0f),
+                             new Vector3(grosseurJambe * 0.95f, 0.18f, grosseurJambe * 0.95f),
                              a.Pantalon).SansCollision();
                 Bloc.Galet("Chaussure", genou, new Vector3(0f, -0.29f, 0.06f),
                            new Vector3(0.28f, 0.18f, 0.40f), a.Chaussures).SansCollision();
