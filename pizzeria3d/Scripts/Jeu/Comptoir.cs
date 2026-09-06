@@ -99,9 +99,12 @@ namespace Pizzeria3D
 
             if (premier.EstServi)
             {
-                // le client paie en lachant une liasse : au joueur d'aller la prendre
-                Billet.Lacher(transform.position + Vector3.up * 1.2f,
-                              premier.Pizzas * Reglages.PrixPizza, Joueur);
+                // Le client paie en lachant une liasse : au joueur d'aller la
+                // prendre. Celui qui mange sur place, lui, laisse son argent
+                // sur la table en partant.
+                if (!premier.SurPlace)
+                    Billet.Lacher(transform.position + Vector3.up * 1.2f,
+                                  premier.Pizzas * Reglages.PrixPizza, Joueur);
                 premier.Partir();
                 _file.RemoveAt(0);
                 if (Caisse != null) Caisse.Fermer();   // commande terminee

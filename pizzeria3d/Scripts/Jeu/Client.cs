@@ -169,7 +169,13 @@ namespace Pizzeria3D
                 EstArrive = true;
                 return;
             }
-            transform.position += delta.normalized * Reglages.VitesseClient * Time.deltaTime;
+            var pas = delta.normalized;
+            transform.position += pas * Reglages.VitesseClient * Time.deltaTime;
+            // Il regarde ou il va. Sans cela il traversait la salle de profil,
+            // ou a reculons, ce qui se voyait tout de suite.
+            transform.rotation = Quaternion.Slerp(transform.rotation,
+                                                  Quaternion.LookRotation(pas, Vector3.up),
+                                                  Reglages.VitesseRotation * Time.deltaTime);
         }
 
         /// <summary>
@@ -214,6 +220,9 @@ namespace Pizzeria3D
             transform.position = new Vector3(transform.position.x, 0f, transform.position.z);
             if (_table != null)
             {
+                // il laisse l'addition sur la table, avec ses restes
+                Billet.Lacher(_table.transform.position, Pizzas * Reglages.PrixPizza,
+                              _comptoir != null ? _comptoir.Joueur : null, 0.25f, 1.05f);
                 _table.LaisserOrdures();
                 _table.Liberer(this);
                 _table = null;

@@ -15,13 +15,22 @@ namespace Pizzeria3D
         bool _encaisse;
         float _rebond;
 
-        public static Billet Lacher(Vector3 position, int montant, Joueur joueur)
+        /// <summary>
+        /// Lache une liasse. <paramref name="dispersion"/> a 0 la pose pile au
+        /// point donne, et <paramref name="hauteur"/> dit a quelle altitude
+        /// elle flotte — au sol, ou sur une table.
+        /// </summary>
+        public static Billet Lacher(Vector3 position, int montant, Joueur joueur,
+                                    float dispersion = 1f, float hauteur = 0.35f)
         {
             var go = new GameObject("Billet");
-            go.transform.position = position + new Vector3(Random.Range(-0.7f, 0.7f), 0f, Random.Range(-1.2f, -0.3f));
+            go.transform.position = position + new Vector3(Random.Range(-0.7f, 0.7f) * dispersion,
+                                                          0f,
+                                                          Random.Range(-1.2f, -0.3f) * dispersion);
             var b = go.AddComponent<Billet>();
             b._montant = montant;
             b._joueur = joueur;
+            b._hauteur = hauteur;
 
             Bloc.Boite("Liasse", go.transform, Vector3.zero, new Vector3(0.55f, 0.16f, 0.34f), Bloc.Billet)
                 .SansCollision();
@@ -29,6 +38,8 @@ namespace Pizzeria3D
                        Bloc.Couleur(0x2FA82F)).SansCollision();
             return b;
         }
+
+        float _hauteur = 0.35f;
 
         void Update()
         {
@@ -39,7 +50,7 @@ namespace Pizzeria3D
                 // repose au sol en flottant legerement
                 _rebond += Time.deltaTime * 4f;
                 var p = transform.position;
-                p.y = 0.35f + Mathf.Sin(_rebond) * 0.06f;
+                p.y = _hauteur + Mathf.Sin(_rebond) * 0.06f;
                 transform.position = p;
                 transform.Rotate(0f, 60f * Time.deltaTime, 0f);
 

@@ -876,6 +876,9 @@ static class Harness3D
         // Ils flanent : le pas ne doit jamais partir a fond, sinon ils ont
         // l'air de courir vers le comptoir.
         float allureClientMax = 0f, allureClientEnMarche = 0f;
+        bool clientDeTravers = false, clientOriente = false;
+        var ouEtaient = new Dictionary<Client, Vector3>();
+        var deTravers = new Dictionary<Client, int>();
         for (int i = 0; i < 240; i++)
         {
             Frames(1);
@@ -886,6 +889,30 @@ static class Harness3D
                 allureClientMax = Mathf.Max(allureClientMax, pas.Allure);
                 if (pas.Allure > 0.05f)
                     allureClientEnMarche = Mathf.Max(allureClientEnMarche, pas.Allure);
+
+                // Marcher de profil ou a reculons se voit tout de suite : le
+                // regard doit suivre le deplacement.
+                if (ouEtaient.TryGetValue(cl, out var avant2))
+                {
+                    var course2 = cl.transform.position - avant2;
+                    course2.y = 0f;
+                    if (course2.magnitude > 0.02f && !cl.Attable)
+                    {
+                        var vise = cl.transform.rotation * Vector3.forward;
+                        vise.y = 0f;
+                        float accord = Vector3.Dot(vise.normalized, course2.normalized);
+                        if (accord > 0.9f) clientOriente = true;
+
+                        // Un demi-tour prend quelques images : ce qui compte
+                        // est de ne pas marcher de travers DURABLEMENT.
+                        int compte;
+                        deTravers.TryGetValue(cl, out compte);
+                        compte = accord < 0.3f ? compte + 1 : 0;
+                        deTravers[cl] = compte;
+                        if (compte > 45) clientDeTravers = true;
+                    }
+                }
+                ouEtaient[cl] = cl.transform.position;
             }
         }
         // Le temps passe : celui qu'on observait a pu etre servi et repartir.
@@ -894,6 +921,7 @@ static class Harness3D
         if (encoreLa.Count > 0) premierClient = encoreLa[0];
 
         Check("les clients marchent pour de bon", allureClientEnMarche > 0.25f);
+        Check("ils regardent ou ils vont", !clientDeTravers && clientOriente);
         Check("mais ils ne courent pas", allureClientMax < 0.8f);
         Check("ils avancent moins vite que le personnel",
               Reglages.VitesseClient < Reglages.VitesseCaissier &&
@@ -1059,14 +1087,16 @@ static class Harness3D
         Placer(joueur, new Vector3(-9f, 0f, -12f));
         Secondes(0.2f);
         int avantLiasse = Banque.Solde;
-        Billet.Lacher(new Vector3(-9f, 1f, -6f), 42, joueur);
+        // On suit CETTE liasse : d'autres trainent maintenant sur la table de
+        // la salle, laissees par les clients qui mangent sur place.
+        var liasse = Billet.Lacher(new Vector3(-9f, 1f, -6f), 42, joueur);
         Secondes(0.5f);
         Check("la liasse attend au sol tant qu'on ne passe pas dessus",
-              Banque.Solde == avantLiasse && TousLes<Billet>().Count >= 1);
+              Banque.Solde == avantLiasse && !liasse.gameObject.Detruit);
         Placer(joueur, new Vector3(-9f, 0f, -6.7f));
         Secondes(1.5f);
         Check("marcher sur la liasse encaisse", Banque.Solde == avantLiasse + 42);
-        Check("la liasse disparait une fois prise", TousLes<Billet>().Count == 0);
+        Check("la liasse disparait une fois prise", liasse.gameObject.Detruit);
 
         // --- embauche du caissier ---
         Placer(joueur, new Vector3(0f, 0f, -9f));      // le joueur quitte le comptoir
@@ -1291,7 +1321,7 @@ static class Harness3D
         // sur place : une seule pizza, et pas de carton
         bool attableGourmand = false, attableEnBoite = false, attableAvecPizza = false;
         int repasServis = 0;
-        bool pizzaEntiere = false, orduresLaissees = false;
+        bool pizzaEntiere = false, orduresLaissees = false, liasseSurLaTable = false;
         bool mainsPleinesEnMangeant = false, vuMangerALaTable = false;
         var vueEntamee = new bool[Reglages.QuartiersParPizza + 1];
         // On observe sans s'arreter au premier repas : ce sont les clients
@@ -1340,6 +1370,14 @@ static class Harness3D
             if (reste > 0 && reste < Reglages.QuartiersParPizza) vueEntamee[reste] = true;
             if (tableSalle.ADesOrdures) orduresLaissees = true;
 
+            // l'argent du repas se ramasse a la table, pas a la caisse
+            foreach (var bl in TousLes<Billet>())
+            {
+                var ecartTable = bl.transform.position - tableSalle.transform.position;
+                ecartTable.y = 0f;
+                if (ecartTable.magnitude < 1.2f) liasseSurLaTable = true;
+            }
+
             if (!tableSalle.EstLibre) aEteOccupee = true;
             else if (aEteOccupee) { tableRendue = true; aEteOccupee = false; repasServis++; }
         }
@@ -1355,6 +1393,7 @@ static class Harness3D
         Check("elle s'en va part par part",
               vueEntamee[3] && vueEntamee[2] && vueEntamee[1]);
         Check("et il ne laisse que des restes", orduresLaissees);
+        Check("il laisse aussi l'addition sur la table", liasseSurLaTable);
         Check("la table se libere apres le repas", tableRendue);
         // Elle ressert : une place rendue une seule fois pourrait n'etre
         // qu'un client parti sans manger.

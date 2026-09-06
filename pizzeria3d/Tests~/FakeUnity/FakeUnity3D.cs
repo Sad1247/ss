@@ -274,6 +274,8 @@ namespace UnityEngine
         public static Vector3 operator -(Vector3 a) => new Vector3(-a.x, -a.y, -a.z);
         public static Vector3 operator *(Vector3 v, float f) => new Vector3(v.x * f, v.y * f, v.z * f);
         public static Vector3 operator *(float f, Vector3 v) => v * f;
+        public static float Dot(Vector3 a, Vector3 b) => a.x * b.x + a.y * b.y + a.z * b.z;
+
         public static Vector3 Lerp(Vector3 a, Vector3 b, float t)
         {
             t = Mathf.Clamp01(t);
