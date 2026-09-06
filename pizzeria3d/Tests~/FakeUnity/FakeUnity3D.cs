@@ -108,9 +108,12 @@ namespace UnityEngine
             }
         }
 
+        /// <summary>Forme d'origine, que le vrai Unity garde dans son maillage.</summary>
+        public PrimitiveType Primitive = PrimitiveType.Cube;
+
         public static GameObject CreatePrimitive(PrimitiveType type)
         {
-            var go = new GameObject(type.ToString());
+            var go = new GameObject(type.ToString()) { Primitive = type };
             go.AddComponent<MeshRenderer>();
             go.AddComponent<BoxCollider>();
             return go;

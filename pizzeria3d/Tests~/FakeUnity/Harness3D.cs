@@ -245,6 +245,54 @@ static class Harness3D
         Console.WriteLine("texture ecrite dans " + chemin);
     }
 
+    /// <summary>
+    /// Ecrit la geometrie de la scene, pour la dessiner hors du jeu et
+    /// regarder ce que le joueur verra. Une ligne par objet visible :
+    /// forme, position, taille, rotation en Y, couleur.
+    /// </summary>
+    static void DumpScene(string chemin)
+    {
+        using (var f = new System.IO.StreamWriter(chemin))
+            foreach (var o in UnityEngine.Object.Tous)
+            {
+                if (!(o is GameObject go) || go.Detruit || !go.ActifDansHierarchie) continue;
+                var r = go.GetComponent<MeshRenderer>();
+                if (r == null || !r.enabled || r.sharedMaterial == null) continue;
+
+                // composition a la main : le faux Transform ignore rotations
+                // et echelles des parents
+                var p = go.transform.localPosition;
+                var e = go.transform.localScale;
+                float ry = Angle(go.transform.localRotation);
+                for (var t = go.transform.parent; t != null; t = t.parent)
+                {
+                    var s2 = t.localScale;
+                    p = new Vector3(p.x * s2.x, p.y * s2.y, p.z * s2.z);
+                    float a = Angle(t.localRotation);
+                    if (Mathf.Abs(a) > 0.01f)
+                    {
+                        float rad = a * Mathf.Deg2Rad;
+                        float c = Mathf.Cos(rad), si = Mathf.Sin(rad);
+                        p = new Vector3(p.x * c + p.z * si, p.y, -p.x * si + p.z * c);
+                        ry += a;
+                    }
+                    e = new Vector3(e.x * s2.x, e.y * s2.y, e.z * s2.z);
+                    p = new Vector3(p.x + t.localPosition.x, p.y + t.localPosition.y,
+                                    p.z + t.localPosition.z);
+                }
+
+                var c2 = r.sharedMaterial.color;
+                int rgb = ((int)(c2.r * 255) << 16) | ((int)(c2.g * 255) << 8) | (int)(c2.b * 255);
+                f.WriteLine($"{go.name}|{go.Primitive}|{p.x:0.###} {p.y:0.###} {p.z:0.###}|" +
+                            $"{e.x:0.###} {e.y:0.###} {e.z:0.###}|{ry:0.##}|{rgb:x6}");
+            }
+        Console.WriteLine("scene ecrite dans " + chemin);
+    }
+
+    /// <summary>L'angle en Y d'un quaternion, seul axe utilise par le decor.</summary>
+    static float Angle(Quaternion q)
+        => 2f * Mathf.Rad2Deg * (float)Math.Atan2(q.y, q.w);
+
     static void Main()
     {
         if (Environment.GetEnvironmentVariable("DUMP_PIZZA") is string chemin && chemin.Length > 0)
@@ -252,6 +300,8 @@ static class Harness3D
             DumpPizza(chemin);
             return;
         }
+
+        bool dumpScene = Environment.GetEnvironmentVariable("DUMP_SCENE") is string ds && ds.Length > 0;
 
         // Une scene Unity neuve arrive avec une Main Camera et une lumiere :
         // on reproduit ces conditions, c'est ce que le joueur aura.
@@ -435,6 +485,24 @@ static class Harness3D
 
         Check("on ne passe pas la porte avant de l'avoir payee",
               porte != null && Obstacles.Bloque(porte.transform.position, Reglages.RayonJoueur));
+        // Elle occupe le coin du batiment : son pan droit et le mur du fond
+        // finissent au meme endroit, sinon le mur depasse dans le vide.
+        var pieceCachee = Trouver("PetitePiece");
+        if (pieceCachee != null && murFondBis != null)
+        {
+            float boutDuMur = murFondBis.transform.position.x
+                            + murFondBis.transform.localScale.x * 0.5f;
+            float boutDeLaPiece = -99f;
+            foreach (var e in pieceCachee.transform.Enfants)
+                if (e.gameObject.name == "MurPiece")
+                    boutDeLaPiece = Mathf.Max(boutDeLaPiece,
+                                              pieceCachee.transform.position.x + e.localPosition.x
+                                              + e.localScale.x * 0.5f);
+            Check("la piece va jusqu'au bout du batiment",
+                  Mathf.Abs(boutDeLaPiece - boutDuMur) < 0.05f);
+        }
+        else Check("la piece va jusqu'au bout du batiment", false);
+
         Check("la piece attend, cachee",
               Trouver("PetitePiece") != null && !Trouver("PetitePiece").activeSelf);
 
@@ -1013,8 +1081,12 @@ static class Harness3D
                                       laPiece.transform.position.z);
         Check("on peut se tenir dans la piece",
               !Obstacles.Bloque(dansLaPiece, Reglages.RayonJoueur));
+        // le pan du fond, a l'aplomb du centre : il ferme la piece quelle que
+        // soit sa largeur
         Check("mais pas traverser ses murs",
-              Obstacles.Bloque(dansLaPiece + new Vector3(2.2f, 0f, 0f), Reglages.RayonJoueur));
+              Obstacles.Bloque(new Vector3(laPiece.transform.position.x, 0f,
+                                           laPiece.transform.position.z + 2.3f),
+                               Reglages.RayonJoueur));
 
         // --- les murs qui cachent la piece s'escamotent ---
         // La vue est fixe : sans cela, le joueur passe la porte et disparait
@@ -1266,6 +1338,8 @@ static class Harness3D
 
         var erreurs = new List<string>();
         foreach (var l in Debug.Journal) if (l.StartsWith("ERROR")) erreurs.Add(l);
+        if (dumpScene) DumpScene(Environment.GetEnvironmentVariable("DUMP_SCENE"));
+
         Check("aucune erreur Unity remontee", erreurs.Count == 0);
         foreach (var e in erreurs) Console.WriteLine("      " + e);
 

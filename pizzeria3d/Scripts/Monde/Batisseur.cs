@@ -127,7 +127,9 @@ namespace Pizzeria3D
             var gond = Porte(parent, new Vector3(xPorte, 0f, 7.2f));
 
             // La piece derriere, et la dalle qui l'ouvre, devant la porte.
-            var piece = Piece(parent, new Vector3(xPorte, 0f, 9.7f), gond, seuil, _joueur);
+            // Elle occupe tout le coin du batiment : son pan droit rejoint le
+            // bout du mur du fond, sinon ce dernier depassait dans le vide.
+            var piece = Piece(parent, new Vector3(5.35f, 0f, 9.7f), gond, seuil, _joueur);
             _pieceEtSaDalle = new Vector3(xPorte, 0f, 5.6f);
             _piece = piece;
 
@@ -206,7 +208,7 @@ namespace Pizzeria3D
             // Les pans de cote descendent jusqu'au mur du fond, qui est a
             // 2,5 d'ici : un jour de quelques centimetres suffisait a laisser
             // voir la pelouse au raccord.
-            const float demiX = 2.16f, demiZ = 2.5f;
+            const float demiX = 2.95f, demiZ = 2.5f;
 
             Bloc.Boite("SolPiece", t, new Vector3(0f, -0.2f, 0f),
                        new Vector3(demiX * 2f, 0.4f, demiZ * 2f), Bloc.Sol).SansCollision();
