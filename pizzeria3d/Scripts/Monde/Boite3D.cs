@@ -30,10 +30,12 @@ namespace Pizzeria3D
             // la rainure de fermeture, sur le devant
             Bloc.Boite("Rainure", racine.transform, new Vector3(0f, h * 0.80f, c * 0.51f),
                        new Vector3(c * 0.9f, h * 0.10f, 0.02f), Bloc.CartonOmbre).SansCollision();
-            // l'etiquette : une pastille de sauce, pour reconnaitre une boite
-            // a pizza d'un carton de demenagement
-            Bloc.Disque("Etiquette", racine.transform, new Vector3(0f, h * 1.00f, 0f),
-                        c * 0.42f, h * 0.06f, Bloc.Sauce).SansCollision();
+            // L'etiquette : un cartouche imprime, dans les tons du carton. Une
+            // pastille rouge, elle, se lisait comme la pizza vue au travers du
+            // couvercle.
+            Bloc.Boite("Etiquette", racine.transform, new Vector3(0f, h * 1.02f, 0f),
+                       new Vector3(c * 0.40f, h * 0.06f, c * 0.28f), Bloc.CartonOmbre)
+                .SansCollision();
 
             return racine;
         }

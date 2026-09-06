@@ -13,8 +13,10 @@ namespace Pizzeria3D
     /// </summary>
     public sealed class Emballage : MonoBehaviour
     {
-        public Pile Boites;      // le tas pose dans le coin du plan
-        public Transform Poste;  // ou le caissier se place pour emballer
+        public Pile Boites;        // la reserve, dans le coin du plan
+        public Pile Preparation;   // le rond rouge : le carton qu'on vient de sortir
+        public Pile Assemblage;    // le rond vert : les boites qu'on garnit
+        public Transform Poste;    // ou le caissier se place pour travailler
 
         float _compteurReappro;
 
@@ -30,6 +32,8 @@ namespace Pizzeria3D
         /// </summary>
         public void Garnir()
         {
+            if (Preparation != null) Preparation.Max = 1;
+            if (Assemblage != null) Assemblage.Max = Reglages.CapacitePorteeCaissier + 1;
             if (Boites == null) return;
             Boites.Max = Reglages.BoitesEnReserve;
             while (!Boites.EstPleine) Boites.Ajouter(true);
@@ -47,12 +51,18 @@ namespace Pizzeria3D
             Boites.Ajouter(true);
         }
 
-        /// <summary>Prend le carton du dessus.</summary>
+        /// <summary>Prend le carton du dessus de la reserve.</summary>
         public bool PrendreBoite()
         {
             if (Boites == null || Boites.EstVide) return false;
             Boites.Retirer();
             return true;
+        }
+
+        /// <summary>Repose un carton inutilise : il ne se perd pas.</summary>
+        public void Rendre()
+        {
+            if (Boites != null && !Boites.EstPleine) Boites.Ajouter(true);
         }
     }
 }

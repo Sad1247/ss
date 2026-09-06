@@ -293,6 +293,19 @@ static class Harness3D
             Check("il est vitre sur toute sa longueur", false);
         }
 
+        // Les deux ronds de travail : le rouge avant le vert, tous deux sur le
+        // dessus du plan et non a cote.
+        if (table != null)
+        {
+            var rouge = table.Preparation.transform.localPosition;
+            var vert = table.Assemblage.transform.localPosition;
+            Check("le plan a ses deux ronds de travail",
+                  table.Preparation != null && table.Assemblage != null);
+            Check("le rouge est avant le vert", rouge.x < vert.x);
+            Check("les deux sont poses sur le dessus",
+                  Mathf.Abs(rouge.y - vert.y) < 0.01f && rouge.y > 1f);
+        }
+
         // La pile de cartons de la cour masquait ce mur : elle a ete retiree.
         Check("plus de pile de cartons dans la cour",
               Trouver("Caisse0") == null && Trouver("Caisse1") == null && Trouver("Caisse2") == null);
@@ -339,6 +352,13 @@ static class Harness3D
         // Il est pousse dans un coin : au milieu, il mangeait tout le plan.
         var coin = table != null ? table.Boites.transform.localPosition : Vector3.zero;
         Check("le tas est pousse dans un coin", coin.x < -1f && coin.z > 0.1f);
+        var carton = table != null && table.Boites.transform.Enfants.Count > 0
+                   ? table.Boites.transform.Enfants[0] : null;
+        var pastille = CouleurDe(carton, "Etiquette");
+        Check("l'etiquette du carton n'est pas rouge sauce",
+              carton != null &&
+              !(pastille.r == Bloc.Sauce.r && pastille.g == Bloc.Sauce.g && pastille.b == Bloc.Sauce.b));
+
         Check("les cartons sont poses bien droits",
               table != null && ToutDroit(table.Boites.transform));
         Check("le caissier vient s'y placer devant, pas dedans",
@@ -733,8 +753,13 @@ static class Harness3D
         // s'arreter au premier ratait la marche quand le caissier portait deja
         // une pizza a la premiere image.
         bool aPorte = false, aMarche = false, aEmballe = false, aTouche = false, reserveEntamee = false;
-        int porteeMax = 0;
-        for (int i = 0; i < 60 * 90 && !(aPorte && aMarche && aEmballe && aTouche); i++)
+        // le geste decompose : carton au rond rouge, puis au rond vert, puis
+        // une pizza rapportee du four et glissee dedans
+        bool auRouge = false, auVert = false, aRapporteUnePizza = false, aGarni = false;
+        bool tropDePizzasNues = false;
+        int porteeMax = 0, nuesMax = 0, pretesAvant = 0;
+        for (int i = 0; i < 60 * 120 &&
+             !(aPorte && aMarche && aEmballe && aTouche && auRouge && auVert && aGarni); i++)
         {
             Frames(1);
             porteeMax = Mathf.Max(porteeMax, navetteur.Portees);
@@ -742,6 +767,17 @@ static class Harness3D
             if (pasDuCaissier != null && pasDuCaissier.Allure > 0.2f) aMarche = true;
             if (navetteur.PorteeEmballee) aEmballe = true;
             if (table.Reserve < Reglages.BoitesEnReserve) reserveEntamee = true;
+
+            if (table.Preparation.Nombre > 0) auRouge = true;
+            if (table.Assemblage.Nombre > 0) auVert = true;
+            if (navetteur.PorteeNue)
+            {
+                aRapporteUnePizza = true;
+                nuesMax = Mathf.Max(nuesMax, navetteur.Portees);
+                if (navetteur.Portees > 1) tropDePizzasNues = true;
+            }
+            if (navetteur.Pretes > pretesAvant) aGarni = true;
+            pretesAvant = navetteur.Pretes;
 
             var versTable = employe.transform.position - table.PointDeTravail;
             versTable.y = 0f;
@@ -754,6 +790,12 @@ static class Harness3D
               porteeMax == 3 && porteeMax == Reglages.CapacitePorteeCaissier);
         Check("il marche pour de bon, membres animes", aMarche);
         Check("il fait un detour par le plan de mise en boite", aTouche);
+        Check("il sort un carton sur le rond rouge", auRouge);
+        Check("il le fait glisser sur le rond vert", auVert);
+        Check("il rapporte une pizza du four", aRapporteUnePizza);
+        Check("une seule pizza a la fois, sa boite l'attend",
+              !tropDePizzasNues && nuesMax == 1);
+        Check("il la met dans la boite qui attendait", aGarni);
         Check("il pioche dans la reserve de cartons", reserveEntamee);
         Check("il porte des pizzas en boite en repartant", aEmballe);
 

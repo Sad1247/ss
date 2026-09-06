@@ -232,12 +232,25 @@ namespace Pizzeria3D
             rangee.transform.SetParent(t, false);
             rangee.transform.localPosition = new Vector3(-1.58f, 1.23f, 0.26f);
 
+            // Les deux ronds de travail, sur le dessus : le carton sort de la
+            // reserve, se pose au premier, glisse au second, et c'est la qu'il
+            // recoit sa pizza.
+            var rouge = new GameObject("Preparation");
+            rouge.transform.SetParent(t, false);
+            rouge.transform.localPosition = new Vector3(-0.10f, 1.23f, 0f);
+
+            var vert = new GameObject("Assemblage");
+            vert.transform.SetParent(t, false);
+            vert.transform.localPosition = new Vector3(1.20f, 1.23f, 0f);
+
             var poste = new GameObject("Poste");
             poste.transform.SetParent(t, false);
             poste.transform.localPosition = new Vector3(0f, 0f, -1.40f);
 
             var e = go.AddComponent<Emballage>();
             e.Boites = rangee.AddComponent<Pile>();
+            e.Preparation = rouge.AddComponent<Pile>();
+            e.Assemblage = vert.AddComponent<Pile>();
             e.Poste = poste.transform;
             e.Garnir();
             return e;
