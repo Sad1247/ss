@@ -1030,6 +1030,13 @@ static class Harness3D
         Frames(2);
         Check("depuis la salle, les murs sont bien la", TousVisibles(discrets));
 
+        // Devant la porte, cote salle, la piece doit encore etre entiere :
+        // effaces trop tot, ses murs donnaient une piece amputee.
+        Placer(joueur, new Vector3(porte.transform.position.x, 0f,
+                                   porte.transform.position.z - 0.8f));
+        Frames(2);
+        Check("et devant la porte aussi", TousVisibles(discrets));
+
         Placer(joueur, dansLaPiece);
         Frames(2);
         Check("une fois dedans, ils s'effacent", AucunVisible(discrets));

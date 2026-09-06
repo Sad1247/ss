@@ -19,8 +19,12 @@ namespace Pizzeria3D
         /// <summary>Emprise de la piece, en coordonnees du monde.</summary>
         public Vector3 Centre;
         public float DemiX = 2f, DemiZ = 2f;
-        /// <summary>Marge devant la porte : les murs s'ecartent des l'entree.</summary>
-        public float Marge = 1.2f;
+        /// <summary>
+        /// Marge devant la porte. Courte a dessein : large, les murs
+        /// s'effacaient alors que le joueur etait encore dans la salle, et la
+        /// piece paraissait amputee de son cote droit.
+        /// </summary>
+        public float Marge = 0.2f;
 
         bool _escamotes;
 
