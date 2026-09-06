@@ -570,6 +570,13 @@ static class Harness3D
         Check("ni d'obstacle a sa place",
               !Obstacles.Bloque(new Vector3(-7f, 0f, 5.6f), Reglages.RayonJoueur));
 
+        // --- la poubelle ---
+        var poubelle = Trouver("Poubelle");
+        Check("une poubelle est posee dans la salle", poubelle != null);
+        Check("on ne la traverse pas",
+              poubelle != null &&
+              Obstacles.Bloque(poubelle.transform.position, Reglages.RayonJoueur));
+
         // --- la table de la salle ---
         var tableSalle = UnityEngine.Object.FindObjectOfType<TableRepas>();
         Check("une table est dressee dans la salle", tableSalle != null);
@@ -580,7 +587,7 @@ static class Harness3D
             Check("elle a deux chaises", Compte(tableSalle.transform, "Chaise", true) == 2);
             Check("elle offre une place assise", tableSalle.Siege != null);
             Check("elle est libre au depart", tableSalle.EstLibre);
-            Check("on ne la traverse pas",
+            Check("on ne traverse pas la table",
                   Obstacles.Bloque(tableSalle.transform.position, Reglages.RayonJoueur));
             Check("elle ne gene pas la file",
                   Mathf.Abs(tableSalle.transform.position.x - comptoir.PlaceDeLaFile(0).x) > 2f);
@@ -591,7 +598,7 @@ static class Harness3D
             Check("elle a deux chaises", false);
             Check("elle offre une place assise", false);
             Check("elle est libre au depart", false);
-            Check("on ne la traverse pas", false);
+            Check("on ne traverse pas la table", false);
             Check("elle ne gene pas la file", false);
         }
 
@@ -1315,6 +1322,11 @@ static class Harness3D
               TousLes<Billet>().Count > liassesAvant || comptoir.Stock.Nombre < servisAvant);
 
         // --- les clients servis passent a table ---
+        // La table peut trainer sale d'un essai precedent : on attend que le
+        // caissier soit passe, sinon on mesure une salle condamnee.
+        for (int i = 0; i < 60 * 120 && tableSalle.ADesOrdures; i++) Frames(1);
+        Check("le caissier finit par debarrasser la table", !tableSalle.ADesOrdures);
+
         // Une seule place : le deuxieme servi doit repartir avec ses boites.
         bool unAttable = false, deuxALaFois = false, tableRendue = false, aEteOccupee = false;
         bool assisSurLaChaise = false, poseAssise = false;
@@ -1322,11 +1334,12 @@ static class Harness3D
         bool attableGourmand = false, attableEnBoite = false, attableAvecPizza = false;
         int repasServis = 0;
         bool pizzaEntiere = false, orduresLaissees = false, liasseSurLaTable = false;
+        bool tableNettoyee = false, caissierEmporte = false, attableSurLesRestes = false;
         bool mainsPleinesEnMangeant = false, vuMangerALaTable = false;
         var vueEntamee = new bool[Reglages.QuartiersParPizza + 1];
         // On observe sans s'arreter au premier repas : ce sont les clients
         // suivants qui disent si la regle tient, pas le premier.
-        for (int i = 0; i < 60 * 90; i++)
+        for (int i = 0; i < 60 * 150; i++)
         {
             Frames(1);
             int attables = 0;
@@ -1368,7 +1381,17 @@ static class Harness3D
             int reste = tableSalle.Quartiers;
             if (reste == Reglages.QuartiersParPizza) pizzaEntiere = true;
             if (reste > 0 && reste < Reglages.QuartiersParPizza) vueEntamee[reste] = true;
-            if (tableSalle.ADesOrdures) orduresLaissees = true;
+            if (tableSalle.ADesOrdures)
+            {
+                orduresLaissees = true;
+                // Personne ne mange devant les restes du precedent. Le
+                // mangeur quitte sa chaise AVANT de les laisser : les deux ne
+                // se chevauchent jamais d'une image.
+                if (attables > 0) attableSurLesRestes = true;
+            }
+            else if (orduresLaissees) tableNettoyee = true;
+
+            if (navetteur.PorteDesOrdures) caissierEmporte = true;
 
             // l'argent du repas se ramasse a la table, pas a la caisse
             foreach (var bl in TousLes<Billet>())
@@ -1394,6 +1417,22 @@ static class Harness3D
               vueEntamee[3] && vueEntamee[2] && vueEntamee[1]);
         Check("et il ne laisse que des restes", orduresLaissees);
         Check("il laisse aussi l'addition sur la table", liasseSurLaTable);
+        Check("personne ne mange devant les restes", !attableSurLesRestes);
+
+        // La regle elle-meme, verifiee de face : la simulation ne tombe pas
+        // forcement sur le cas pendant la fenetre d'observation.
+        var clients = TousLes<Client>();
+        tableSalle.LaisserOrdures();
+        Check("une table sale n'accueille personne",
+              clients.Count > 0 && !tableSalle.Accueillir(clients[0]));
+        for (int i = 0; i < 60 * 120 && tableSalle.ADesOrdures; i++) Frames(1);
+        Check("et le caissier vient la nettoyer", !tableSalle.ADesOrdures);
+        Check("une fois propre, elle accueille de nouveau",
+              clients.Count > 0 && tableSalle.EstLibre);
+        Check("le caissier emporte les restes", caissierEmporte);
+        Check("et la table redevient propre", tableNettoyee);
+        Check("rien ne traine plus sur la table a la fin",
+              !tableSalle.ADesOrdures || caissierEmporte);
         Check("la table se libere apres le repas", tableRendue);
         // Elle ressert : une place rendue une seule fois pourrait n'etre
         // qu'un client parti sans manger.

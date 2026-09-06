@@ -16,20 +16,26 @@ namespace Pizzeria3D
     /// </summary>
     public sealed class Caissier : MonoBehaviour
     {
-        enum Etat { Poste, VersTable, Travaille, VersFour, Ramasse, VersComptoir }
+        enum Etat { Poste, VersTable, Travaille, VersFour, Ramasse, VersComptoir,
+                    VersSalle, VersPoubelle }
 
         public Comptoir Comptoir;
         public Four Four;
         public Emballage Table;
+        /// <summary>La table de la salle, qu'il vient debarrasser.</summary>
+        public TableRepas Salle;
         public Vector3 Poste;
         public Vector3 Relais;
+        /// <summary>Ou il jette les restes.</summary>
+        public Vector3 Poubelle;
 
         Pile _portee;
         Demarche _demarche;
         Etat _etat = Etat.Poste;
         bool _passeParRelais;
         float _compteurTransfert;
-        int _pleines;              // boites garnies qui attendent au rond vert
+        int _pleines;
+        GameObject _ordures;      // les restes qu'il porte a la poubelle              // boites garnies qui attendent au rond vert
 
         public int Portees => _portee != null ? _portee.Nombre : 0;
         /// <summary>Vrai quand tout ce qu'il porte est en boite.</summary>
@@ -38,6 +44,8 @@ namespace Pizzeria3D
         public bool PorteeNue => _portee != null && !_portee.EstVide && !_portee.ToutEmballe;
         /// <summary>Boites garnies posees sur le plan, pas encore livrees.</summary>
         public int Pretes => _pleines;
+        /// <summary>Vrai quand il transporte les restes d'un repas.</summary>
+        public bool PorteDesOrdures => _ordures != null;
 
         void OnEnable()
         {
@@ -54,7 +62,7 @@ namespace Pizzeria3D
         void Update()
         {
             if (_compteurTransfert > 0f) _compteurTransfert -= Time.deltaTime;
-            if (_demarche != null) _demarche.BrasPortent = !_portee.EstVide;
+            if (_demarche != null) _demarche.BrasPortent = !_portee.EstVide || _ordures != null;
 
             switch (_etat)
             {
@@ -64,6 +72,8 @@ namespace Pizzeria3D
                 case Etat.VersFour:     Aller(DevantFour(), Etat.Ramasse); break;
                 case Etat.Ramasse:      Ramasser(); break;
                 case Etat.VersComptoir: Aller(Poste, Etat.Poste); break;
+                case Etat.VersSalle:    Aller(DevantLaSalle(), Etat.VersPoubelle, Debarrasser); break;
+                case Etat.VersPoubelle: Aller(Poubelle, Etat.Poste, Jeter); break;
             }
         }
 
@@ -73,6 +83,16 @@ namespace Pizzeria3D
         {
             Decharger();
             if (!_portee.EstVide || Four == null || Comptoir == null || Table == null) return;
+
+            // Une table sale bloque la salle : plus personne ne peut manger
+            // sur place tant qu'elle n'est pas debarrassee. Cela passe donc
+            // avant le reappro du comptoir, qui, lui, n'a pas de fin.
+            if (Salle != null && Salle.ADesOrdures)
+            {
+                _etat = Etat.VersSalle;
+                _passeParRelais = true;
+                return;
+            }
 
             bool stockBas = Comptoir.Stock.Nombre <= Reglages.SeuilRechargeComptoir;
             if (stockBas && !Four.Sortie.EstVide)
@@ -173,14 +193,41 @@ namespace Pizzeria3D
             _compteurTransfert = Reglages.DelaiTransfert;
         }
 
+        /// <summary>Il prend les restes sur la table et les met dans ses mains.</summary>
+        void Debarrasser()
+        {
+            if (Salle == null) return;
+            var restes = Salle.EmporterOrdures();
+            if (restes == null) return;
+
+            _ordures = restes;
+            var mains = transform.Find("Corps/Mains");
+            _ordures.transform.SetParent(mains != null ? mains : transform, false);
+            _ordures.transform.localPosition = Vector3.zero;
+            _passeParRelais = true;
+        }
+
+        void Jeter()
+        {
+            if (_ordures != null) { Destroy(_ordures); _ordures = null; }
+            _passeParRelais = true;
+        }
+
+        Vector3 DevantLaSalle()
+        {
+            if (Salle == null) return Poste;
+            var p = Salle.transform.position;
+            return new Vector3(p.x, 0f, p.z - 1.4f);   // devant la table, pas dessus
+        }
+
         /// <summary>Marche vers un point, en passant d'abord par le relais.</summary>
-        void Aller(Vector3 cible, Etat arrivee)
+        void Aller(Vector3 cible, Etat arrivee, System.Action arrive = null)
         {
             var but = _passeParRelais ? Relais : cible;
             if (Avancer(but))
             {
                 if (_passeParRelais) _passeParRelais = false;
-                else _etat = arrivee;
+                else { _etat = arrivee; if (arrive != null) arrive(); }
             }
         }
 

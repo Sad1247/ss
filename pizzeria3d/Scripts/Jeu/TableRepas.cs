@@ -21,10 +21,14 @@ namespace Pizzeria3D
         public Client Occupant => _occupant;
         public bool EstLibre => _occupant == null;
 
-        /// <summary>Reserve la place. Faux si quelqu'un mange deja.</summary>
+        /// <summary>
+        /// Reserve la place. Faux si quelqu'un mange deja — ou si la table
+        /// n'a pas ete debarrassee : personne ne s'assoit devant les restes
+        /// du precedent.
+        /// </summary>
         public bool Accueillir(Client client)
         {
-            if (_occupant != null || Siege == null) return false;
+            if (_occupant != null || Siege == null || _ordures != null) return false;
             _occupant = client;
             return true;
         }
@@ -46,7 +50,7 @@ namespace Pizzeria3D
         /// </summary>
         public void PoserPizza()
         {
-            Debarrasser();
+            if (_pizza != null) { Destroy(_pizza); _pizza = null; }
             _mangees = 0;
             _pizza = new GameObject("PizzaTable");
             _pizza.transform.SetParent(Ancrage, false);
@@ -88,10 +92,15 @@ namespace Pizzeria3D
                        new Vector3(0.20f, 0.03f, 0.16f), Bloc.Couleur(0xF2EFE6)).SansCollision();
         }
 
-        void Debarrasser()
+        /// <summary>
+        /// Le caissier emporte les restes : la table les lache, a lui de les
+        /// jeter. Renvoie null s'il n'y a rien a debarrasser.
+        /// </summary>
+        public GameObject EmporterOrdures()
         {
-            if (_pizza != null) { Destroy(_pizza); _pizza = null; }
-            if (_ordures != null) { Destroy(_ordures); _ordures = null; }
+            var restes = _ordures;
+            _ordures = null;
+            return restes;
         }
 
         Transform Ancrage => Plateau != null ? Plateau : transform;

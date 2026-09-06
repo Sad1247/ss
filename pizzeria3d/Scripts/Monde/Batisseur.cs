@@ -52,7 +52,18 @@ namespace Pizzeria3D
                  Reglages.PrixPetitePiece, "Ouvrir la petite piece");
 
             // La table de la salle : les clients servis viennent y manger.
-            comptoir.Table = Salle(racine.transform, new Vector3(-2.6f, 0f, -3.2f));
+            var tableSalle = Salle(racine.transform, new Vector3(-2.6f, 0f, -3.2f));
+            comptoir.Table = tableSalle;
+
+            // La poubelle, ou le caissier vide les restes des repas.
+            // Loin de l'endroit ou passait la pile de cartons : le joueur doit
+            // pouvoir traverser la cour sans buter dessus.
+            var poubelle = new Vector3(7.6f, 0f, 2.4f);
+            Poubelle(racine.transform, poubelle);
+
+            var employe = caissier.GetComponent<Caissier>();
+            employe.Salle = tableSalle;
+            employe.Poubelle = poubelle + new Vector3(-1.0f, 0f, 0f);   // il s'arrete devant
 
             racine.AddComponent<Hud>();
             racine.AddComponent<Manette>();
@@ -567,6 +578,30 @@ namespace Pizzeria3D
             table.Siege = siege;
             table.Plateau = plateau.transform;
             return table;
+        }
+
+        /// <summary>
+        /// La poubelle de la pizzeria : caisson bleu, couvercle rouge, et le
+        /// pictogramme blanc. C'est la que finissent les restes des repas.
+        /// </summary>
+        static void Poubelle(Transform parent, Vector3 position)
+        {
+            var go = new GameObject("Poubelle");
+            go.transform.SetParent(parent, false);
+            go.transform.position = position;
+            var t = go.transform;
+
+            Bloc.Boite("Caisson", t, new Vector3(0f, 0.45f, 0f), new Vector3(0.9f, 0.9f, 0.9f),
+                       Bloc.Machine).SansCollision();
+            Bloc.Boite("Couvercle", t, new Vector3(0f, 0.96f, 0f), new Vector3(1.0f, 0.14f, 1.0f),
+                       Bloc.Casquette).SansCollision();
+            Bloc.Boite("Fente", t, new Vector3(0f, 1.04f, 0f), new Vector3(0.5f, 0.06f, 0.34f),
+                       Bloc.Couleur(0x1A1A1E)).SansCollision();
+            // le pictogramme, sur la face avant
+            Bloc.Boite("Sigle", t, new Vector3(0f, 0.52f, -0.46f), new Vector3(0.34f, 0.40f, 0.04f),
+                       Bloc.Couleur(0xF4F1EA)).SansCollision();
+
+            Obstacles.Ajouter(position, 1.0f, 1.0f);
         }
 
         /// <summary>Une chaise : quatre montants, une assise, un dossier.</summary>
