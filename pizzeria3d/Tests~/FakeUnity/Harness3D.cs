@@ -231,6 +231,19 @@ static class Harness3D
               Banque.Solde == Reglages.ArgentDepart);
         Check("une zone d'embauche attend derriere la caisse",
               zoneCaissier != null && zoneCaissier.Restant == Reglages.PrixCaissier);
+
+        // Elle se tient juste derriere le tiroir-caisse, et le joueur doit
+        // pouvoir s'y placer : une dalle collee au comptoir serait injouable.
+        var dalle = zoneCaissier != null ? zoneCaissier.transform.position : Vector3.zero;
+        var tiroir = caisse != null ? caisse.transform.position : Vector3.zero;
+        Check("elle est juste derriere le tiroir-caisse",
+              Mathf.Abs(dalle.x - tiroir.x) < 0.6f && dalle.z > tiroir.z && dalle.z - tiroir.z < 2.2f);
+        // Resoudre ne repousse pas hors d'un obstacle, il refuse d'y entrer :
+        // c'est donc Bloque qu'il faut interroger, sinon le test ne dit rien.
+        Check("le joueur peut se tenir dessus", !Obstacles.Bloque(dalle, Reglages.RayonJoueur));
+
+        var cadre = zoneCaissier != null ? Piece(zoneCaissier.transform, "Dalle") : null;
+        Check("elle reste discrete", cadre != null && cadre.localScale.x <= 1.2f);
         Check("le caissier n'est pas encore la",
               Trouver("Caissier") != null && !Trouver("Caissier").activeSelf && !comptoir.CaissierPresent);
         Check("le tiroir-caisse est ferme au depart", caisse != null && !caisse.EstOuverte);

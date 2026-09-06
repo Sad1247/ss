@@ -37,10 +37,11 @@ namespace Pizzeria3D
             // la caisse : le caissier y passe entre le four et le comptoir.
             var table = Table(racine.transform, new Vector3(1.6f, 0f, 6.0f));
 
-            // L'embauche se paie derriere la caisse, la ou l'employe se tiendra.
+            // L'embauche se paie juste derriere le tiroir-caisse, a portee du
+            // joueur qui longe le comptoir.
             var caissier = Caissier(racine.transform, comptoir, four.GetComponent<Four>(),
                                     table, new Vector3(3.6f, 0f, 2.05f));
-            Zone(racine.transform, joueur, caissier, new Vector3(3.6f, 0f, 3.3f),
+            Zone(racine.transform, joueur, caissier, new Vector3(2.5f, 0f, 2.2f),
                  Reglages.PrixCaissier, "Embaucher un caissier");
 
             racine.AddComponent<Hud>();
@@ -356,9 +357,9 @@ namespace Pizzeria3D
             go.transform.position = position;
 
             Bloc.Boite("Cadre", go.transform, new Vector3(0f, 0.012f, 0f),
-                       new Vector3(1.58f, 0.024f, 1.58f), Color.white).SansCollision();
+                       new Vector3(1.24f, 0.024f, 1.24f), Color.white).SansCollision();
             Bloc.Boite("Dalle", go.transform, new Vector3(0f, 0.018f, 0f),
-                       new Vector3(1.40f, 0.024f, 1.40f), Bloc.Zone).SansCollision();
+                       new Vector3(1.10f, 0.024f, 1.10f), Bloc.Zone).SansCollision();
 
             var z = go.AddComponent<ZoneAchat>();
             z.Joueur = joueur;
