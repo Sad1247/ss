@@ -373,6 +373,9 @@ static class Harness3D
                 if (auMilieu && aHauteurDePassage) passageLibre = false;
             }
             Check("le cadre laisse le passage libre", passageLibre);
+            // rien ne traine non plus au sol en travers du pas de la porte
+            Check("et le pas de la porte est nu",
+                  Piece(porte.transform, "Seuil") == null);
 
             Check("elle est plaquee sur la face interieure du mur",
                   porte.transform.position.z + jambage.localPosition.z
@@ -405,6 +408,7 @@ static class Harness3D
             Check("elle descend jusqu'au sol", false);
             Check("elle est plus haute qu'une fenetre", false);
             Check("le cadre laisse le passage libre", false);
+            Check("et le pas de la porte est nu", false);
             Check("elle est plaquee sur la face interieure du mur", false);
             Check("aucune vitre ne lui passe dessus", false);
             Check("elle jouxte le plan de mise en boite", false);

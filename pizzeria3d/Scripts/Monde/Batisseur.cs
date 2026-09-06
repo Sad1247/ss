@@ -187,10 +187,6 @@ namespace Pizzeria3D
             Bloc.Boite("Poignee", gond.transform, new Vector3(-1.22f, 1.05f, -0.09f),
                        new Vector3(0.16f, 0.14f, 0.08f), Bloc.Metal).SansCollision();
 
-            // le seuil, en travers du passage
-            Bloc.Boite("Seuil", t, new Vector3(0f, 0.02f, 0f),
-                       new Vector3(1.70f, 0.04f, 0.62f), Bloc.SolBordure).SansCollision();
-
             return gond.transform;
         }
 
