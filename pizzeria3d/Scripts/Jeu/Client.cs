@@ -160,7 +160,11 @@ namespace Pizzeria3D
             if (_resteCommande > 0f) _resteCommande -= deltaTemps;
         }
 
-        /// <summary>Prend une pizza — en boite ou nue — si le rythme le permet.</summary>
+        /// <summary>
+        /// Prend une boite si le rythme de remise le permet. Elles s'empilent
+        /// dans son sac les unes sur les autres, sans jamais se melanger a une
+        /// pizza nue : le comptoir n'en sert pas.
+        /// </summary>
         public bool Recevoir(bool emballee)
         {
             if (EstServi) return false;

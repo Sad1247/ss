@@ -399,6 +399,11 @@ static class Harness3D
         Placer(joueur, comptoir.transform.position);
         Secondes(1.5f);
         Check("le joueur decharge sa pile au comptoir", joueur.Portee.Nombre < avantDepot);
+        // Rien de nu sur le comptoir : une pizza posee au milieu des cartons
+        // faisait une pile batarde, et le client repartait avec un melange.
+        Check("ce qu'il pose part en boite", comptoir.Stock.Nombre > 0 && comptoir.Stock.ToutEmballe);
+        Check("aucune pizza nue ne traine sur le comptoir",
+              Compte(comptoir.Stock.transform, "Pizza", false) == 0);
 
         // --- un client arrive, patiente, est servi ---
         Check("des clients font la queue", comptoir.TailleFile >= 1 || TousLes<Client>().Count >= 1);
@@ -632,17 +637,26 @@ static class Harness3D
         Secondes(Reglages.DelaiClient + Reglages.DureeCommande + 14f);
         // Un client servi par le caissier repart avec des cartons, pas avec
         // des pizzas nues posees les unes sur les autres.
-        bool clientEnBoite = false;
-        for (int i = 0; i < 60 * 40 && !clientEnBoite; i++)
+        bool clientEnBoite = false, sacMelange = false, sacDeTravers = false;
+        int sacLePlusGarni = 0;
+        for (int i = 0; i < 60 * 40 && !(clientEnBoite && sacLePlusGarni >= 2); i++)
         {
             Frames(1);
             foreach (var cl in TousLes<Client>())
             {
                 var sac = cl.transform.Find("Sac");
-                if (sac != null && Compte(sac, "Boite", false) > 0) clientEnBoite = true;
+                if (sac == null) continue;
+                int boites = Compte(sac, "Boite", false);
+                if (boites > 0) clientEnBoite = true;
+                if (Compte(sac, "Pizza", false) > 0) sacMelange = true;
+                if (!ToutDroit(sac)) sacDeTravers = true;
+                sacLePlusGarni = Mathf.Max(sacLePlusGarni, boites);
             }
         }
         Check("les clients repartent avec des boites", clientEnBoite);
+        Check("un client en emporte plusieurs, l'une sur l'autre", sacLePlusGarni >= 2);
+        Check("son sac ne melange jamais boites et pizzas nues", !sacMelange);
+        Check("elles y sont empilees bien droites", !sacDeTravers);
 
         Check("le caissier sert les clients sans le joueur",
               TousLes<Billet>().Count > liassesAvant || comptoir.Stock.Nombre < servisAvant);

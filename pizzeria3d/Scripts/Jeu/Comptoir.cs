@@ -5,7 +5,8 @@ namespace Pizzeria3D
 {
     /// <summary>
     /// Le comptoir : recoit les pizzas que le joueur depose, fait patienter les
-    /// clients en file et les sert un par un.
+    /// clients en file et les sert un par un. Tout ce qui s'y pose est en
+    /// carton — donc tout ce qui en part aussi.
     /// </summary>
     public sealed class Comptoir : MonoBehaviour
     {
@@ -46,8 +47,11 @@ namespace Pizzeria3D
             if (Joueur.Portee.EstVide || !Joueur.PretPourTransfert) return;
             if (!Joueur.EstPres(transform.position, Reglages.RayonRamassage + 0.6f)) return;
 
+            // Le comptoir ne recoit que des cartons : une pizza nue posee au
+            // milieu des boites faisait une pile batarde, et le client repartait
+            // avec un melange. Le joueur emballe donc en deposant.
             Joueur.Portee.Retirer();
-            Stock.Ajouter();
+            Stock.Ajouter(true);
             Joueur.ArmerTransfert();
         }
 
