@@ -92,9 +92,12 @@ namespace Pizzeria3D
             if (!premier.CommandeFinie) return;
 
             if (Stock == null || Stock.EstVide) return;
-            // Celui qui mange sur place est servi nu : on n'emballe que ce qui
-            // s'emporte. Pour les autres, une boite s'il y en a une.
-            if (!premier.Recevoir(Stock.SommetEmballe && !premier.SurPlace)) return;
+            // Celui qui mange sur place est servi sur un plateau : on n'emballe
+            // que ce qui s'emporte. Pour les autres, une boite s'il y en a une.
+            var forme = premier.SurPlace ? Pile.Forme.Plateau
+                      : Stock.SommetEmballe ? Pile.Forme.Boite
+                      : Pile.Forme.Nue;
+            if (!premier.Recevoir(forme)) return;
             Stock.Retirer();
 
             if (premier.EstServi)

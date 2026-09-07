@@ -253,17 +253,16 @@ namespace Pizzeria3D
         public bool SurPlace => _table != null;
 
         /// <summary>
-        /// Prend une boite si le rythme de remise le permet. Elles s'empilent
-        /// dans son sac les unes sur les autres, sans jamais se melanger a une
-        /// pizza nue : le comptoir n'en sert pas.
+        /// Prend ce qu'on lui tend si le rythme de remise le permet : une
+        /// boite a emporter, ou un plateau s'il mange sur place.
         /// </summary>
-        public bool Recevoir(bool emballee)
+        public bool Recevoir(Pile.Forme forme)
         {
             if (EstServi) return false;
             if (_compteurRemise > 0f) { _compteurRemise -= Time.deltaTime; return false; }
             _compteurRemise = Reglages.DelaiTransfert * 2f;
             _recues++;
-            if (_sac != null) _sac.Ajouter(emballee);
+            if (_sac != null) _sac.Ajouter(forme);
             if (_bulle != null) _bulle.Afficher(Pizzas - _recues);
             return true;
         }

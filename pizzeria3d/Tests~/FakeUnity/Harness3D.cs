@@ -1400,10 +1400,11 @@ static class Harness3D
         bool unAttable = false, deuxALaFois = false, tableRendue = false, aEteOccupee = false;
         bool assisSurLaChaise = false, poseAssise = false;
         // sur place : une seule pizza, et pas de carton
-        bool attableGourmand = false, attableEnBoite = false, attableAvecPizza = false;
+        bool attableGourmand = false, attableEnBoite = false, attableSurPlateau = false;
         int repasServis = 0;
         bool pizzaEntiere = false, orduresLaissees = false, liasseSurLaTable = false;
         bool tableNettoyee = false, caissierEmporte = false, attableSurLesRestes = false;
+        bool plateauSurLaTable = false;
         bool mainsPleinesEnMangeant = false, vuMangerALaTable = false;
         var vueEntamee = new bool[Reglages.QuartiersParPizza + 1];
         // On observe sans s'arreter au premier repas : ce sont les clients
@@ -1424,7 +1425,7 @@ static class Harness3D
                 {
                     var main = SacDe(cl);
                     if (main != null && Compte(main, "Boite", false) > 0) attableEnBoite = true;
-                    if (main != null && Compte(main, "Pizza", false) > 0) attableAvecPizza = true;
+                    if (main != null && Compte(main, "Plateau", false) > 0) attableSurPlateau = true;
                 }
                 if (!cl.Attable) continue;
                 attables++;
@@ -1447,6 +1448,7 @@ static class Harness3D
             if (attables > 1) deuxALaFois = true;
 
             // la pizza posee sur la table, puis mangee part par part
+            if (Trouver("PlateauTable") != null) plateauSurLaTable = true;
             int reste = tableSalle.Quartiers;
             if (reste == Reglages.QuartiersParPizza) pizzaEntiere = true;
             if (reste > 0 && reste < Reglages.QuartiersParPizza) vueEntamee[reste] = true;
@@ -1475,11 +1477,13 @@ static class Harness3D
         }
         Check("un client servi s'attable", unAttable);
         Check("seul celui qui a commande une pizza mange sur place", !attableGourmand);
-        Check("et on la lui sert sans boite", !attableEnBoite && attableAvecPizza);
+        Check("et on la lui sert sur un plateau, pas en boite",
+              !attableEnBoite && attableSurPlateau);
         Check("il est bien assis sur la chaise", assisSurLaChaise);
         Check("et il en a la pose", poseAssise);
         Check("jamais deux a la fois", !deuxALaFois);
         Check("il pose sa pizza entiere sur la table", pizzaEntiere);
+        Check("elle est servie sur son plateau", plateauSurLaTable);
         Check("elle est bien dans l'assiette, plus dans ses mains",
               vuMangerALaTable && !mainsPleinesEnMangeant);
         Check("elle s'en va part par part",

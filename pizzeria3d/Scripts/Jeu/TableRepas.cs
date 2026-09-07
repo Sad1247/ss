@@ -52,10 +52,13 @@ namespace Pizzeria3D
         {
             if (_pizza != null) { Destroy(_pizza); _pizza = null; }
             _mangees = 0;
-            _pizza = new GameObject("PizzaTable");
-            _pizza.transform.SetParent(Ancrage, false);
-            _pizza.transform.localPosition = Vector3.zero;
-            for (int i = 0; i < Reglages.QuartiersParPizza; i++) Pizza3D.Quartier(_pizza.transform, i);
+
+            // Le plateau d'abord, les parts posees dessus : c'est le plateau
+            // que le client rapporte du comptoir.
+            _pizza = Plateau3D.Creer(Ancrage, 0, false);
+            _pizza.name = "PlateauTable";
+            for (int i = 0; i < Reglages.QuartiersParPizza; i++)
+                Plateau3D.PoserDessus(Pizza3D.Quartier(_pizza.transform, i));
         }
 
         /// <summary>Avale une part. Faux quand l'assiette est vide.</summary>
@@ -75,20 +78,33 @@ namespace Pizzeria3D
         /// <summary>Fin du repas : il ne reste que la croute et la serviette.</summary>
         public void LaisserOrdures()
         {
-            if (_pizza != null) { Destroy(_pizza); _pizza = null; }
             if (_ordures != null) return;
 
-            _ordures = new GameObject("Ordures");
-            _ordures.transform.SetParent(Ancrage, false);
-            _ordures.transform.localPosition = Vector3.zero;
+            // Le plateau reste : ce sont lui et ses restes que le caissier
+            // vient debarrasser.
+            if (_pizza != null)
+            {
+                foreach (var e in Enfants(_pizza.transform))
+                    if (e.gameObject.name.StartsWith("Quartier")) Destroy(e.gameObject);
+                _ordures = _pizza;
+                _ordures.name = "Ordures";
+                _pizza = null;
+            }
+            else
+            {
+                _ordures = new GameObject("Ordures");
+                _ordures.transform.SetParent(Ancrage, false);
+                _ordures.transform.localPosition = Vector3.zero;
+            }
             var t = _ordures.transform;
 
+            float dessus = Plateau3D.Hauteur * 0.75f;
             var croute = Bloc.Couleur(0xC58B3E);
-            Bloc.Galet("Croute", t, new Vector3(-0.12f, 0.03f, 0.06f),
+            Bloc.Galet("Croute", t, new Vector3(-0.12f, dessus + 0.03f, 0.06f),
                        new Vector3(0.26f, 0.06f, 0.10f), croute).SansCollision();
-            Bloc.Galet("Croute", t, new Vector3(0.10f, 0.03f, -0.04f),
+            Bloc.Galet("Croute", t, new Vector3(0.10f, dessus + 0.03f, -0.04f),
                        new Vector3(0.22f, 0.06f, 0.09f), croute, 24f).SansCollision();
-            Bloc.Boite("Serviette", t, new Vector3(0.04f, 0.02f, 0.14f),
+            Bloc.Boite("Serviette", t, new Vector3(0.04f, dessus + 0.02f, 0.14f),
                        new Vector3(0.20f, 0.03f, 0.16f), Bloc.Couleur(0xF2EFE6)).SansCollision();
         }
 
