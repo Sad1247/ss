@@ -92,6 +92,66 @@ static class Harness3D
 
     /// <summary>Compte a n'importe quelle profondeur : une pizza posee sur un
     /// plateau est petite-fille de la pile, pas fille.</summary>
+    /// <summary>
+    /// L'emprise au sol de tout ce qui pend a un point du plan : c'est elle
+    /// qui dit si deux tas se rentrent dedans, pas la distance entre leurs
+    /// piquets.
+    /// </summary>
+    static bool Empreinte(Transform t, out float x0, out float x1, out float z0, out float z1)
+    {
+        x0 = 9999f; x1 = -9999f; z0 = 9999f; z1 = -9999f;
+        bool trouve = false;
+        foreach (var o in UnityEngine.Object.Tous)
+        {
+            if (!(o is GameObject go) || go.Detruit) continue;
+            if (go.GetComponent<MeshRenderer>() == null) continue;
+            bool sien = false;
+            for (var m = go.transform; m != null; m = m.parent) if (m == t) { sien = true; break; }
+            if (!sien) continue;
+
+            // Composition a la main, comme pour le dessin de la scene : le
+            // faux Transform ignore rotations et echelles des parents. Sans
+            // elle, un plateau pose en travers se mesurait large ET profond.
+            var p = go.transform.localPosition;
+            var e = go.transform.localScale;
+            float ry = Angle(go.transform.localRotation);
+            for (var q = go.transform.parent; q != null; q = q.parent)
+            {
+                var s2 = q.localScale;
+                p = new Vector3(p.x * s2.x, p.y * s2.y, p.z * s2.z);
+                float a = Angle(q.localRotation);
+                if (Mathf.Abs(a) > 0.01f)
+                {
+                    float r2 = a * Mathf.Deg2Rad;
+                    float c2 = Mathf.Cos(r2), s3 = Mathf.Sin(r2);
+                    p = new Vector3(p.x * c2 + p.z * s3, p.y, -p.x * s3 + p.z * c2);
+                    ry += a;
+                }
+                e = new Vector3(e.x * s2.x, e.y * s2.y, e.z * s2.z);
+                p = new Vector3(p.x + q.localPosition.x, p.y + q.localPosition.y,
+                                p.z + q.localPosition.z);
+            }
+
+            float rad = ry * Mathf.Deg2Rad;
+            float co = Mathf.Abs(Mathf.Cos(rad)), si = Mathf.Abs(Mathf.Sin(rad));
+            float hx = (e.x * co + e.z * si) * 0.5f;
+            float hz = (e.x * si + e.z * co) * 0.5f;
+
+            x0 = Mathf.Min(x0, p.x - hx); x1 = Mathf.Max(x1, p.x + hx);
+            z0 = Mathf.Min(z0, p.z - hz); z1 = Mathf.Max(z1, p.z + hz);
+            trouve = true;
+        }
+        return trouve;
+    }
+
+    /// <summary>Deux emplacements du plan qui empietent l'un sur l'autre.</summary>
+    static bool SeChevauchent(Transform a, Transform b)
+    {
+        if (!Empreinte(a, out float ax0, out float ax1, out float az0, out float az1)) return false;
+        if (!Empreinte(b, out float bx0, out float bx1, out float bz0, out float bz1)) return false;
+        return ax0 < bx1 && bx0 < ax1 && az0 < bz1 && bz0 < az1;
+    }
+
     static int Dedans(Transform parent, string nom)
     {
         int n = 0;
@@ -706,7 +766,10 @@ static class Harness3D
             var vert = table.Assemblage.transform.localPosition;
             Check("le plan a ses deux ronds de travail", true);
             Check("le rouge est avant le vert", rouge.x < vert.x);
-            Check("le vert est au milieu du plan", Mathf.Abs(vert.x) < 0.35f);
+            // Au milieu, mais pas au centimetre : les quatre emplacements du
+            // dessus doivent tenir cote a cote sans se toucher, et c'est cette
+            // contrainte-la qui fixe le pas.
+            Check("le vert est au milieu du plan", Mathf.Abs(vert.x) < 0.6f);
             Check("les deux sont poses sur le dessus",
                   Mathf.Abs(rouge.y - vert.y) < 0.01f && vert.y > 1f);
         }
@@ -1629,6 +1692,34 @@ static class Harness3D
         }
         Check("sans plateau propre, il attend au lieu d'emballer", !cartonAuLieuDuPlateau);
         table.Garnir();
+
+        // --- les quatre emplacements du plan se tiennent a distance ---
+        // Le carton pose sur le rond rouge touchait le tas de la reserve :
+        // on voyait deux cartons passer l'un dans l'autre.
+        var emplacements = new[] { table.Boites.transform, table.PlateauxEnPile.transform,
+                                   table.Preparation.transform, table.Assemblage.transform };
+        bool sInterpenetrent = false, deborde = false;
+        bool ronsGarnis = false;
+        for (int i = 0; i < 60 * 90; i++)
+        {
+            Frames(1);
+            if (!table.Preparation.EstVide && !table.Assemblage.EstVide) ronsGarnis = true;
+            for (int a1 = 0; a1 < emplacements.Length; a1++)
+            {
+                if (Empreinte(emplacements[a1], out float x0, out float x1, out float z0, out float z1))
+                {
+                    // le dessus du plan : 4,4 sur 1,4, centre sur le meuble
+                    var centre = table.transform.position;
+                    if (x0 < centre.x - 2.2f || x1 > centre.x + 2.2f ||
+                        z0 < centre.z - 0.7f || z1 > centre.z + 0.7f) deborde = true;
+                }
+                for (int b1 = a1 + 1; b1 < emplacements.Length; b1++)
+                    if (SeChevauchent(emplacements[a1], emplacements[b1])) sInterpenetrent = true;
+            }
+        }
+        Check("on voit le caissier emballer, les deux ronds garnis", ronsGarnis);
+        Check("rien ne s'interpenetre sur le plan d'emballage", !sInterpenetrent);
+        Check("et rien ne deborde du plan", !deborde);
 
         // et le joueur encaisse en revenant marcher dessus
         int soldeAvant = Banque.Solde;

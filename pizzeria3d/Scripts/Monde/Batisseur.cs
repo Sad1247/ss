@@ -41,7 +41,7 @@ namespace Pizzeria3D
 
             // Le plan de mise en boite, adosse aux fenetres du fond, derriere
             // la caisse : le caissier y passe entre le four et le comptoir.
-            var table = Table(racine.transform, new Vector3(1.6f, 0f, 6.0f));
+            var table = Table(racine.transform, new Vector3(1.3f, 0f, 6.0f));
 
             // L'embauche se paie juste derriere le tiroir-caisse, a portee du
             // joueur qui longe le comptoir.
@@ -454,20 +454,28 @@ namespace Pizzeria3D
 
             // memes cotes que le caisson du comptoir : les deux meubles se
             // repondent au lieu de sembler pris dans deux jeux differents
-            Bloc.Boite("Plan", t, new Vector3(0f, 0.55f, 0f), new Vector3(3.6f, 1.1f, 1.2f),
+            // Le meuble est plus long que le comptoir : il porte quatre
+            // emplacements — la reserve, les deux ronds, la pile de plateaux —
+            // et sur 3,80 ils se touchaient.
+            Bloc.Boite("Plan", t, new Vector3(0f, 0.55f, 0f), new Vector3(4.2f, 1.1f, 1.2f),
                        Bloc.Machine).SansCollision();
-            Bloc.Boite("Dessus", t, new Vector3(0f, 1.15f, 0f), new Vector3(3.8f, 0.16f, 1.4f),
+            Bloc.Boite("Dessus", t, new Vector3(0f, 1.15f, 0f), new Vector3(4.4f, 0.16f, 1.4f),
                        Bloc.Metal).SansCollision();
-            Bloc.Boite("Bandeau", t, new Vector3(0f, 0.20f, -0.61f), new Vector3(3.6f, 0.30f, 0.04f),
+            Bloc.Boite("Bandeau", t, new Vector3(0f, 0.20f, -0.61f), new Vector3(4.2f, 0.30f, 0.04f),
                        Bloc.MachineBis).SansCollision();
 
-            Obstacles.Ajouter(position, 3.8f, 1.4f);
+            Obstacles.Ajouter(position, 4.4f, 1.4f);
 
             // Un seul tas de cartons, dans le coin arriere gauche du plan :
             // etales cote a cote, ils occupaient tout le meuble.
+            //
+            // Les quatre emplacements du dessus — reserve, rond rouge, rond
+            // vert, plateaux — sont espaces d'au moins une largeur de carton :
+            // trop proches, le carton pose sur le rond rouge rentrait dans le
+            // tas de la reserve, et l'on voyait deux cartons s'interpenetrer.
             var rangee = new GameObject("Boites");
             rangee.transform.SetParent(t, false);
-            rangee.transform.localPosition = new Vector3(-1.58f, 1.23f, 0.26f);
+            rangee.transform.localPosition = new Vector3(-1.74f, 1.23f, 0.26f);
 
             // Les deux ronds de travail, sur le dessus : le carton sort de la
             // reserve, se pose au premier, glisse au second, et c'est la qu'il
@@ -475,16 +483,16 @@ namespace Pizzeria3D
             // la pile de plateaux propres, a l'autre bout du plan
             var plateaux = new GameObject("PlateauxPropres");
             plateaux.transform.SetParent(t, false);
-            plateaux.transform.localPosition = new Vector3(1.55f, 1.23f, 0.26f);
+            plateaux.transform.localPosition = new Vector3(1.60f, 1.23f, 0.10f);
 
             var rouge = new GameObject("Preparation");
             rouge.transform.SetParent(t, false);
-            rouge.transform.localPosition = new Vector3(-1.00f, 1.23f, 0f);
+            rouge.transform.localPosition = new Vector3(-0.68f, 1.23f, 0f);
 
             // ce qui est pret attend au milieu du plan, entre les deux reserves
             var vert = new GameObject("Assemblage");
             vert.transform.SetParent(t, false);
-            vert.transform.localPosition = new Vector3(0.10f, 1.23f, 0f);
+            vert.transform.localPosition = new Vector3(0.35f, 1.23f, 0f);
 
             var poste = new GameObject("Poste");
             poste.transform.SetParent(t, false);
