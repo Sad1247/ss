@@ -1404,7 +1404,8 @@ static class Harness3D
         int repasServis = 0;
         bool pizzaEntiere = false, orduresLaissees = false, liasseSurLaTable = false;
         bool tableNettoyee = false, caissierEmporte = false, attableSurLesRestes = false;
-        bool plateauSurLaTable = false;
+        bool plateauSurLaTable = false, plateauAuComptoir = false;
+        bool plateauEmballe = false, plateauTourne = false;
         bool mainsPleinesEnMangeant = false, vuMangerALaTable = false;
         var vueEntamee = new bool[Reglages.QuartiersParPizza + 1];
         // On observe sans s'arreter au premier repas : ce sont les clients
@@ -1425,7 +1426,15 @@ static class Harness3D
                 {
                     var main = SacDe(cl);
                     if (main != null && Compte(main, "Boite", false) > 0) attableEnBoite = true;
-                    if (main != null && Compte(main, "Plateau", false) > 0) attableSurPlateau = true;
+                    if (main != null && Compte(main, "Plateau", false) > 0)
+                    {
+                        attableSurPlateau = true;
+                        // dans la longueur : un quart de tour, face a celui
+                        // qui le porte, et non en travers de son torse
+                        foreach (var e in main.Enfants)
+                            if (e.gameObject.name.StartsWith("Plateau") &&
+                                Mathf.Abs(e.localRotation.y) > 0.5f) plateauTourne = true;
+                    }
                 }
                 if (!cl.Attable) continue;
                 attables++;
@@ -1449,6 +1458,9 @@ static class Harness3D
 
             // la pizza posee sur la table, puis mangee part par part
             if (Trouver("PlateauTable") != null) plateauSurLaTable = true;
+            if (comptoir.Plateaux.Nombre > 0) plateauAuComptoir = true;
+            // le plateau qui attend au comptoir n'est pas un carton deguise
+            if (comptoir.Plateaux.SommetEmballe) plateauEmballe = true;
             int reste = tableSalle.Quartiers;
             if (reste == Reglages.QuartiersParPizza) pizzaEntiere = true;
             if (reste > 0 && reste < Reglages.QuartiersParPizza) vueEntamee[reste] = true;
@@ -1479,6 +1491,9 @@ static class Harness3D
         Check("seul celui qui a commande une pizza mange sur place", !attableGourmand);
         Check("et on la lui sert sur un plateau, pas en boite",
               !attableEnBoite && attableSurPlateau);
+        Check("sa pizza n'est jamais passee par un carton", !plateauEmballe);
+        Check("le comptoir dresse des plateaux a part", plateauAuComptoir);
+        Check("porte, le plateau se presente dans la longueur", plateauTourne);
         Check("il est bien assis sur la chaise", assisSurLaChaise);
         Check("et il en a la pose", poseAssise);
         Check("jamais deux a la fois", !deuxALaFois);

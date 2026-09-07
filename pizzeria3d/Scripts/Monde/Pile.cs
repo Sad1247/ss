@@ -108,7 +108,8 @@ namespace Pizzeria3D
         GameObject Creer(int index, Forme forme)
         {
             if (forme == Forme.Boite) return Boite3D.Creer(transform, index);
-            if (forme == Forme.Plateau) return Plateau3D.Creer(transform, index, true);
+            // porte : dans la longueur, face a qui le recoit
+            if (forme == Forme.Plateau) return Plateau3D.Creer(transform, index, true, true);
             return Pizza3D.Creer(transform, index);
         }
 

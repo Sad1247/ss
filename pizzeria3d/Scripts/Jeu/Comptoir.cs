@@ -11,6 +11,8 @@ namespace Pizzeria3D
     public sealed class Comptoir : MonoBehaviour
     {
         public Pile Stock;
+        /// <summary>Le coin des plateaux : ce qui se mange sur place ne s'emballe pas.</summary>
+        public Pile Plateaux;
         public Joueur Joueur;
         public Transform PointFile;          // premiere place de la file
         public Transform Sortie;             // ou les clients s'en vont
@@ -32,6 +34,7 @@ namespace Pizzeria3D
         void Awake()
         {
             if (Stock != null) Stock.Max = Reglages.StockComptoirMax;
+            if (Plateaux != null) Plateaux.Max = Reglages.PlateauxAuComptoir;
         }
 
         void Update()
@@ -42,19 +45,45 @@ namespace Pizzeria3D
             Servir();
         }
 
-        /// <summary>Le joueur vide sa pile sur le comptoir, pizza par pizza.</summary>
+        /// <summary>
+        /// Le joueur vide sa pile sur le comptoir, pizza par pizza. Il dresse
+        /// un plateau si quelqu'un mange sur place et qu'aucun n'attend —
+        /// sinon il emballe : le comptoir ne recoit rien de nu, une pizza
+        /// posee au milieu des boites faisait une pile batarde.
+        /// </summary>
         void Recevoir()
         {
-            if (Joueur == null || Stock == null || Stock.EstPleine) return;
+            if (Joueur == null || Stock == null) return;
             if (Joueur.Portee.EstVide || !Joueur.PretPourTransfert) return;
             if (!Joueur.EstPres(transform.position, Reglages.RayonRamassage + 0.6f)) return;
 
-            // Le comptoir ne recoit que des cartons : une pizza nue posee au
-            // milieu des boites faisait une pile batarde, et le client repartait
-            // avec un melange. Le joueur emballe donc en deposant.
+            if (UnPlateauManque)
+            {
+                Joueur.Portee.Retirer();
+                Plateaux.Ajouter(Pile.Forme.Plateau);
+                Joueur.ArmerTransfert();
+                return;
+            }
+
+            if (Stock.EstPleine) return;
             Joueur.Portee.Retirer();
             Stock.Ajouter(true);
             Joueur.ArmerTransfert();
+        }
+
+        /// <summary>
+        /// Vrai quand un client mange sur place, attend encore, et qu'aucun
+        /// plateau n'est pret : c'est le signal pour en dresser un.
+        /// </summary>
+        public bool UnPlateauManque
+        {
+            get
+            {
+                if (Plateaux == null || Plateaux.EstPleine) return false;
+                foreach (var c in _file)
+                    if (c.SurPlace && !c.EstServi) return Plateaux.EstVide;
+                return false;
+            }
         }
 
         void FaireVenir()
@@ -91,14 +120,21 @@ namespace Pizzeria3D
             premier.Commander(Time.deltaTime);
             if (!premier.CommandeFinie) return;
 
-            if (Stock == null || Stock.EstVide) return;
-            // Celui qui mange sur place est servi sur un plateau : on n'emballe
-            // que ce qui s'emporte. Pour les autres, une boite s'il y en a une.
-            var forme = premier.SurPlace ? Pile.Forme.Plateau
-                      : Stock.SommetEmballe ? Pile.Forme.Boite
-                      : Pile.Forme.Nue;
-            if (!premier.Recevoir(forme)) return;
-            Stock.Retirer();
+            // Celui qui mange sur place prend son plateau, jamais une boite :
+            // sa pizza n'a pas ete emballee. Les autres prennent au stock.
+            if (premier.SurPlace)
+            {
+                if (Plateaux == null || Plateaux.EstVide) return;   // il attend son plateau
+                if (!premier.Recevoir(Pile.Forme.Plateau)) return;
+                Plateaux.Retirer();
+            }
+            else
+            {
+                if (Stock == null || Stock.EstVide) return;
+                if (!premier.Recevoir(Stock.SommetEmballe ? Pile.Forme.Boite : Pile.Forme.Nue))
+                    return;
+                Stock.Retirer();
+            }
 
             if (premier.EstServi)
             {

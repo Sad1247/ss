@@ -11,12 +11,18 @@ namespace Pizzeria3D
     {
         public const float Cote = 1.02f, Profondeur = 0.80f, Hauteur = 0.09f;
 
-        /// <summary>Un plateau, avec sa pizza entiere dessus si on le demande.</summary>
-        public static GameObject Creer(Transform parent, int index, bool avecPizza)
+        /// <summary>
+        /// Un plateau, avec sa pizza entiere dessus si on le demande. Porte a
+        /// bout de bras, il se presente dans la longueur — de face pour celui
+        /// qu'on sert, et non en travers.
+        /// </summary>
+        public static GameObject Creer(Transform parent, int index, bool avecPizza,
+                                       bool dansLaLongueur = false)
         {
             var racine = new GameObject("Plateau" + index);
             racine.transform.SetParent(parent, false);
             racine.transform.localPosition = new Vector3(0f, index * Reglages.EpaisseurPlateau, 0f);
+            if (dansLaLongueur) racine.transform.localRotation = Quaternion.Euler(0f, 90f, 0f);
 
             var corps = Bloc.Couleur(0xB4462F);
             var rebord = Bloc.Couleur(0x8E3220);

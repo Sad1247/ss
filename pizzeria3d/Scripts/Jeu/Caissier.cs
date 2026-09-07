@@ -8,6 +8,9 @@ namespace Pizzeria3D
     /// reserve sur le rond rouge, le fait glisser au rond vert et y depose sa
     /// pizza. Une fois sa poignee de boites prete, il la porte au comptoir.
     ///
+    /// Sauf pour qui mange sur place : celle-la ne passe pas par le carton,
+    /// elle est dressee sur un plateau au comptoir.
+    ///
     /// Le carton ne sort qu'une fois la pizza en main : sinon une boite vide
     /// restait posee de cote pendant tout l'aller-retour au four.
     ///
@@ -121,7 +124,18 @@ namespace Pizzeria3D
                 return;
             }
 
-            // 2. pizza en main : un carton neuf sort sur le rond rouge
+            // 2. Un client mange sur place et n'a pas son plateau : celle-ci
+            //    part sans carton, dressee directement au comptoir.
+            if (Comptoir != null && Comptoir.UnPlateauManque && _pleines == 0
+                && Table.Preparation.EstVide && Table.Assemblage.EstVide)
+            {
+                _portee.Retirer();
+                Comptoir.Plateaux.Ajouter(Pile.Forme.Plateau);
+                _compteurTransfert = Reglages.DelaiEmballage;
+                return;
+            }
+
+            // 3. pizza en main : un carton neuf sort sur le rond rouge
             if (Table.Preparation.EstVide && Table.Assemblage.Nombre <= _pleines)
             {
                 if (Table.PrendreBoite())
@@ -132,7 +146,7 @@ namespace Pizzeria3D
                 return;                              // reserve vide : il attend
             }
 
-            // 3. le carton glisse du rond rouge au rond vert
+            // 4. le carton glisse du rond rouge au rond vert
             if (!Table.Preparation.EstVide)
             {
                 Table.Preparation.Retirer();
@@ -141,7 +155,7 @@ namespace Pizzeria3D
                 return;
             }
 
-            // 4. la pizza entre dans la boite ouverte
+            // 5. la pizza entre dans la boite ouverte
             _portee.Retirer();
             _pleines++;
             _compteurTransfert = Reglages.DelaiEmballage;

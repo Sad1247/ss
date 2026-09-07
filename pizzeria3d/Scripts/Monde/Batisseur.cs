@@ -511,6 +511,11 @@ namespace Pizzeria3D
             pile.transform.SetParent(go.transform, false);
             pile.transform.localPosition = new Vector3(0.6f, 1.25f, 0f);
 
+            // le coin des plateaux, a l'autre bout du dessus
+            var plateaux = new GameObject("Plateaux");
+            plateaux.transform.SetParent(go.transform, false);
+            plateaux.transform.localPosition = new Vector3(1.5f, 1.25f, 0f);
+
             var file = new GameObject("PointFile");
             file.transform.SetParent(go.transform, false);
             file.transform.localPosition = new Vector3(0f, 0f, -2.2f);
@@ -521,6 +526,7 @@ namespace Pizzeria3D
 
             var c = go.AddComponent<Comptoir>();
             c.Stock = pile.AddComponent<Pile>();
+            c.Plateaux = plateaux.AddComponent<Pile>();
             c.Joueur = joueur;
             c.PointFile = file.transform;
             c.Sortie = sortie.transform;
