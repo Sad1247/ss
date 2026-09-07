@@ -42,6 +42,8 @@ namespace Pizzeria3D
         public const float VitesseClient = 2.1f;
         /// <summary>Temps qu'un client passe attable, une fois servi.</summary>
         public const float DureeRepas = 9f;
+        /// <summary>Plateaux propres empiles sur le plan de mise en boite.</summary>
+        public const int PlateauxSurLePlan = 3;
         /// <summary>Plateaux dresses d'avance sur le comptoir.</summary>
         public const int PlateauxAuComptoir = 2;
         /// <summary>Hauteur d'un plateau, qui sert d'ecart dans une pile.</summary>

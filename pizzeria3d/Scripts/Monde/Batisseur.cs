@@ -472,6 +472,11 @@ namespace Pizzeria3D
             // Les deux ronds de travail, sur le dessus : le carton sort de la
             // reserve, se pose au premier, glisse au second, et c'est la qu'il
             // recoit sa pizza.
+            // la pile de plateaux propres, a cote des cartons
+            var plateaux = new GameObject("PlateauxPropres");
+            plateaux.transform.SetParent(t, false);
+            plateaux.transform.localPosition = new Vector3(-1.58f, 1.23f, -0.42f);
+
             var rouge = new GameObject("Preparation");
             rouge.transform.SetParent(t, false);
             rouge.transform.localPosition = new Vector3(-0.10f, 1.23f, 0f);
@@ -486,6 +491,7 @@ namespace Pizzeria3D
 
             var e = go.AddComponent<Emballage>();
             e.Boites = rangee.AddComponent<Pile>();
+            e.PlateauxEnPile = plateaux.AddComponent<Pile>();
             e.Preparation = rouge.AddComponent<Pile>();
             e.Assemblage = vert.AddComponent<Pile>();
             e.Poste = poste.transform;

@@ -13,7 +13,8 @@ namespace Pizzeria3D
     /// </summary>
     public sealed class Emballage : MonoBehaviour
     {
-        public Pile Boites;        // la reserve, dans le coin du plan
+        public Pile Boites;        // la reserve de cartons, dans le coin du plan
+        public Pile PlateauxEnPile; // la pile de plateaux propres, a cote
         public Pile Preparation;   // le rond rouge : le carton qu'on vient de sortir
         public Pile Assemblage;    // le rond vert : les boites qu'on garnit
         public Transform Poste;    // ou le caissier se place pour travailler
@@ -32,6 +33,11 @@ namespace Pizzeria3D
         /// </summary>
         public void Garnir()
         {
+            if (PlateauxEnPile != null)
+            {
+                PlateauxEnPile.Max = Reglages.PlateauxSurLePlan;
+                while (!PlateauxEnPile.EstPleine) PlateauxEnPile.Ajouter(Pile.Forme.Plateau);
+            }
             if (Preparation != null) Preparation.Max = 1;
             if (Assemblage != null) Assemblage.Max = Reglages.CapacitePorteeCaissier + 1;
             if (Boites == null) return;
@@ -43,6 +49,13 @@ namespace Pizzeria3D
 
         void Update()
         {
+            // les plateaux reviennent aussi, laves : on n'en manque jamais
+            if (PlateauxEnPile != null && !PlateauxEnPile.EstPleine && _compteurReappro <= 0f)
+            {
+                PlateauxEnPile.Ajouter(Pile.Forme.Plateau);
+                _compteurReappro = Reglages.DelaiReappro;
+                return;
+            }
             if (Boites == null || Boites.EstPleine) return;
 
             _compteurReappro -= Time.deltaTime;
@@ -57,6 +70,21 @@ namespace Pizzeria3D
             if (Boites == null || Boites.EstVide) return false;
             Boites.Retirer();
             return true;
+        }
+
+        /// <summary>Prend un plateau propre sur la pile du plan.</summary>
+        public bool PrendrePlateau()
+        {
+            if (PlateauxEnPile == null || PlateauxEnPile.EstVide) return false;
+            PlateauxEnPile.Retirer();
+            return true;
+        }
+
+        /// <summary>Rend un plateau lave a la pile.</summary>
+        public void RendrePlateau()
+        {
+            if (PlateauxEnPile != null && !PlateauxEnPile.EstPleine)
+                PlateauxEnPile.Ajouter(Pile.Forme.Plateau);
         }
 
         /// <summary>Repose un carton inutilise : il ne se perd pas.</summary>

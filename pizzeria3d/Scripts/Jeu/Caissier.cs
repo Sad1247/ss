@@ -38,7 +38,8 @@ namespace Pizzeria3D
         bool _passeParRelais;
         float _compteurTransfert;
         int _pleines;
-        GameObject _ordures;      // les restes qu'il porte a la poubelle              // boites garnies qui attendent au rond vert
+        GameObject _ordures;      // les restes qu'il porte a la poubelle
+        bool _plateauEnCours;     // un plateau est en preparation dans la fournee              // boites garnies qui attendent au rond vert
 
         public int Portees => _portee != null ? _portee.Nombre : 0;
         /// <summary>Vrai quand tout ce qu'il porte est en boite.</summary>
@@ -47,6 +48,9 @@ namespace Pizzeria3D
         public bool PorteeNue => _portee != null && !_portee.EstVide && !_portee.ToutEmballe;
         /// <summary>Boites garnies posees sur le plan, pas encore livrees.</summary>
         public int Pretes => _pleines;
+        /// <summary>Vrai quand il porte un plateau dresse pour la salle.</summary>
+        public bool PortePlateau => _portee != null && _portee.SommetForme == Pile.Forme.Plateau;
+
         /// <summary>Vrai quand il transporte les restes d'un repas.</summary>
         public bool PorteDesOrdures => _ordures != null;
 
@@ -119,25 +123,26 @@ namespace Pizzeria3D
             if (_portee.EstVide)
             {
                 if (_pleines >= Reglages.CapacitePorteeCaissier) { Livrer(); return; }
+                // un plateau ne se fait pas attendre : le client est au comptoir
+                if (_plateauEnCours && _pleines > 0) { Livrer(); return; }
                 if (Four == null || Four.Sortie.EstVide) { Livrer(); return; }
                 _etat = Etat.VersFour;
                 return;
             }
 
-            // 2. Un client mange sur place et n'a pas son plateau : celle-ci
-            //    part sans carton, dressee directement au comptoir.
-            if (Comptoir != null && Comptoir.UnPlateauManque && _pleines == 0
-                && Table.Preparation.EstVide && Table.Assemblage.EstVide)
-            {
-                _portee.Retirer();
-                Comptoir.Plateaux.Ajouter(Pile.Forme.Plateau);
-                _compteurTransfert = Reglages.DelaiEmballage;
-                return;
-            }
-
-            // 3. pizza en main : un carton neuf sort sur le rond rouge
+            // 3. Pizza en main : de quoi la recevoir sort sur le rond rouge.
+            //    Un plateau si quelqu'un mange sur place et n'a pas le sien —
+            //    sa pizza ne passe pas par le carton — un carton sinon.
             if (Table.Preparation.EstVide && Table.Assemblage.Nombre <= _pleines)
             {
+                bool pourLaSalle = Comptoir != null && Comptoir.UnPlateauManque && !_plateauEnCours;
+                if (pourLaSalle && Table.PrendrePlateau())
+                {
+                    Table.Preparation.Ajouter(Pile.Forme.Plateau);
+                    _plateauEnCours = true;
+                    _compteurTransfert = Reglages.DelaiEmballage;
+                    return;
+                }
                 if (Table.PrendreBoite())
                 {
                     Table.Preparation.Ajouter(true);
@@ -149,8 +154,9 @@ namespace Pizzeria3D
             // 4. le carton glisse du rond rouge au rond vert
             if (!Table.Preparation.EstVide)
             {
+                var forme = Table.Preparation.SommetForme;
                 Table.Preparation.Retirer();
-                Table.Assemblage.Ajouter(true);
+                Table.Assemblage.Ajouter(forme);
                 _compteurTransfert = Reglages.DelaiEmballage;
                 return;
             }
@@ -173,11 +179,13 @@ namespace Pizzeria3D
                 }
                 for (int i = 0; i < _pleines; i++)
                 {
+                    var forme = Table.Assemblage.SommetForme;
                     Table.Assemblage.Retirer();
-                    _portee.Ajouter(true);
+                    _portee.Ajouter(forme);
                 }
             }
             _pleines = 0;
+            _plateauEnCours = false;
             _etat = Etat.VersComptoir;
             _passeParRelais = true;
         }
@@ -198,12 +206,24 @@ namespace Pizzeria3D
 
         void Decharger()
         {
-            if (_portee.EstVide || Comptoir == null || Comptoir.Stock.EstPleine) return;
+            if (_portee.EstVide || Comptoir == null) return;
             if (_compteurTransfert > 0f) return;
 
-            bool emballe = _portee.SommetEmballe;
-            _portee.Retirer();
-            Comptoir.Stock.Ajouter(emballe);
+            var forme = _portee.SommetForme;
+            if (forme == Pile.Forme.Plateau)
+            {
+                // le plateau ne se range pas avec les cartons : il attend
+                // dans son coin, pret a etre tendu
+                if (Comptoir.Plateaux == null || Comptoir.Plateaux.EstPleine) return;
+                _portee.Retirer();
+                Comptoir.Plateaux.Ajouter(Pile.Forme.Plateau);
+            }
+            else
+            {
+                if (Comptoir.Stock.EstPleine) return;
+                _portee.Retirer();
+                Comptoir.Stock.Ajouter(forme);
+            }
             _compteurTransfert = Reglages.DelaiTransfert;
         }
 

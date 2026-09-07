@@ -40,6 +40,10 @@ namespace Pizzeria3D
         public bool SommetEmballe =>
             _elements.Count > 0 && _elements[_elements.Count - 1].Forme == Forme.Boite;
 
+        /// <summary>Sous quelle forme se presente le prochain a partir.</summary>
+        public Forme SommetForme =>
+            _elements.Count > 0 ? _elements[_elements.Count - 1].Forme : Forme.Nue;
+
         public bool Ajouter() => Ajouter(Forme.Nue);
         public bool Ajouter(bool emballe) => Ajouter(emballe ? Forme.Boite : Forme.Nue);
 

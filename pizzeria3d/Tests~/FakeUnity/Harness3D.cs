@@ -685,6 +685,9 @@ static class Harness3D
               table != null && MemeCouleur(table.transform, "Plan", comptoir.transform, "Plan") &&
               MemeCouleur(table.transform, "Dessus", comptoir.transform, "Dessus"));
 
+        Check("des plateaux propres attendent sur le plan",
+              table != null && table.PlateauxEnPile != null &&
+              table.PlateauxEnPile.Nombre == Reglages.PlateauxSurLePlan);
         Check("des boites a pizza y attendent",
               table != null && table.Reserve == Reglages.BoitesEnReserve);
         Check("elles forment un seul tas",
@@ -1406,6 +1409,7 @@ static class Harness3D
         bool tableNettoyee = false, caissierEmporte = false, attableSurLesRestes = false;
         bool plateauSurLaTable = false, plateauAuComptoir = false;
         bool plateauEmballe = false, plateauTourne = false;
+        bool plateauAuPlan = false, caissierPorteLePlateau = false;
         bool mainsPleinesEnMangeant = false, vuMangerALaTable = false;
         var vueEntamee = new bool[Reglages.QuartiersParPizza + 1];
         // On observe sans s'arreter au premier repas : ce sont les clients
@@ -1459,6 +1463,10 @@ static class Harness3D
             // la pizza posee sur la table, puis mangee part par part
             if (Trouver("PlateauTable") != null) plateauSurLaTable = true;
             if (comptoir.Plateaux.Nombre > 0) plateauAuComptoir = true;
+            // il se dresse la ou l'on emballe, puis voyage dans ses mains
+            if (table.Preparation.SommetForme == Pile.Forme.Plateau ||
+                table.Assemblage.SommetForme == Pile.Forme.Plateau) plateauAuPlan = true;
+            if (navetteur.PortePlateau) caissierPorteLePlateau = true;
             // le plateau qui attend au comptoir n'est pas un carton deguise
             if (comptoir.Plateaux.SommetEmballe) plateauEmballe = true;
             int reste = tableSalle.Quartiers;
@@ -1493,6 +1501,8 @@ static class Harness3D
               !attableEnBoite && attableSurPlateau);
         Check("sa pizza n'est jamais passee par un carton", !plateauEmballe);
         Check("le comptoir dresse des plateaux a part", plateauAuComptoir);
+        Check("le plateau se prepare au plan, avec les cartons", plateauAuPlan);
+        Check("le caissier le porte lui-meme au comptoir", caissierPorteLePlateau);
         Check("porte, le plateau se presente dans la longueur", plateauTourne);
         Check("il est bien assis sur la chaise", assisSurLaChaise);
         Check("et il en a la pose", poseAssise);
