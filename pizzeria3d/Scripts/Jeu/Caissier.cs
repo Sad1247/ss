@@ -138,7 +138,7 @@ namespace Pizzeria3D
                 bool pourLaSalle = Comptoir != null && Comptoir.UnPlateauManque && !_plateauEnCours;
                 if (pourLaSalle && Table.PrendrePlateau())
                 {
-                    Table.Preparation.Ajouter(Pile.Forme.Plateau);
+                    Table.Preparation.Ajouter(Pile.Forme.PlateauVide);
                     _plateauEnCours = true;
                     _compteurTransfert = Reglages.DelaiEmballage;
                     return;
@@ -161,8 +161,11 @@ namespace Pizzeria3D
                 return;
             }
 
-            // 5. la pizza entre dans la boite ouverte
+            // 5. La pizza entre dans la boite ouverte — ou se pose sur le
+            //    plateau, qui n'etait qu'un plateau vide jusque-la.
             _portee.Retirer();
+            if (Table.Assemblage.SommetForme == Pile.Forme.PlateauVide)
+                Table.Assemblage.ChangerSommet(Pile.Forme.Plateau);
             _pleines++;
             _compteurTransfert = Reglages.DelaiEmballage;
         }

@@ -11,7 +11,7 @@ namespace Pizzeria3D
     public sealed class Pile : MonoBehaviour
     {
         /// <summary>Comment se presente une pizza : nue, en boite, sur plateau.</summary>
-        public enum Forme { Nue, Boite, Plateau }
+        public enum Forme { Nue, Boite, Plateau, PlateauVide }
 
         struct Element
         {
@@ -70,6 +70,20 @@ namespace Pizzeria3D
         }
 
         /// <summary>
+        /// Remplace le sommet par la meme chose sous une autre forme : un
+        /// plateau vide qui recoit sa pizza, par exemple.
+        /// </summary>
+        public bool ChangerSommet(Forme forme)
+        {
+            if (EstVide) return false;
+            int i = _elements.Count - 1;
+            if (_elements[i].Objet != null) Destroy(_elements[i].Objet);
+            _elements[i] = new Element { Objet = Creer(i, forme), Forme = forme };
+            Reposer();
+            return true;
+        }
+
+        /// <summary>
         /// Met une pizza en boite, la plus basse d'abord, et renvoie faux quand
         /// il n'y a plus rien a emballer. Une par appel : le caissier emballe au
         /// rythme du geste, pas d'un coup.
@@ -103,8 +117,8 @@ namespace Pizzeria3D
                     t.localPosition = new Vector3(0f, hauteur, t.localPosition.z);
                 }
                 hauteur += e.Forme == Forme.Boite ? Reglages.EpaisseurBoite
-                         : e.Forme == Forme.Plateau ? Reglages.EpaisseurPlateau
-                         : Reglages.EpaisseurPizza;
+                         : e.Forme == Forme.Nue ? Reglages.EpaisseurPizza
+                         : Reglages.EpaisseurPlateau;
             }
         }
 
@@ -114,6 +128,8 @@ namespace Pizzeria3D
             if (forme == Forme.Boite) return Boite3D.Creer(transform, index);
             // porte : dans la longueur, face a qui le recoit
             if (forme == Forme.Plateau) return Plateau3D.Creer(transform, index, true, true);
+            // propre et vide : la pizza n'apparait qu'une fois posee dessus
+            if (forme == Forme.PlateauVide) return Plateau3D.Creer(transform, index, false, true);
             return Pizza3D.Creer(transform, index);
         }
 

@@ -472,10 +472,10 @@ namespace Pizzeria3D
             // Les deux ronds de travail, sur le dessus : le carton sort de la
             // reserve, se pose au premier, glisse au second, et c'est la qu'il
             // recoit sa pizza.
-            // la pile de plateaux propres, a cote des cartons
+            // la pile de plateaux propres, a l'autre bout du plan
             var plateaux = new GameObject("PlateauxPropres");
             plateaux.transform.SetParent(t, false);
-            plateaux.transform.localPosition = new Vector3(-1.58f, 1.23f, -0.42f);
+            plateaux.transform.localPosition = new Vector3(1.55f, 1.23f, 0.26f);
 
             var rouge = new GameObject("Preparation");
             rouge.transform.SetParent(t, false);

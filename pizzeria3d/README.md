@@ -90,7 +90,7 @@ Scripts/Monde/
 
 Tests~/FakeUnity/            (ignore par Unity : le ~ final)
   FakeUnity3D.cs  faux runtime Unity (hierarchie, transforms, entrees, cycle de vie)
-  Harness3D.cs    230 verifications qui jouent la boucle complete
+  Harness3D.cs    233 verifications qui jouent la boucle complete
 ```
 
 ## Regarder la scene sans Unity
@@ -142,7 +142,7 @@ partie. Le remettre a 0.
 
 ## Ce qui est verifie, et ce qui ne l'est pas
 
-La logique tourne : les 230 verifications ci-dessus s'executent hors editeur.
+La logique tourne : les 233 verifications ci-dessus s'executent hors editeur.
 Le **rendu 3D n'a jamais ete affiche** — positions, echelles, cadrage de la
 camera et couleurs ont ete poses sans jamais etre vus. C'est la premiere chose
 a corriger a l'oeil au lancement.

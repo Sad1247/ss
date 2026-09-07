@@ -14,7 +14,7 @@ namespace Pizzeria3D
     public sealed class Emballage : MonoBehaviour
     {
         public Pile Boites;        // la reserve de cartons, dans le coin du plan
-        public Pile PlateauxEnPile; // la pile de plateaux propres, a cote
+        public Pile PlateauxEnPile; // la pile de plateaux propres — et vides
         public Pile Preparation;   // le rond rouge : le carton qu'on vient de sortir
         public Pile Assemblage;    // le rond vert : les boites qu'on garnit
         public Transform Poste;    // ou le caissier se place pour travailler
@@ -36,7 +36,7 @@ namespace Pizzeria3D
             if (PlateauxEnPile != null)
             {
                 PlateauxEnPile.Max = Reglages.PlateauxSurLePlan;
-                while (!PlateauxEnPile.EstPleine) PlateauxEnPile.Ajouter(Pile.Forme.Plateau);
+                while (!PlateauxEnPile.EstPleine) PlateauxEnPile.Ajouter(Pile.Forme.PlateauVide);
             }
             if (Preparation != null) Preparation.Max = 1;
             if (Assemblage != null) Assemblage.Max = Reglages.CapacitePorteeCaissier + 1;
@@ -52,7 +52,7 @@ namespace Pizzeria3D
             // les plateaux reviennent aussi, laves : on n'en manque jamais
             if (PlateauxEnPile != null && !PlateauxEnPile.EstPleine && _compteurReappro <= 0f)
             {
-                PlateauxEnPile.Ajouter(Pile.Forme.Plateau);
+                PlateauxEnPile.Ajouter(Pile.Forme.PlateauVide);
                 _compteurReappro = Reglages.DelaiReappro;
                 return;
             }
@@ -84,7 +84,7 @@ namespace Pizzeria3D
         public void RendrePlateau()
         {
             if (PlateauxEnPile != null && !PlateauxEnPile.EstPleine)
-                PlateauxEnPile.Ajouter(Pile.Forme.Plateau);
+                PlateauxEnPile.Ajouter(Pile.Forme.PlateauVide);
         }
 
         /// <summary>Repose un carton inutilise : il ne se perd pas.</summary>

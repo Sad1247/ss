@@ -90,6 +90,19 @@ static class Harness3D
         return morceaux > 0;
     }
 
+    /// <summary>Compte a n'importe quelle profondeur : une pizza posee sur un
+    /// plateau est petite-fille de la pile, pas fille.</summary>
+    static int Dedans(Transform parent, string nom)
+    {
+        int n = 0;
+        foreach (var e in parent.Enfants)
+        {
+            if (e.gameObject.name.Contains(nom)) n++;
+            n += Dedans(e, nom);
+        }
+        return n;
+    }
+
     /// <summary>Combien d'objets vivants portent ce prefixe.</summary>
     static int Objets(string prefixe)
     {
@@ -688,6 +701,14 @@ static class Harness3D
         Check("des plateaux propres attendent sur le plan",
               table != null && table.PlateauxEnPile != null &&
               table.PlateauxEnPile.Nombre == Reglages.PlateauxSurLePlan);
+        // Propres, donc vides : une pizza n'apparait qu'une fois posee dessus.
+        Check("ils sont vides tant qu'on n'y a rien pose",
+              table != null && Dedans(table.PlateauxEnPile.transform, "Pizza") == 0);
+        Check("ils attendent a l'autre bout du plan, cote droit",
+              table != null &&
+              table.PlateauxEnPile.transform.localPosition.x > 1f &&
+              table.PlateauxEnPile.transform.localPosition.x
+                  > table.Boites.transform.localPosition.x);
         Check("des boites a pizza y attendent",
               table != null && table.Reserve == Reglages.BoitesEnReserve);
         Check("elles forment un seul tas",
@@ -1409,7 +1430,7 @@ static class Harness3D
         bool tableNettoyee = false, caissierEmporte = false, attableSurLesRestes = false;
         bool plateauSurLaTable = false, plateauAuComptoir = false;
         bool plateauEmballe = false, plateauTourne = false;
-        bool plateauAuPlan = false, caissierPorteLePlateau = false;
+        bool plateauAuPlan = false, caissierPorteLePlateau = false, plateauNePasVide = false;
         bool mainsPleinesEnMangeant = false, vuMangerALaTable = false;
         var vueEntamee = new bool[Reglages.QuartiersParPizza + 1];
         // On observe sans s'arreter au premier repas : ce sont les clients
@@ -1464,8 +1485,12 @@ static class Harness3D
             if (Trouver("PlateauTable") != null) plateauSurLaTable = true;
             if (comptoir.Plateaux.Nombre > 0) plateauAuComptoir = true;
             // il se dresse la ou l'on emballe, puis voyage dans ses mains
-            if (table.Preparation.SommetForme == Pile.Forme.Plateau ||
-                table.Assemblage.SommetForme == Pile.Forme.Plateau) plateauAuPlan = true;
+            if (table.Preparation.SommetForme == Pile.Forme.PlateauVide ||
+                table.Assemblage.SommetForme == Pile.Forme.PlateauVide) plateauAuPlan = true;
+            // Un plateau qui attend sa pizza reste vide : il ne s'en cree pas
+            // une par magie en sortant de la pile.
+            if (table.Preparation.SommetForme == Pile.Forme.PlateauVide &&
+                Dedans(table.Preparation.transform, "Pizza") > 0) plateauNePasVide = true;
             if (navetteur.PortePlateau) caissierPorteLePlateau = true;
             // le plateau qui attend au comptoir n'est pas un carton deguise
             if (comptoir.Plateaux.SommetEmballe) plateauEmballe = true;
@@ -1502,6 +1527,7 @@ static class Harness3D
         Check("sa pizza n'est jamais passee par un carton", !plateauEmballe);
         Check("le comptoir dresse des plateaux a part", plateauAuComptoir);
         Check("le plateau se prepare au plan, avec les cartons", plateauAuPlan);
+        Check("il reste vide jusqu'a ce qu'on y pose la pizza", !plateauNePasVide);
         Check("le caissier le porte lui-meme au comptoir", caissierPorteLePlateau);
         Check("porte, le plateau se presente dans la longueur", plateauTourne);
         Check("il est bien assis sur la chaise", assisSurLaChaise);
