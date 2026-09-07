@@ -1594,6 +1594,42 @@ static class Harness3D
         // qu'un client parti sans manger.
         Check("et elle ressert au suivant", repasServis >= 2);
 
+        // --- le plan se regarnit des deux mains ---
+        // Le compte a rebours est commun aux deux piles. Separe, il restait
+        // fige des qu'une des deux etait pleine : l'autre ne revenait alors
+        // plus jamais, et le caissier cherchait ses boites pour rien.
+        bool plateauxRevenus = false, cartonsRevenus = false;
+        table.PlateauxEnPile.Vider();
+        table.Boites.Vider();
+        for (int i = 0; i < 60 * 60 && !(plateauxRevenus && cartonsRevenus); i++)
+        {
+            Frames(1);
+            if (table.PlateauxEnPile.EstPleine) plateauxRevenus = true;
+            if (table.Boites.EstPleine) cartonsRevenus = true;
+        }
+        Check("les plateaux laves reviennent sur le plan", plateauxRevenus);
+        Check("et les cartons se regarnissent aussi", cartonsRevenus);
+
+        // --- plus un plateau propre : il attend, il n'emballe pas ---
+        // Sans plateau sous la main il partait prendre un carton : le client
+        // de la salle voyait sa pizza emboitee, ou n'etait jamais servi.
+        bool cartonAuLieuDuPlateau = false;
+        bool preparationVide = table.Preparation.EstVide;
+        for (int i = 0; i < 60 * 60; i++)
+        {
+            table.PlateauxEnPile.Vider();       // tous les plateaux sont dehors
+            // l'etat se lit AVANT l'image : c'est lui qui a decide du geste
+            bool manque = comptoir.UnPlateauManque;
+            bool fourneeVierge = table.Assemblage.EstVide;   // donc aucune boite garnie
+            Frames(1);
+            if (preparationVide && manque && fourneeVierge
+                && table.Preparation.SommetForme == Pile.Forme.Boite)
+                cartonAuLieuDuPlateau = true;
+            preparationVide = table.Preparation.EstVide;
+        }
+        Check("sans plateau propre, il attend au lieu d'emballer", !cartonAuLieuDuPlateau);
+        table.Garnir();
+
         // et le joueur encaisse en revenant marcher dessus
         int soldeAvant = Banque.Solde;
         var liasses = TousLes<Billet>();

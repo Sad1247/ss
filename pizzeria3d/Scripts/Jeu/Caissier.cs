@@ -140,8 +140,13 @@ namespace Pizzeria3D
                 // cartons.
                 bool pourLaSalle = Comptoir != null && Comptoir.UnPlateauManque
                                 && !_plateauEnCours && _pleines == 0;
-                if (pourLaSalle && Table.PrendrePlateau())
+                if (pourLaSalle)
                 {
+                    // Pas de plateau propre sous la main : il attend qu'on en
+                    // rende un. L'emballer serait pire — le client de la salle
+                    // repartirait avec un carton, ou ne serait jamais servi.
+                    if (!Table.PrendrePlateau()) return;
+
                     Table.Preparation.Ajouter(Pile.Forme.PlateauVide);
                     _plateauEnCours = true;
                     _compteurTransfert = Reglages.DelaiEmballage;

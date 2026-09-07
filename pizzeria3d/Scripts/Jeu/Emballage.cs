@@ -47,21 +47,25 @@ namespace Pizzeria3D
 
         void Awake() => Garnir();
 
+        /// <summary>
+        /// Regarnit le plan, une piece a la fois : les plateaux laves d'abord,
+        /// les cartons ensuite. Le compte a rebours tourne pour les deux —
+        /// separe, il restait bloque des que l'une des deux piles etait pleine,
+        /// et l'autre ne se regarnissait plus jamais.
+        /// </summary>
         void Update()
         {
-            // les plateaux reviennent aussi, laves : on n'en manque jamais
-            if (PlateauxEnPile != null && !PlateauxEnPile.EstPleine && _compteurReappro <= 0f)
-            {
-                PlateauxEnPile.Ajouter(Pile.Forme.PlateauVide);
-                _compteurReappro = Reglages.DelaiReappro;
-                return;
-            }
-            if (Boites == null || Boites.EstPleine) return;
+            var aRemplir = PlateauxEnPile != null && !PlateauxEnPile.EstPleine ? PlateauxEnPile
+                         : Boites != null && !Boites.EstPleine ? Boites
+                         : null;
+            if (aRemplir == null) return;
 
             _compteurReappro -= Time.deltaTime;
             if (_compteurReappro > 0f) return;
             _compteurReappro = Reglages.DelaiReappro;
-            Boites.Ajouter(true);
+
+            aRemplir.Ajouter(aRemplir == PlateauxEnPile ? Pile.Forme.PlateauVide
+                                                        : Pile.Forme.Boite);
         }
 
         /// <summary>Prend le carton du dessus de la reserve.</summary>
