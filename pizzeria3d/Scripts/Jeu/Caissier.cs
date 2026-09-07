@@ -135,7 +135,11 @@ namespace Pizzeria3D
             //    sa pizza ne passe pas par le carton — un carton sinon.
             if (Table.Preparation.EstVide && Table.Assemblage.Nombre <= _pleines)
             {
-                bool pourLaSalle = Comptoir != null && Comptoir.UnPlateauManque && !_plateauEnCours;
+                // Un plateau part seul : le client de la salle attend debout,
+                // et son plateau n'a rien a faire au milieu d'une fournee de
+                // cartons.
+                bool pourLaSalle = Comptoir != null && Comptoir.UnPlateauManque
+                                && !_plateauEnCours && _pleines == 0;
                 if (pourLaSalle && Table.PrendrePlateau())
                 {
                     Table.Preparation.Ajouter(Pile.Forme.PlateauVide);

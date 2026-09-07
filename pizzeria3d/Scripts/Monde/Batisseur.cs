@@ -479,11 +479,12 @@ namespace Pizzeria3D
 
             var rouge = new GameObject("Preparation");
             rouge.transform.SetParent(t, false);
-            rouge.transform.localPosition = new Vector3(-0.10f, 1.23f, 0f);
+            rouge.transform.localPosition = new Vector3(-1.00f, 1.23f, 0f);
 
+            // ce qui est pret attend au milieu du plan, entre les deux reserves
             var vert = new GameObject("Assemblage");
             vert.transform.SetParent(t, false);
-            vert.transform.localPosition = new Vector3(1.20f, 1.23f, 0f);
+            vert.transform.localPosition = new Vector3(0.10f, 1.23f, 0f);
 
             var poste = new GameObject("Poste");
             poste.transform.SetParent(t, false);

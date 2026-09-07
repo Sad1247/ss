@@ -698,6 +698,26 @@ static class Harness3D
               table != null && MemeCouleur(table.transform, "Plan", comptoir.transform, "Plan") &&
               MemeCouleur(table.transform, "Dessus", comptoir.transform, "Dessus"));
 
+        // Les deux ronds de travail : le rouge d'abord, le vert au milieu du
+        // plan — c'est la que ce qui est pret attend d'etre emporte.
+        if (table != null && table.Preparation != null && table.Assemblage != null)
+        {
+            var rouge = table.Preparation.transform.localPosition;
+            var vert = table.Assemblage.transform.localPosition;
+            Check("le plan a ses deux ronds de travail", true);
+            Check("le rouge est avant le vert", rouge.x < vert.x);
+            Check("le vert est au milieu du plan", Mathf.Abs(vert.x) < 0.35f);
+            Check("les deux sont poses sur le dessus",
+                  Mathf.Abs(rouge.y - vert.y) < 0.01f && vert.y > 1f);
+        }
+        else
+        {
+            Check("le plan a ses deux ronds de travail", false);
+            Check("le rouge est avant le vert", false);
+            Check("le vert est au milieu du plan", false);
+            Check("les deux sont poses sur le dessus", false);
+        }
+
         Check("des plateaux propres attendent sur le plan",
               table != null && table.PlateauxEnPile != null &&
               table.PlateauxEnPile.Nombre == Reglages.PlateauxSurLePlan);
@@ -1431,6 +1451,7 @@ static class Harness3D
         bool plateauSurLaTable = false, plateauAuComptoir = false;
         bool plateauEmballe = false, plateauTourne = false;
         bool plateauAuPlan = false, caissierPorteLePlateau = false, plateauNePasVide = false;
+        bool plateauAvecDesBoites = false;
         bool mainsPleinesEnMangeant = false, vuMangerALaTable = false;
         var vueEntamee = new bool[Reglages.QuartiersParPizza + 1];
         // On observe sans s'arreter au premier repas : ce sont les clients
@@ -1491,7 +1512,17 @@ static class Harness3D
             // une par magie en sortant de la pile.
             if (table.Preparation.SommetForme == Pile.Forme.PlateauVide &&
                 Dedans(table.Preparation.transform, "Pizza") > 0) plateauNePasVide = true;
-            if (navetteur.PortePlateau) caissierPorteLePlateau = true;
+            if (navetteur.PortePlateau)
+            {
+                caissierPorteLePlateau = true;
+                // le plateau voyage seul : pas de cartons dans la meme fournee
+                if (navetteur.Portees > 1) plateauAvecDesBoites = true;
+            }
+            // meme regle sur le plan : un plateau ne rejoint pas une fournee
+            // de cartons deja commencee
+            var enPreparation = table.Assemblage.SommetForme;
+            if ((enPreparation == Pile.Forme.Plateau || enPreparation == Pile.Forme.PlateauVide)
+                && table.Assemblage.Nombre > 1) plateauAvecDesBoites = true;
             // le plateau qui attend au comptoir n'est pas un carton deguise
             if (comptoir.Plateaux.SommetEmballe) plateauEmballe = true;
             int reste = tableSalle.Quartiers;
@@ -1529,6 +1560,7 @@ static class Harness3D
         Check("le plateau se prepare au plan, avec les cartons", plateauAuPlan);
         Check("il reste vide jusqu'a ce qu'on y pose la pizza", !plateauNePasVide);
         Check("le caissier le porte lui-meme au comptoir", caissierPorteLePlateau);
+        Check("et il le porte seul, sans cartons", !plateauAvecDesBoites);
         Check("porte, le plateau se presente dans la longueur", plateauTourne);
         Check("il est bien assis sur la chaise", assisSurLaChaise);
         Check("et il en a la pose", poseAssise);
