@@ -742,6 +742,8 @@ namespace Pizzeria3D
                        new Vector3(0.72f, 0.02f, 0.46f), Bloc.Couleur(0x2E3A46)).SansCollision();
             Bloc.Boite("Papiers", t, new Vector3(0.62f, 0.83f, 0.06f),
                        new Vector3(0.30f, 0.06f, 0.40f), Bloc.Couleur(0xF6F1E6)).SansCollision();
+
+            Ordinateur(t, new Vector3(-0.05f, 0.81f, -0.06f));
             Bloc.Disque("PiedLampe", t, new Vector3(-0.80f, 0.83f, 0.18f), 0.20f, 0.05f,
                         laiton).SansCollision();
             Bloc.Boite("TigeLampe", t, new Vector3(-0.80f, 0.98f, 0.18f),
@@ -759,6 +761,60 @@ namespace Pizzeria3D
             bureau.Joueur = joueur;
             bureau.Siege = siege;
             return bureau;
+        }
+
+        /// <summary>
+        /// L'ordinateur du bureau : dalle mince sur pied d'aluminium, menton
+        /// clair sous l'ecran, clavier plat et souris. L'ecran est tourne vers
+        /// la camera et non vers le fauteuil : de dos, on ne verrait qu'une
+        /// plaque grise, et l'on ne reconnaitrait rien.
+        /// </summary>
+        static Transform Ordinateur(Transform parent, Vector3 local)
+        {
+            var go = new GameObject("Ordinateur");
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = local;
+            go.transform.localRotation = Quaternion.Euler(0f, 18f, 0f);
+            var t = go.transform;
+
+            var alu = Bloc.Couleur(0xC9CDD2);
+            var aluSombre = Bloc.Couleur(0x9AA0A8);
+            var dalle = Bloc.Couleur(0x1B2027);
+            var fond = Bloc.Couleur(0x2E6FB7);
+            var blanc = Bloc.Couleur(0xEDEDEF);
+
+            // le pied : une semelle mince et un col, comme sur le modele
+            Bloc.Boite("Semelle", t, new Vector3(0f, 0.015f, 0.06f),
+                       new Vector3(0.44f, 0.03f, 0.22f), alu).SansCollision();
+            Bloc.Boite("Col", t, new Vector3(0f, 0.16f, 0.05f),
+                       new Vector3(0.10f, 0.30f, 0.04f), aluSombre).SansCollision();
+
+            // Le dos de la dalle, puis l'ecran pose dessus : une seule boite
+            // aurait donne un ecran aussi epais que l'appareil.
+            Bloc.Boite("Dos", t, new Vector3(0f, 0.60f, 0.02f),
+                       new Vector3(0.94f, 0.60f, 0.04f), alu).SansCollision();
+            Bloc.Boite("Ecran", t, new Vector3(0f, 0.635f, -0.005f),
+                       new Vector3(0.88f, 0.48f, 0.01f), dalle).SansCollision();
+            Bloc.Boite("Bureau", t, new Vector3(0f, 0.63f, -0.011f),
+                       new Vector3(0.84f, 0.42f, 0.01f), fond).SansCollision();
+            // la barre des menus, en haut, et le dock en bas : c'est a cela
+            // qu'on reconnait la machine d'un coup d'oeil
+            Bloc.Boite("BarreMenus", t, new Vector3(0f, 0.825f, -0.012f),
+                       new Vector3(0.84f, 0.04f, 0.01f), blanc).SansCollision();
+            Bloc.Boite("Dock", t, new Vector3(0f, 0.445f, -0.012f),
+                       new Vector3(0.46f, 0.05f, 0.01f), Bloc.Couleur(0xD7DCE4)).SansCollision();
+            // le menton clair sous la dalle
+            Bloc.Boite("Menton", t, new Vector3(0f, 0.36f, -0.005f),
+                       new Vector3(0.94f, 0.10f, 0.05f), alu).SansCollision();
+
+            Bloc.Boite("Clavier", t, new Vector3(0f, 0.02f, 0.30f),
+                       new Vector3(0.62f, 0.03f, 0.17f), blanc).SansCollision();
+            Bloc.Boite("Touches", t, new Vector3(0f, 0.037f, 0.30f),
+                       new Vector3(0.56f, 0.01f, 0.11f), Bloc.Couleur(0xC8CBD0)).SansCollision();
+            Bloc.Galet("Souris", t, new Vector3(0.36f, 0.03f, 0.29f),
+                       new Vector3(0.11f, 0.05f, 0.17f), blanc).SansCollision();
+
+            return t;
         }
 
         /// <summary>

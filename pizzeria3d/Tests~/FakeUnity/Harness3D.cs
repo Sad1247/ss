@@ -1410,6 +1410,29 @@ static class Harness3D
         Check("les mains pleines, il ne s'assoit pas", !joueur.Assis);
         joueur.Portee.Vider();
 
+        // --- l'ordinateur du bureau ---
+        var ordi = Trouver("Ordinateur");
+        Check("le bureau a son ordinateur", ordi != null);
+        Check("avec sa dalle, son clavier et sa souris",
+              ordi != null && Dedans(ordi.transform, "Ecran") == 1
+                           && Dedans(ordi.transform, "Clavier") == 1
+                           && Dedans(ordi.transform, "Souris") == 1);
+        // Pose sur le plan : ni encastre dans le bois, ni debordant dans le
+        // vide a cote du meuble.
+        var semelle = ordi != null ? Piece(ordi.transform, "Semelle") : null;
+        Check("il repose sur le dessus du bureau",
+              semelle != null && semelle.position.y > bureau.transform.position.y + 0.80f
+                              && semelle.position.y < bureau.transform.position.y + 0.90f);
+        if (ordi != null && Empreinte(ordi.transform, out float ox0, out float ox1,
+                                      out float oz0, out float oz1))
+        {
+            var plan = bureau.transform.position;
+            Check("et tient entierement sur le plan",
+                  ox0 > plan.x - 1.0f && ox1 < plan.x + 1.0f &&
+                  oz0 > plan.z - 0.425f && oz1 < plan.z + 0.425f);
+        }
+        else Check("et tient entierement sur le plan", false);
+
         // --- la porte du bureau s'ouvre a l'approche, et se referme derriere ---
         var porteDuBureau = laPiece.GetComponent<PetitePiece>();
         var devantLaPorte = new Vector3(porte.transform.position.x, 0f,
