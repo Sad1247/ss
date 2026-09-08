@@ -858,10 +858,9 @@ namespace Pizzeria3D
         }
 
         /// <summary>
-        /// La fontaine a eau : socle noir, colonne d'inox cannelee, collier
-        /// sombre en haut et la bonbonne cylindrique posee dessus. La niche
-        /// de service est creusee dans la colonne — robinets chaud et froid
-        /// au fond, grille d'egouttage sous eux.
+        /// La fontaine a eau du modele : socle noir, colonne d'inox cannelee,
+        /// collier sombre en haut et la bonbonne translucide dont la base
+        /// s'enfonce dedans. La niche de service est creusee a mi-hauteur.
         /// </summary>
         static Transform Fontaine(Transform parent, Vector3 local, Vector3 centrePiece)
         {
@@ -873,46 +872,47 @@ namespace Pizzeria3D
             var inox = Bloc.Metal;
             var inoxClair = Bloc.Couleur(0xD5DBE1);
             var noir = Bloc.Couleur(0x22262B);
-            var creux = Bloc.Couleur(0x14161A);
-            var eau = Bloc.Couleur(0x86C6EA);
-            var eauClaire = Bloc.Couleur(0xB8E0F5);
+            var creux = Bloc.Couleur(0x101215);
+            var eau = Bloc.Couleur(0x7FC3E8);
+            var eauClaire = Bloc.Couleur(0xBEE4F6);
 
-            // Le socle deborde de la colonne : c'est lui qui pose l'appareil
-            // au sol au lieu de le faire flotter.
-            Bloc.Boite("Socle", t, new Vector3(0f, 0.05f, 0f), new Vector3(0.56f, 0.10f, 0.52f),
+            Bloc.Boite("Socle", t, new Vector3(0f, 0.05f, 0f), new Vector3(0.58f, 0.10f, 0.54f),
                        noir).SansCollision();
-            Bloc.Boite("Colonne", t, new Vector3(0f, 0.60f, 0f), new Vector3(0.46f, 1.00f, 0.42f),
+            Bloc.Boite("Colonne", t, new Vector3(0f, 0.65f, 0f), new Vector3(0.44f, 1.10f, 0.40f),
                        inox).Poli(0.55f, 0.85f).SansCollision();
             // les cannelures verticales de la tole brossee
-            foreach (float x in new[] { -0.16f, -0.05f, 0.06f, 0.17f })
-                Bloc.Boite("Cannelure", t, new Vector3(x, 0.60f, -0.212f),
-                           new Vector3(0.02f, 0.98f, 0.01f), inoxClair)
+            foreach (float x in new[] { -0.15f, -0.05f, 0.05f, 0.15f })
+                Bloc.Boite("Cannelure", t, new Vector3(x, 0.65f, -0.202f),
+                           new Vector3(0.02f, 1.06f, 0.01f), inoxClair)
                     .Poli(0.6f, 0.85f).SansCollision();
 
-            // Le collier noir sur lequel repose la bonbonne.
-            Bloc.Boite("Collier", t, new Vector3(0f, 1.20f, 0f), new Vector3(0.54f, 0.20f, 0.50f),
+            // Le collier noir : la bonbonne s'y enfonce, elle n'est pas
+            // simplement posee dessus.
+            Bloc.Boite("Collier", t, new Vector3(0f, 1.29f, 0f), new Vector3(0.52f, 0.18f, 0.48f),
                        noir).SansCollision();
 
-            // La niche de service, creusee dans la colonne : c'est ce
-            // renfoncement, plus que les robinets, qui fait reconnaitre
-            // l'appareil de loin.
-            Bloc.Boite("Niche", t, new Vector3(0f, 0.86f, -0.13f),
-                       new Vector3(0.30f, 0.34f, 0.18f), creux).SansCollision();
-            Bloc.Boite("RobinetChaud", t, new Vector3(-0.07f, 0.97f, -0.20f),
-                       new Vector3(0.05f, 0.10f, 0.04f), Bloc.Couleur(0xC0392B)).SansCollision();
-            Bloc.Boite("RobinetFroid", t, new Vector3(0.07f, 0.97f, -0.20f),
-                       new Vector3(0.05f, 0.10f, 0.04f), Bloc.Couleur(0x2F6FB5)).SansCollision();
-            // au fond de la niche, et non en saillie : c'est une grille
-            // d'egouttage, pas une tablette
-            Bloc.Boite("Grille", t, new Vector3(0f, 0.71f, -0.135f),
-                       new Vector3(0.26f, 0.02f, 0.11f), inoxClair)
+            // La niche de service, a mi-hauteur : c'est ce renfoncement qui
+            // fait reconnaitre l'appareil de loin.
+            Bloc.Boite("Niche", t, new Vector3(0f, 0.74f, -0.12f),
+                       new Vector3(0.30f, 0.36f, 0.18f), creux).SansCollision();
+            Bloc.Boite("RobinetChaud", t, new Vector3(-0.07f, 0.85f, -0.18f),
+                       new Vector3(0.05f, 0.11f, 0.04f), Bloc.Couleur(0xC0392B)).SansCollision();
+            Bloc.Boite("RobinetFroid", t, new Vector3(0.07f, 0.85f, -0.18f),
+                       new Vector3(0.05f, 0.11f, 0.04f), Bloc.Couleur(0x2F6FB5)).SansCollision();
+            Bloc.Boite("Grille", t, new Vector3(0f, 0.60f, -0.13f),
+                       new Vector3(0.26f, 0.02f, 0.13f), inoxClair)
                 .Poli(0.5f, 0.8f).SansCollision();
 
-            // La bonbonne : un cylindre pose sur le collier, coiffe de son
-            // bouchon.
-            Bloc.Disque("Bonbonne", t, new Vector3(0f, 1.58f, 0f), 0.46f, 0.56f, eau)
+            // La bonbonne : translucide, comme sur le modele — on voit le
+            // niveau de l'eau au travers. Un cylindre plein n'aurait ete
+            // qu'un bidon bleu.
+            var bonbonne = Bloc.Disque("Bonbonne", t, new Vector3(0f, 1.60f, 0f), 0.44f, 0.52f, eau);
+            bonbonne.GetComponent<MeshRenderer>().sharedMaterial = Bloc.Vitrage(eau, 0.62f);
+            bonbonne.SansCollision();
+            // la levre du goulot, puis le bouchon
+            Bloc.Disque("Levre", t, new Vector3(0f, 1.845f, 0f), 0.46f, 0.05f, eauClaire)
                 .SansCollision();
-            Bloc.Disque("Bouchon", t, new Vector3(0f, 1.87f, 0f), 0.18f, 0.06f, eauClaire)
+            Bloc.Disque("Bouchon", t, new Vector3(0f, 1.885f, 0f), 0.18f, 0.05f, eauClaire)
                 .SansCollision();
 
             Obstacles.Ajouter(centrePiece + local, 0.60f, 0.55f);
