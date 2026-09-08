@@ -1413,16 +1413,21 @@ static class Harness3D
         // --- l'ordinateur du bureau ---
         var ordi = Trouver("Ordinateur");
         Check("le bureau a son ordinateur", ordi != null);
-        Check("avec sa dalle, son clavier et sa souris",
+        Check("avec son ecran, son clavier et son pave tactile",
               ordi != null && Dedans(ordi.transform, "Ecran") == 1
                            && Dedans(ordi.transform, "Clavier") == 1
-                           && Dedans(ordi.transform, "Souris") == 1);
+                           && Dedans(ordi.transform, "PaveTactile") == 1);
+        // Un portable, pas une tour ni un ecran sur pied : le capot se releve
+        // au-dessus de la coque, il ne tient pas sur une colonne.
+        Check("c'est un portable, capot releve",
+              ordi != null && Dedans(ordi.transform, "Capot") == 1
+                           && Dedans(ordi.transform, "Charniere") == 1);
         // Pose sur le plan : ni encastre dans le bois, ni debordant dans le
         // vide a cote du meuble.
-        var semelle = ordi != null ? Piece(ordi.transform, "Semelle") : null;
+        var coque = ordi != null ? Piece(ordi.transform, "Socle") : null;
         Check("il repose sur le dessus du bureau",
-              semelle != null && semelle.position.y > bureau.transform.position.y + 0.80f
-                              && semelle.position.y < bureau.transform.position.y + 0.90f);
+              coque != null && coque.position.y > bureau.transform.position.y + 0.80f
+                            && coque.position.y < bureau.transform.position.y + 0.90f);
         if (ordi != null && Empreinte(ordi.transform, out float ox0, out float ox1,
                                       out float oz0, out float oz1))
         {
