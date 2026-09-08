@@ -728,6 +728,12 @@ namespace Pizzeria3D
         /// un pied central, assises bleues, montants sombres. Un seul couvert
         /// est reellement servi — la seconde chaise est la pour l'allure.
         /// </summary>
+        /// <summary>
+        /// Le comptoir de la salle, ou l'on mange sur place : meme facture que
+        /// celui de la caisse — caisson bleu, bandeau sombre, dessus
+        /// metallique — avec ses tabourets. Il remplace la table ronde : dans
+        /// une pizzeria, on mange au comptoir.
+        /// </summary>
         static TableRepas Salle(Transform parent, Vector3 position)
         {
             var go = new GameObject("TableSalle");
@@ -735,31 +741,56 @@ namespace Pizzeria3D
             go.transform.position = position;
             var t = go.transform;
 
-            var rouge = Bloc.Couleur(0xE2503A);
             var sombre = Bloc.Couleur(0x2B303A);
             var assise = Bloc.Couleur(0x3D8BE0);
 
-            Bloc.Galet("Plateau", t, new Vector3(0f, 0.78f, 0f), new Vector3(1.35f, 0.30f, 1.35f),
-                       rouge).SansCollision();
-            Bloc.Boite("Pied", t, new Vector3(0f, 0.36f, 0f), new Vector3(0.34f, 0.72f, 0.34f),
-                       sombre).SansCollision();
-            Bloc.Boite("Socle", t, new Vector3(0f, 0.06f, 0f), new Vector3(0.72f, 0.12f, 0.72f),
-                       sombre).SansCollision();
+            Bloc.Boite("Caisson", t, new Vector3(0f, 0.385f, 0f), new Vector3(1.50f, 0.77f, 1.00f),
+                       Bloc.Machine).SansCollision();
+            Bloc.Boite("Bandeau", t, new Vector3(0f, 0.18f, -0.51f), new Vector3(1.50f, 0.26f, 0.04f),
+                       Bloc.MachineBis).SansCollision();
+            // Le dessus deborde de part et d'autre, comme au comptoir : c'est
+            // ce debord qui le distingue d'un simple bloc.
+            Bloc.Boite("Plateau", t, new Vector3(0f, 0.82f, 0f), new Vector3(1.62f, 0.10f, 1.10f),
+                       Bloc.Metal).Poli(0.5f, 0.75f).SansCollision();
 
-            var siege = Chaise(t, new Vector3(-1.20f, 0f, 0f), 90f, sombre, assise);
-            Chaise(t, new Vector3(1.20f, 0f, 0f), -90f, sombre, assise);
+            var siege = Tabouret(t, new Vector3(-1.20f, 0f, 0f), sombre, assise);
+            Tabouret(t, new Vector3(1.20f, 0f, 0f), sombre, assise);
 
             Obstacles.Ajouter(position, 2.9f, 1.5f);
 
-            // l'assiette se pose sur le plateau, pas au pied de la table
+            // l'assiette se pose sur le dessus, pas au pied du comptoir
             var plateau = new GameObject("Assiette");
             plateau.transform.SetParent(t, false);
-            plateau.transform.localPosition = new Vector3(0f, 0.90f, 0f);
+            plateau.transform.localPosition = new Vector3(0f, 0.88f, 0f);
 
             var table = go.AddComponent<TableRepas>();
             table.Siege = siege;
             table.Plateau = plateau.transform;
             return table;
+        }
+
+        /// <summary>
+        /// Un tabouret de comptoir : assise ronde, pied unique, repose-pieds.
+        /// Sa hauteur est celle d'une chaise — c'est elle que connait la pose
+        /// assise, et un tabouret haut y suspendrait le client en l'air.
+        /// </summary>
+        static Transform Tabouret(Transform parent, Vector3 local, Color metal, Color assise)
+        {
+            var go = new GameObject("Chaise");
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = local;
+            var t = go.transform;
+
+            Bloc.Disque("Assise", t, new Vector3(0f, 0.46f, 0f), 0.50f, 0.10f, assise).SansCollision();
+            Bloc.Disque("Colonne", t, new Vector3(0f, 0.23f, 0f), 0.10f, 0.44f, metal)
+                .Poli(0.45f, 0.8f).SansCollision();
+            Bloc.Disque("Socle", t, new Vector3(0f, 0.03f, 0f), 0.42f, 0.06f, metal)
+                .Poli(0.45f, 0.8f).SansCollision();
+            // le repose-pieds : sans lui, le tabouret n'est qu'un champignon
+            Bloc.Disque("ReposePieds", t, new Vector3(0f, 0.17f, 0f), 0.30f, 0.04f, metal)
+                .Poli(0.45f, 0.8f).SansCollision();
+
+            return t;
         }
 
         /// <summary>
