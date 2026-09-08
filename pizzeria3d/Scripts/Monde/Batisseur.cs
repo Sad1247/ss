@@ -906,13 +906,14 @@ namespace Pizzeria3D
             // La bonbonne : translucide, comme sur le modele — on voit le
             // niveau de l'eau au travers. Un cylindre plein n'aurait ete
             // qu'un bidon bleu.
-            var bonbonne = Bloc.Disque("Bonbonne", t, new Vector3(0f, 1.60f, 0f), 0.44f, 0.52f, eau);
+            var bonbonne = Bloc.Disque("Bonbonne", t, new Vector3(0f, 1.63f, 0f), 0.44f, 0.58f, eau);
             bonbonne.GetComponent<MeshRenderer>().sharedMaterial = Bloc.Vitrage(eau, 0.62f);
             bonbonne.SansCollision();
-            // la levre du goulot, puis le bouchon
-            Bloc.Disque("Levre", t, new Vector3(0f, 1.845f, 0f), 0.46f, 0.05f, eauClaire)
+            // Le dessus est fait de trois cercles emboites, comme sur le
+            // modele : le bord de la bonbonne, une couronne, le bouchon.
+            Bloc.Disque("Levre", t, new Vector3(0f, 1.925f, 0f), 0.30f, 0.03f, eauClaire)
                 .SansCollision();
-            Bloc.Disque("Bouchon", t, new Vector3(0f, 1.885f, 0f), 0.18f, 0.05f, eauClaire)
+            Bloc.Disque("Bouchon", t, new Vector3(0f, 1.945f, 0f), 0.16f, 0.04f, eauClaire)
                 .SansCollision();
 
             Obstacles.Ajouter(centrePiece + local, 0.60f, 0.55f);

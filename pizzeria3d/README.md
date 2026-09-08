@@ -116,6 +116,8 @@ DUMP_UI_CIBLE=HudCanvas DUMP_UI=... mono h3d.exe   # ou celle du Hud
 python3 'pizzeria3d/Tests~/Rendu/interface.py' /tmp/ui.txt ui.png 0.55
 python3 'pizzeria3d/Tests~/Rendu/rendu.py' /tmp/scene.txt vue.png
 # cadrage : zoom=52 centre=11.5,4.6  (coordonnees ecran, pas monde)
+# un seul meuble, sous un autre angle, sur fond blanc :
+#   zone=3.3,11.35,0.9 cam=30,45 fond=ffffff
 ```
 
 Il compose maintenant les rotations entieres — le capot du portable se rabat

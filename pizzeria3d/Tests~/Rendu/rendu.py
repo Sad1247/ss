@@ -6,7 +6,7 @@ Cela suffit a repondre a "qu'est-ce que le joueur voit la ?".
 import math, sys
 from PIL import Image, ImageDraw
 
-CAM = (38.0, -45.0)          # les angles de la camera du jeu
+CAM = [38.0, -45.0]          # les angles de la camera du jeu, modifiables
 
 
 def axes():
@@ -55,7 +55,14 @@ def teinte(rgb, k):
 
 
 def main(source, sortie, largeur=1100, hauteur=900, zoom=None,
-         centre=None, cacher=()):
+         centre=None, cacher=(), garder=(), zone=None, fond=(150, 205, 120), cam=None):
+    if cam:
+        # On peut regarder la scene d'ailleurs que de la camera du jeu :
+        # pour comparer une piece a un modele dessine sous un autre angle.
+        CAM[0], CAM[1] = cam
+        global RIGHT, UP, FWD
+        RIGHT, UP, FWD = axes()
+
     objets = []
     for ligne in open(source):
         ligne = ligne.strip()
@@ -64,7 +71,13 @@ def main(source, sortie, largeur=1100, hauteur=900, zoom=None,
         nom, forme, pos, taille, rot, coul = ligne.split("|")
         if any(h in nom for h in cacher):
             continue
+        if garder and not any(g in nom for g in garder):
+            continue
         p = tuple(float(v) for v in pos.split())
+        # Ne garder qu'un morceau de la scene, autour d'un point : les noms
+        # se repetent d'un meuble a l'autre, la position, elle, est unique.
+        if zone and (p[0] - zone[0]) ** 2 + (p[2] - zone[1]) ** 2 > zone[2] ** 2:
+            continue
         s = tuple(float(v) for v in taille.split())
         alpha = int(coul[6:8], 16) / 255 if len(coul) == 8 else 1.0
         q = tuple(float(v) for v in rot.split())
@@ -85,7 +98,7 @@ def main(source, sortie, largeur=1100, hauteur=900, zoom=None,
         ey = max(y for _, y in pts) - min(y for _, y in pts)
         zoom = min(largeur / (ex + 2), hauteur / (ey + 2))
 
-    img = Image.new("RGB", (largeur, hauteur), (150, 205, 120))
+    img = Image.new("RGB", (largeur, hauteur), tuple(fond))
     d = ImageDraw.Draw(img)
     ecran = lambda c: (largeur / 2 + (dot(c, RIGHT) - cx) * zoom,
                        hauteur / 2 - (dot(c, UP) - cy) * zoom)
@@ -142,6 +155,12 @@ def normale(q):
 if __name__ == "__main__":
     args = dict(a.split("=", 1) for a in sys.argv[3:] if "=" in a)
     main(sys.argv[1], sys.argv[2],
+         largeur=int(args.get("largeur", 1100)), hauteur=int(args.get("hauteur", 900)),
          zoom=float(args["zoom"]) if "zoom" in args else None,
          centre=tuple(float(v) for v in args["centre"].split(",")) if "centre" in args else None,
-         cacher=tuple(args["cacher"].split(",")) if "cacher" in args else ())
+         cacher=tuple(args["cacher"].split(",")) if "cacher" in args else (),
+         garder=tuple(args["garder"].split(",")) if "garder" in args else (),
+         zone=tuple(float(v) for v in args["zone"].split(",")) if "zone" in args else None,
+         fond=tuple(int(args["fond"][i:i + 2], 16) for i in (0, 2, 4)) if "fond" in args
+              else (150, 205, 120),
+         cam=tuple(float(v) for v in args["cam"].split(",")) if "cam" in args else None)
