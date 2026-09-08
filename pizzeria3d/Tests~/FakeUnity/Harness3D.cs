@@ -991,19 +991,9 @@ static class Harness3D
         Check("une table est dressee dans la salle", tableSalle != null);
         if (tableSalle != null)
         {
-            // Meme facture que le comptoir de la caisse : caisson bleu et
-            // dessus metallique. C'est un comptoir ou l'on mange, plus une
-            // table ronde.
-            var caisson = CouleurDe(tableSalle.transform, "Caisson");
-            Check("son caisson est bleu comme celui de la caisse",
-                  caisson.r == Bloc.Machine.r && caisson.g == Bloc.Machine.g
-                  && caisson.b == Bloc.Machine.b);
-            var dessus = tableSalle != null ? Piece(tableSalle.transform, "Plateau") : null;
-            var matiereDessus = dessus != null
-                ? dessus.gameObject.GetComponent<MeshRenderer>().sharedMaterial : null;
-            Check("son dessus est metallique",
-                  matiereDessus != null && matiereDessus.GetFloat("_Metallic") > 0.5f);
-            Check("il a ses deux tabourets", Compte(tableSalle.transform, "Chaise", true) == 2);
+            var plateau = CouleurDe(tableSalle.transform, "Plateau");
+            Check("son plateau est rouge", plateau.r > plateau.g + 0.3f && plateau.r > plateau.b + 0.3f);
+            Check("elle a deux chaises", Compte(tableSalle.transform, "Chaise", true) == 2);
             Check("elle offre une place assise", tableSalle.Siege != null);
             Check("elle est libre au depart", tableSalle.EstLibre);
             Check("on ne traverse pas la table",
@@ -1013,9 +1003,8 @@ static class Harness3D
         }
         else
         {
-            Check("son caisson est bleu comme celui de la caisse", false);
-            Check("son dessus est metallique", false);
-            Check("il a ses deux tabourets", false);
+            Check("son plateau est rouge", false);
+            Check("elle a deux chaises", false);
             Check("elle offre une place assise", false);
             Check("elle est libre au depart", false);
             Check("on ne traverse pas la table", false);
