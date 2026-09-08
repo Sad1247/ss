@@ -39,6 +39,12 @@ namespace Pizzeria3D
         /// </summary>
         public bool Assis;
 
+        /// <summary>
+        /// De 0 a 1 : le bras droit se tend devant lui, assis. C'est le geste
+        /// qui ouvre le capot de l'ordinateur.
+        /// </summary>
+        public float BrasAvance;
+
         Vector3 _precedente;
         float _phase;
         float _allure;          // 0 a l'arret, 1 a pleine vitesse
@@ -113,7 +119,7 @@ namespace Pizzeria3D
             Tourner(GenouG, 78f);
             Tourner(GenouD, 78f);
             Tourner(EpauleG, -12f);
-            Tourner(EpauleD, -12f);
+            Tourner(EpauleD, Mathf.Lerp(-12f, -74f, Mathf.Clamp01(BrasAvance)));
 
             if (Corps == null) return;
             var p = Corps.localPosition;

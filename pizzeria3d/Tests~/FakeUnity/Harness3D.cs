@@ -97,34 +97,21 @@ static class Harness3D
     /// comprises : le faux Transform, lui, les ignore. Sans cette composition,
     /// un objet retourne par son porteur se mesurait a sa place d'origine.
     /// </summary>
-    static void Composer(Transform t, out Vector3 p, out Vector3 e, out float ry)
+    static void Composer(Transform t, out Vector3 p, out Vector3 e, out Quaternion rot)
     {
         p = t.localPosition;
         e = t.localScale;
-        ry = Angle(t.localRotation);
+        rot = t.localRotation;
         for (var q = t.parent; q != null; q = q.parent)
         {
             var s = q.localScale;
             p = new Vector3(p.x * s.x, p.y * s.y, p.z * s.z);
-            float a = Angle(q.localRotation);
-            if (Mathf.Abs(a) > 0.01f)
-            {
-                float r = a * Mathf.Deg2Rad;
-                float c = Mathf.Cos(r), si = Mathf.Sin(r);
-                p = new Vector3(p.x * c + p.z * si, p.y, -p.x * si + p.z * c);
-                ry += a;
-            }
+            p = q.localRotation * p;
+            rot = q.localRotation * rot;
             e = new Vector3(e.x * s.x, e.y * s.y, e.z * s.z);
             p = new Vector3(p.x + q.localPosition.x, p.y + q.localPosition.y,
                             p.z + q.localPosition.z);
         }
-    }
-
-    /// <summary>Un de ces textes contient-il ce fragment ?</summary>
-    static bool Contient(List<Text> textes, string fragment)
-    {
-        foreach (var t in textes) if (t.text.Contains(fragment)) return true;
-        return false;
     }
 
     /// <summary>Un pixel d'une texture, compare a une couleur attendue.</summary>
@@ -133,6 +120,13 @@ static class Harness3D
         if (tex == null || tex.Pixels == null) return false;
         var p = tex.Pixels[y * tex.width + x];
         return p.r == ((rgb >> 16) & 255) && p.g == ((rgb >> 8) & 255) && p.b == (rgb & 255);
+    }
+
+    /// <summary>Un de ces textes contient-il ce fragment ?</summary>
+    static bool Contient(List<Text> textes, string fragment)
+    {
+        foreach (var t in textes) if (t.text.Contains(fragment)) return true;
+        return false;
     }
 
     /// <summary>Ou se trouve vraiment un objet, une fois tout compose.</summary>
@@ -159,15 +153,19 @@ static class Harness3D
             for (var m = go.transform; m != null; m = m.parent) if (m == t) { sien = true; break; }
             if (!sien) continue;
 
-            Composer(go.transform, out var p, out var e, out float ry);
+            Composer(go.transform, out var p, out var e, out var rot);
 
-            float rad = ry * Mathf.Deg2Rad;
-            float co = Mathf.Abs(Mathf.Cos(rad)), si = Mathf.Abs(Mathf.Sin(rad));
-            float hx = (e.x * co + e.z * si) * 0.5f;
-            float hz = (e.x * si + e.z * co) * 0.5f;
+            // Les huit coins, tournes puis projetes : la formule en cosinus
+            // ne valait que pour un cap autour de Y.
+            foreach (float sx in new[] { -0.5f, 0.5f })
+            foreach (float sy in new[] { -0.5f, 0.5f })
+            foreach (float sz in new[] { -0.5f, 0.5f })
+            {
+                var coin = p + rot * new Vector3(e.x * sx, e.y * sy, e.z * sz);
+                x0 = Mathf.Min(x0, coin.x); x1 = Mathf.Max(x1, coin.x);
+                z0 = Mathf.Min(z0, coin.z); z1 = Mathf.Max(z1, coin.z);
+            }
 
-            x0 = Mathf.Min(x0, p.x - hx); x1 = Mathf.Max(x1, p.x + hx);
-            z0 = Mathf.Min(z0, p.z - hz); z1 = Mathf.Max(z1, p.z + hz);
             trouve = true;
         }
         return trouve;
@@ -490,36 +488,17 @@ static class Harness3D
                 var r = go.GetComponent<MeshRenderer>();
                 if (r == null || !r.enabled || r.sharedMaterial == null) continue;
 
-                // composition a la main : le faux Transform ignore rotations
-                // et echelles des parents
-                var p = go.transform.localPosition;
-                var e = go.transform.localScale;
-                float ry = Angle(go.transform.localRotation);
-                for (var t = go.transform.parent; t != null; t = t.parent)
-                {
-                    var s2 = t.localScale;
-                    p = new Vector3(p.x * s2.x, p.y * s2.y, p.z * s2.z);
-                    float a = Angle(t.localRotation);
-                    if (Mathf.Abs(a) > 0.01f)
-                    {
-                        float rad = a * Mathf.Deg2Rad;
-                        float c = Mathf.Cos(rad), si = Mathf.Sin(rad);
-                        p = new Vector3(p.x * c + p.z * si, p.y, -p.x * si + p.z * c);
-                        ry += a;
-                    }
-                    e = new Vector3(e.x * s2.x, e.y * s2.y, e.z * s2.z);
-                    p = new Vector3(p.x + t.localPosition.x, p.y + t.localPosition.y,
-                                    p.z + t.localPosition.z);
-                }
+                Composer(go.transform, out var p, out var e, out var rot);
 
-                // Un materiau imprime est blanc : c'est sa texture qui porte
-                // la couleur. Sans cette moyenne, le logo des cartons se
-                // dessinait en carre blanc, et le dessin mentait.
                 var c2 = Teinte(r.sharedMaterial);
                 int rgb = ((int)(c2.r * 255) << 16) | ((int)(c2.g * 255) << 8) | (int)(c2.b * 255);
                 int alpha = (int)(Mathf.Clamp01(c2.a) * 255);
+                // La rotation entiere, en quaternion : un cap autour de Y ne
+                // suffit plus depuis qu'un capot d'ordinateur se rabat.
                 f.WriteLine($"{go.name}|{go.Primitive}|{p.x:0.###} {p.y:0.###} {p.z:0.###}|" +
-                            $"{e.x:0.###} {e.y:0.###} {e.z:0.###}|{ry:0.##}|{rgb:x6}{alpha:x2}");
+                            $"{e.x:0.###} {e.y:0.###} {e.z:0.###}|" +
+                            $"{rot.x:0.####} {rot.y:0.####} {rot.z:0.####} {rot.w:0.####}|" +
+                            $"{rgb:x6}{alpha:x2}");
             }
         Console.WriteLine("scene ecrite dans " + chemin);
     }
@@ -1531,10 +1510,33 @@ static class Harness3D
         Check("le bureau a son ecran d'ordinateur", ecranBureau != null);
         Check("ferme tant qu'il n'est pas assis", ecranBureau != null && !ecranBureau.Ouvert);
 
+        var portable = UnityEngine.Object.FindObjectOfType<OrdinateurPortable>();
+        Check("le bureau a son portable", portable != null);
+        Check("il reste ferme tant que personne ne s'assoit",
+              portable != null && portable.Ferme);
+
         joueur.Portee.Vider();
         Placer(joueur, bureau.Place);
-        Secondes(0.5f);
-        Check("il s'ouvre quand il s'assoit", joueur.Assis && ecranBureau.Ouvert);
+        Secondes(0.2f);
+        Check("assis, le capot n'est pas encore leve", joueur.Assis && !portable.Ouvert);
+        Check("et l'ecran attend le capot", !ecranBureau.Ouvert);
+
+        // Il l'ouvre de la main : le bras se tend avant que le capot bouge.
+        bool mainVue = false, capotBougeApresLaMain = false, capotEnChemin = false;
+        for (int i = 0; i < 60 * 3; i++)
+        {
+            Frames(1);
+            if (portable.MainTendue) mainVue = true;
+            if (portable.Ouverture > 0.01f && !mainVue) capotBougeApresLaMain = true;
+            // Il se leve, il ne saute pas : sans cela on ne verrait jamais le
+            // geste, seulement un ecran apparu d'un coup.
+            if (portable.Ouverture > 0.05f && portable.Ouverture < 0.95f) capotEnChemin = true;
+        }
+        Check("il tend la main vers le capot", mainVue);
+        Check("le capot ne se leve pas avant la main", !capotBougeApresLaMain);
+        Check("le capot se leve progressivement", capotEnChemin);
+        Check("le capot finit leve", portable.Ouvert);
+        Check("et l'ecran s'affiche alors", joueur.Assis && ecranBureau.Ouvert);
         Check("il montre une ligne par employe",
               ecranBureau.Lignes == Personnel.Fiches.Count && ecranBureau.Lignes >= 2);
 
@@ -1585,6 +1587,8 @@ static class Harness3D
         PousserVers(joueur, bureau.Place + new Vector3(-1.5f, 0f, -1.2f), 0.6f);
         Frames(2);
         Check("il se referme quand il se leve", !joueur.Assis && !ecranBureau.Ouvert);
+        Secondes(1.5f);
+        Check("et le capot se rabat derriere lui", portable.Ferme);
 
         // --- l'ordinateur du bureau ---
         var ordi = Trouver("Ordinateur");

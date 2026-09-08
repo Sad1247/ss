@@ -74,7 +74,11 @@ namespace Pizzeria3D
                                () => caissier != null && caissier.activeSelf);
 
             racine.AddComponent<Hud>();
-            racine.AddComponent<EcranBureau>().Joueur = joueur;
+            var ecran = racine.AddComponent<EcranBureau>();
+            ecran.Joueur = joueur;
+            // Il n'apparait qu'une fois le capot leve : l'ordinateur est
+            // ferme tant que personne n'est assis.
+            ecran.Portable = _portable;
             racine.AddComponent<Manette>();
             Debug.Log("Pizzeria : scene prete. Maintiens le clic et glisse pour te deplacer.");
         }
@@ -84,6 +88,7 @@ namespace Pizzeria3D
         // La piece du fond et l'emplacement de sa dalle, poses pendant le decor
         // et repris au moment d'installer les zones d'achat.
         static GameObject _piece;
+        static OrdinateurPortable _portable;
         static Vector3 _pieceEtSaDalle;
         static Joueur _joueur;
 
@@ -766,6 +771,7 @@ namespace Pizzeria3D
             var bureau = go.AddComponent<Bureau>();
             bureau.Joueur = joueur;
             bureau.Siege = siege;
+            if (_portable != null) _portable.Bureau = bureau;
             return bureau;
         }
 
@@ -804,21 +810,31 @@ namespace Pizzeria3D
             Bloc.Boite("Charniere", t, new Vector3(0f, 0.035f, 0.265f),
                        new Vector3(0.74f, 0.03f, 0.04f), aluSombre).SansCollision();
 
-            // Le capot : le dos d'aluminium, puis l'ecran pose devant. D'une
-            // seule boite, l'affichage aurait l'epaisseur du capot.
-            Bloc.Boite("Capot", t, new Vector3(0f, 0.28f, 0.275f),
+            // Tout le capot pend a un pivot pose sur la charniere : c'est lui
+            // qu'on fait tourner pour ouvrir et fermer le portable.
+            var pivot = new GameObject("Capot");
+            pivot.transform.SetParent(t, false);
+            pivot.transform.localPosition = new Vector3(0f, 0.05f, 0.265f);
+            var cp = pivot.transform;
+
+            // Le dos d'aluminium, puis l'ecran pose devant. D'une seule boite,
+            // l'affichage aurait l'epaisseur du capot.
+            Bloc.Boite("Dos", cp, new Vector3(0f, 0.23f, 0.010f),
                        new Vector3(0.74f, 0.48f, 0.025f), alu).SansCollision();
-            Bloc.Boite("Ecran", t, new Vector3(0f, 0.285f, 0.260f),
+            Bloc.Boite("Ecran", cp, new Vector3(0f, 0.235f, -0.005f),
                        new Vector3(0.70f, 0.44f, 0.008f), dalle).SansCollision();
-            Bloc.Boite("Affichage", t, new Vector3(0f, 0.285f, 0.255f),
+            Bloc.Boite("Affichage", cp, new Vector3(0f, 0.235f, -0.010f),
                        new Vector3(0.66f, 0.38f, 0.006f), fond).SansCollision();
             // barre des menus et dock : c'est a cela qu'on le reconnait d'un
             // coup d'oeil, a la taille ou il apparait a l'ecran
-            Bloc.Boite("BarreMenus", t, new Vector3(0f, 0.460f, 0.254f),
+            Bloc.Boite("BarreMenus", cp, new Vector3(0f, 0.410f, -0.011f),
                        new Vector3(0.66f, 0.03f, 0.006f), clair).SansCollision();
-            Bloc.Boite("Dock", t, new Vector3(0f, 0.118f, 0.254f),
+            Bloc.Boite("Dock", cp, new Vector3(0f, 0.068f, -0.011f),
                        new Vector3(0.34f, 0.035f, 0.006f), clair).SansCollision();
 
+            var portable = go.AddComponent<OrdinateurPortable>();
+            portable.Capot = cp;
+            _portable = portable;
             return t;
         }
 

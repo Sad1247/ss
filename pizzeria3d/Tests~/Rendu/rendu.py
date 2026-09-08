@@ -24,15 +24,25 @@ RIGHT, UP, FWD = axes()
 dot = lambda a, b: a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
 
 
-def boite(p, s, ry):
-    a = math.radians(ry)
-    c, si = math.cos(a), math.sin(a)
+def tourner(q, v):
+    """Applique un quaternion (x, y, z, w) a un vecteur."""
+    qx, qy, qz, qw = q
+    ix = qw * v[0] + qy * v[2] - qz * v[1]
+    iy = qw * v[1] + qz * v[0] - qx * v[2]
+    iz = qw * v[2] + qx * v[1] - qy * v[0]
+    iw = -qx * v[0] - qy * v[1] - qz * v[2]
+    return (ix * qw + iw * -qx + iy * -qz - iz * -qy,
+            iy * qw + iw * -qy + iz * -qx - ix * -qz,
+            iz * qw + iw * -qz + ix * -qy - iy * -qx)
+
+
+def boite(p, s, q):
     coins = []
     for dx in (-.5, .5):
         for dy in (-.5, .5):
             for dz in (-.5, .5):
-                x, y, z = dx * s[0], dy * s[1], dz * s[2]
-                coins.append((p[0] + x * c + z * si, p[1] + y, p[2] - x * si + z * c))
+                r = tourner(q, (dx * s[0], dy * s[1], dz * s[2]))
+                coins.append((p[0] + r[0], p[1] + r[1], p[2] + r[2]))
     # 6 faces, par indices dans la liste ci-dessus (ordre dx,dy,dz)
     faces = [(0, 1, 3, 2), (4, 6, 7, 5), (0, 4, 5, 1),
              (2, 3, 7, 6), (0, 2, 6, 4), (1, 5, 7, 3)]
@@ -51,18 +61,19 @@ def main(source, sortie, largeur=1100, hauteur=900, zoom=None,
         ligne = ligne.strip()
         if not ligne:
             continue
-        nom, forme, pos, taille, ry, coul = ligne.split("|")
+        nom, forme, pos, taille, rot, coul = ligne.split("|")
         if any(h in nom for h in cacher):
             continue
         p = tuple(float(v) for v in pos.split())
         s = tuple(float(v) for v in taille.split())
         alpha = int(coul[6:8], 16) / 255 if len(coul) == 8 else 1.0
-        objets.append((nom, forme, p, s, float(ry), int(coul[:6], 16), alpha))
+        q = tuple(float(v) for v in rot.split())
+        objets.append((nom, forme, p, s, q, int(coul[:6], 16), alpha))
 
     # cadrage
     pts = []
-    for _, _, p, s, ry, _, _a in objets:
-        coins, _f = boite(p, s, ry)
+    for _, _, p, s, q, _, _a in objets:
+        coins, _f = boite(p, s, q)
         pts += [(dot(c, RIGHT), dot(c, UP)) for c in coins]
     if centre:
         cx, cy = centre
@@ -81,8 +92,8 @@ def main(source, sortie, largeur=1100, hauteur=900, zoom=None,
 
     # peintre : du plus loin au plus proche
     dessins = []
-    for nom, forme, p, s, ry, coul, alpha in objets:
-        coins, faces = boite(p, s, ry)
+    for nom, forme, p, s, q, coul, alpha in objets:
+        coins, faces = boite(p, s, q)
         prof = max(dot(c, FWD) for c in coins)
         dessins.append((prof, nom, forme, coins, faces, coul, alpha))
     dessins.sort(key=lambda o: -o[0])

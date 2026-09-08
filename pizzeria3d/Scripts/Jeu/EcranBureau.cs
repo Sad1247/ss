@@ -23,6 +23,8 @@ namespace Pizzeria3D
         static readonly Color Gris = Bloc.Couleur(0x8A8A8A);
 
         public Joueur Joueur;
+        /// <summary>Le portable du bureau : l'ecran suit son capot.</summary>
+        public OrdinateurPortable Portable;
 
         GameObject _ecran;
         Text[] _statuts;
@@ -43,7 +45,9 @@ namespace Pizzeria3D
         void Update()
         {
             if (Joueur == null) Joueur = Object.FindObjectOfType<Joueur>();
-            bool voulu = Joueur != null && Joueur.Assis;
+            bool voulu = Portable != null
+                ? Portable.Ouvert
+                : Joueur != null && Joueur.Assis;
             if (voulu != Ouvert) _ecran.SetActive(voulu);
             if (voulu) Rafraichir();
         }
