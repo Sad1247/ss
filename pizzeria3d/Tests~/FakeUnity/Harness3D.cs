@@ -614,6 +614,58 @@ static class Harness3D
         // essais se joue en plein service, horloge arretee.
         horloge.Avancer(Reglages.HeureOuverture * 60f);
 
+        // --- l'avance rapide ---
+        var avance = UnityEngine.Object.FindObjectOfType<Acceleration>();
+        Check("le jeu a son avance rapide", avance != null);
+        Check("il tourne a vitesse normale au depart",
+              !avance.Rapide && Time.timeScale == 1f);
+
+        // La touche bascule, et c'est tout le jeu qui accelere : le temps
+        // d'Unity lui-meme, donc le four et les clients avec l'horloge.
+        Input.Enfoncer(avance.Touche);
+        Frames(1);
+        Input.Relacher(avance.Touche);
+        Frames(1);
+        Check("une touche passe le jeu en avance rapide",
+              avance.Rapide && Mathf.Abs(Time.timeScale - 4f) < 0.01f);
+
+        // Mesure de face : en avance rapide, l'horloge avance quatre fois plus.
+        horloge.Figee = false;
+        float avantRapide = horloge.MinutesDepuisMinuit;
+        Secondes(10f);
+        float enRapide = horloge.MinutesDepuisMinuit - avantRapide;
+
+        Input.Enfoncer(avance.Touche);
+        Frames(1);
+        Input.Relacher(avance.Touche);
+        Frames(1);
+        Check("la meme touche revient a la vitesse normale",
+              !avance.Rapide && Time.timeScale == 1f);
+
+        float avantNormal = horloge.MinutesDepuisMinuit;
+        Secondes(10f);
+        float enNormal = horloge.MinutesDepuisMinuit - avantNormal;
+        horloge.Figee = true;
+        Check("dix secondes en rapide valent quatre fois dix secondes normales",
+              Mathf.Abs(enRapide - 4f * enNormal) < 2f);
+
+        // Le doigt aussi : sur telephone il n'y a pas de clavier.
+        var boutonVitesse = Trouver("BoutonVitesse");
+        Check("un bouton du Hud fait la meme chose", boutonVitesse != null);
+        var appuiVitesse = boutonVitesse != null
+            ? boutonVitesse.GetComponent<Button>() : null;
+        Check("il est cliquable", appuiVitesse != null && appuiVitesse.Cliquer());
+        Frames(1);
+        Check("le doigt aussi passe en x4", avance.Rapide && Time.timeScale == 4f);
+        var lireVitesse = boutonVitesse != null ? Piece(boutonVitesse.transform, "Texte") : null;
+        Check("et le bouton affiche x4",
+              lireVitesse != null && lireVitesse.gameObject.GetComponent<Text>().text == "x4");
+        appuiVitesse.Cliquer();
+        Frames(1);
+        Check("un second appui revient a x1",
+              !avance.Rapide && lireVitesse.gameObject.GetComponent<Text>().text == "x1");
+        Check("et le temps d'Unity avec", Time.timeScale == 1f);
+
         Check("l'anticrenelage est pousse", QualitySettings.antiAliasing >= 8);
         Check("les ombres portent jusqu'au fond de la salle",
               QualitySettings.shadowDistance >= 40f);

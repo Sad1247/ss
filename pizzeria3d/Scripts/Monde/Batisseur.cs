@@ -79,6 +79,7 @@ namespace Pizzeria3D
 
             // L'horloge avant le Hud : celui-ci lit l'heure des sa premiere image.
             racine.AddComponent<Horloge>();
+            racine.AddComponent<Acceleration>();
             racine.AddComponent<Hud>();
             var ecran = racine.AddComponent<EcranBureau>();
             ecran.Joueur = joueur;

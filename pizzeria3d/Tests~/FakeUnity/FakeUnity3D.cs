@@ -229,8 +229,10 @@ namespace UnityEngine
 
         public static void Frame(float dt)
         {
-            Time.deltaTime = dt;
-            Time.time += dt;
+            // Unity livre un deltaTime deja mis a l'echelle : sans cela,
+            // accelerer le jeu ne changerait rien ici.
+            Time.deltaTime = dt * Time.timeScale;
+            Time.time += Time.deltaTime;
             // Unity cesse d'appeler Update sur un objet detruit : sans cette
             // regle, un objet supprime continuerait de jouer sa logique ici.
             Comportements.RemoveAll(mb => mb.gameObject == null || mb.gameObject.Detruit);
@@ -486,6 +488,8 @@ namespace UnityEngine
     public static class Screen { public static int width = 1080, height = 1920; }
 
     /// <summary>Entrees simulees : le harnais pilote le doigt.</summary>
+    public enum KeyCode { None = 0, Space = 32, Tab = 9, T = 116, Alpha1 = 49, Alpha4 = 52 }
+
     public static class Input
     {
         public static Vector3 mousePosition;
@@ -494,7 +498,26 @@ namespace UnityEngine
         public static bool GetMouseButton(int b) => Boutons[b];
         public static bool GetMouseButtonDown(int b) => Boutons[b] && !BoutonsPrecedents[b];
         public static bool GetMouseButtonUp(int b) => !Boutons[b] && BoutonsPrecedents[b];
-        public static void FinDeFrame() { for (int i = 0; i < Boutons.Length; i++) BoutonsPrecedents[i] = Boutons[i]; }
+
+        static readonly System.Collections.Generic.HashSet<KeyCode> Touches =
+            new System.Collections.Generic.HashSet<KeyCode>();
+        static readonly System.Collections.Generic.HashSet<KeyCode> TouchesPrecedentes =
+            new System.Collections.Generic.HashSet<KeyCode>();
+
+        public static bool GetKey(KeyCode k) => Touches.Contains(k);
+        public static bool GetKeyDown(KeyCode k) => Touches.Contains(k) && !TouchesPrecedentes.Contains(k);
+        public static bool GetKeyUp(KeyCode k) => !Touches.Contains(k) && TouchesPrecedentes.Contains(k);
+
+        /// <summary>Le banc d'essai appuie et relache les touches lui-meme.</summary>
+        public static void Enfoncer(KeyCode k) => Touches.Add(k);
+        public static void Relacher(KeyCode k) => Touches.Remove(k);
+
+        public static void FinDeFrame()
+        {
+            for (int i = 0; i < Boutons.Length; i++) BoutonsPrecedents[i] = Boutons[i];
+            TouchesPrecedentes.Clear();
+            foreach (var k in Touches) TouchesPrecedentes.Add(k);
+        }
     }
 
     public static class Random
@@ -608,6 +631,11 @@ namespace UnityEngine
     {
         public static float deltaTime;
         public static float time;   // avance avec les images simulees
+        /// <summary>
+        /// Comme dans Unity : deltaTime est deja multiplie par cette echelle.
+        /// C'est par elle que passe l'acceleration du jeu.
+        /// </summary>
+        public static float timeScale = 1f;
     }
 
     public class RectOffset

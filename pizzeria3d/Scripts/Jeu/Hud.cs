@@ -28,7 +28,8 @@ namespace Pizzeria3D
         }
 
         static Hud _instance;
-        Text _argent, _indice, _annonce, _portees, _heure, _service;
+        Text _argent, _indice, _annonce, _portees, _heure, _service, _vitesse;
+        Image _fondVitesse;
         Joueur _joueur;
         float _tempsAnnonce;
 
@@ -96,6 +97,30 @@ namespace Pizzeria3D
             rs.anchoredPosition = new Vector2(0f, -62f);
             rs.sizeDelta = new Vector2(0f, 34f);
 
+            // L'avance rapide : une touche au clavier, ce bouton au doigt.
+            // Sur telephone il n'y a pas de clavier — sans lui, la fonction
+            // n'existerait pas.
+            var bouton = new GameObject("BoutonVitesse", typeof(RectTransform));
+            bouton.transform.SetParent(canvasGo.transform, false);
+            var rb = bouton.GetComponent<RectTransform>();
+            rb.anchorMin = new Vector2(0.5f, 1f); rb.anchorMax = new Vector2(0.5f, 1f);
+            rb.pivot = new Vector2(0.5f, 1f);
+            rb.anchoredPosition = new Vector2(0f, -140f);
+            rb.sizeDelta = new Vector2(160f, 88f);
+            _fondVitesse = bouton.AddComponent<Image>();
+            _fondVitesse.color = Bloc.Couleur(0x1E2430);
+
+            _vitesse = Texte(bouton.transform, police, "x1", 44, TextAnchor.MiddleCenter,
+                             Color.white);
+            Etirer(_vitesse.GetComponent<RectTransform>());
+
+            var appui = bouton.AddComponent<Button>();
+            appui.targetGraphic = _fondVitesse;
+            appui.onClick.AddListener(() =>
+            {
+                if (Acceleration.Active != null) Acceleration.Active.Basculer();
+            });
+
             // pile portee : sans ce compteur, rien ne dit au joueur qu'il a
             // bien charge des pizzas au four
             _portees = Texte(canvasGo.transform, police, "", 44, TextAnchor.UpperLeft, Color.white);
@@ -138,6 +163,14 @@ namespace Pizzeria3D
                 bool ouverte = Horloge.Active.Ouverte;
                 _service.text = ouverte ? "OUVERT" : "FERME";
                 _service.color = ouverte ? Bloc.Couleur(0x8CE99A) : Bloc.Couleur(0xFF8A7A);
+            }
+
+            if (Acceleration.Active != null)
+            {
+                bool rapide = Acceleration.Active.Rapide;
+                _vitesse.text = "x" + (int)Acceleration.Active.FacteurCourant;
+                _fondVitesse.color = rapide ? Bloc.Couleur(0xE9A123) : Bloc.Couleur(0x1E2430);
+                _vitesse.color = rapide ? Bloc.Couleur(0x2A1A00) : Color.white;
             }
 
             _indice.text = Indice ?? "";
