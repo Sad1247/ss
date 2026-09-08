@@ -44,6 +44,17 @@ namespace Pizzeria3D
         {
             _instance = this;
 
+            // Sans EventSystem dans la scene, aucun bouton ne recoit de clic :
+            // c'est lui qui distribue les evenements. La scene etant montee
+            // entierement par code, personne ne l'aurait cree.
+            if (Object.FindObjectOfType<UnityEngine.EventSystems.EventSystem>() == null)
+            {
+                var evenements = new GameObject("EventSystem");
+                evenements.transform.SetParent(transform, false);
+                evenements.AddComponent<UnityEngine.EventSystems.EventSystem>();
+                evenements.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
+            }
+
             var canvasGo = new GameObject("HudCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
             canvasGo.transform.SetParent(transform, false);
             var canvas = canvasGo.GetComponent<Canvas>();

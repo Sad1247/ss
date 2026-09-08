@@ -89,7 +89,7 @@ namespace UnityEngine
         static void Reveiller(GameObject go)
         {
             foreach (var c in new List<Component>(go.Composants))
-                if (c is MonoBehaviour mb) mb.Invoquer("OnEnable");
+                if (c is MonoBehaviour mb) Scene.Reveiller(mb);
             foreach (var e in new List<Transform>(go.transform.Enfants))
                 if (e.gameObject.Actif) Reveiller(e.gameObject);
         }
@@ -139,7 +139,15 @@ namespace UnityEngine
             var c = (Component)Activator.CreateInstance(t);
             c.gameObject = this;
             Composants.Add(c);
-            if (c is MonoBehaviour mb) { Scene.Enregistrer(mb); mb.Invoquer("Awake"); }
+            if (c is MonoBehaviour mb)
+            {
+                Scene.Enregistrer(mb);
+                // Unity n'eveille un composant que si son objet est actif — et
+                // il enchaine alors Awake ET OnEnable. Ajoute a un objet
+                // eteint, il attend l'allumage. Sans cette regle, un employe
+                // bati puis eteint s'annoncait quand meme au comptoir.
+                if (ActifDansHierarchie) Scene.Reveiller(mb);
+            }
             return c;
         }
 
@@ -225,7 +233,20 @@ namespace UnityEngine
         static readonly HashSet<MonoBehaviour> Demarres = new HashSet<MonoBehaviour>();
 
         public static void Enregistrer(MonoBehaviour mb) => Comportements.Add(mb);
-        public static void Reinitialiser() { Comportements.Clear(); Demarres.Clear(); Object.Tous.Clear(); }
+
+        static readonly HashSet<MonoBehaviour> Eveilles = new HashSet<MonoBehaviour>();
+
+        /// <summary>
+        /// Le reveil d'un composant : Awake une seule fois dans sa vie, puis
+        /// OnEnable a chaque allumage — l'ordre et la regle d'Unity.
+        /// </summary>
+        public static void Reveiller(MonoBehaviour mb)
+        {
+            if (Eveilles.Add(mb)) mb.Invoquer("Awake");
+            mb.Invoquer("OnEnable");
+        }
+        public static void Reinitialiser()
+        { Comportements.Clear(); Demarres.Clear(); Eveilles.Clear(); Object.Tous.Clear(); }
 
         public static void Frame(float dt)
         {
@@ -487,6 +508,18 @@ namespace UnityEngine
 
     public static class Screen { public static int width = 1080, height = 1920; }
 
+    namespace EventSystems
+    {
+        /// <summary>
+        /// Sans lui, aucun bouton d'interface ne recoit de clic dans Unity :
+        /// c'est lui qui distribue les evenements aux elements survolés.
+        /// </summary>
+        public class EventSystem : Behaviour { public static EventSystem current; }
+
+        /// <summary>Le module qui lit la souris et le doigt pour l'EventSystem.</summary>
+        public class StandaloneInputModule : Behaviour { }
+    }
+
     /// <summary>Entrees simulees : le harnais pilote le doigt.</summary>
     public enum KeyCode { None = 0, Space = 32, Tab = 9, T = 116, Alpha1 = 49, Alpha4 = 52 }
 
@@ -745,8 +778,3 @@ namespace UnityEngine.UI
     public class GraphicRaycaster : Behaviour { }
 }
 
-namespace UnityEngine.EventSystems
-{
-    public class EventSystem : Behaviour { }
-    public class StandaloneInputModule : Behaviour { }
-}

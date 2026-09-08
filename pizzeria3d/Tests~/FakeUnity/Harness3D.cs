@@ -614,6 +614,13 @@ static class Harness3D
         // essais se joue en plein service, horloge arretee.
         horloge.Avancer(Reglages.HeureOuverture * 60f);
 
+        // Sans EventSystem, aucun bouton d'interface ne recoit de clic : le
+        // bouton d'avance rapide etait bien la, mais mort sous le doigt.
+        Check("la scene a un EventSystem",
+              UnityEngine.Object.FindObjectOfType<UnityEngine.EventSystems.EventSystem>() != null);
+        Check("et son module d'entree",
+              UnityEngine.Object.FindObjectOfType<UnityEngine.EventSystems.StandaloneInputModule>() != null);
+
         // --- l'avance rapide ---
         var avance = UnityEngine.Object.FindObjectOfType<Acceleration>();
         Check("le jeu a son avance rapide", avance != null);
@@ -907,6 +914,12 @@ static class Harness3D
 
         Check("la piece attend, cachee",
               Trouver("PetitePiece") != null && !Trouver("PetitePiece").activeSelf);
+        // Cachee ne suffit pas : batie sans etre eteinte d'abord, elle liberait
+        // le pas de sa porte et repoussait la limite du terrain des la
+        // construction — on entrait dans une piece qu'on n'avait pas payee.
+        Check("et son pas de porte est encore barre",
+              Obstacles.Bloque(new Vector3(4.56f, 0f, 7.2f), Reglages.RayonJoueur));
+        Check("le terrain s'arrete avant elle", Obstacles.DemiTerrainZ < 9f);
 
         var dallePiece = ZoneDePrix(Reglages.PrixPetitePiece);
         Check("une dalle a 400 attend devant la porte",

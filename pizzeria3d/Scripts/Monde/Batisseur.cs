@@ -302,6 +302,10 @@ namespace Pizzeria3D
             var go = new GameObject("PetitePiece");
             go.transform.SetParent(parent, false);
             go.transform.position = centre;
+            // Eteinte avant d'etre batie, pour la meme raison que l'employe :
+            // sinon elle liberait le pas de sa porte et repoussait la limite
+            // du terrain des la construction, avant tout achat.
+            go.SetActive(false);
             var t = go.transform;
 
             // Les pans de cote descendent jusqu'au mur du fond, qui est a
@@ -350,7 +354,6 @@ namespace Pizzeria3D
             discrets.DemiX = demiX;
             discrets.DemiZ = demiZ;
 
-            go.SetActive(false);
             return go;
         }
 
@@ -502,6 +505,11 @@ namespace Pizzeria3D
             var go = new GameObject("Caissier");
             go.transform.SetParent(parent, false);
             go.transform.position = position;
+            // Eteint AVANT d'etre equipe. Unity eveille un composant des qu'on
+            // l'ajoute a un objet actif : monte puis eteint, l'employe avait
+            // deja pris son poste et le comptoir le croyait embauche — il
+            // etait la sans qu'on ait paye la dalle verte.
+            go.SetActive(false);
             var membres = Personnage.Construire(go.transform, Bloc.Couleur(0x7BC86B),
                                                Bloc.Couleur(0xF4F1EA));
             Marche(go, membres, Reglages.VitesseCaissier);
@@ -514,7 +522,6 @@ namespace Pizzeria3D
             // en ligne droite, il traverserait le comptoir
             c.Relais = new Vector3(0.5f, 0f, 3.2f);
 
-            go.SetActive(false);
             return go;
         }
 
