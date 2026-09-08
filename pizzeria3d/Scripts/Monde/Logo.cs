@@ -3,10 +3,10 @@ using UnityEngine;
 namespace Pizzeria3D
 {
     /// <summary>
-    /// Le logo de l'enseigne, dessine pixel par pixel a l'execution : disque
-    /// orange, fond rouge, part de pizza et le nom dessous. Comme tout le
-    /// reste du jeu, il ne vient d'aucun fichier a importer — le projet n'a
-    /// pas un seul asset.
+    /// Le logo imprime sur le couvercle des cartons, dessine pixel par pixel
+    /// a l'execution : cerne sombre, couronne jaune, coeur orange et la part
+    /// de pizza dessus. Comme tout le reste du jeu, il ne vient d'aucun
+    /// fichier a importer — le projet n'a pas un seul asset.
     /// </summary>
     public static class Logo
     {
@@ -29,31 +29,28 @@ namespace Pizzeria3D
             tex.filterMode = FilterMode.Bilinear;
             _px = new Color32[Taille * Taille];
 
-            var fond     = Bloc.Couleur(0x1E1B26);
-            var orange   = Bloc.Couleur(0xF5A623);
-            var rouge    = Bloc.Couleur(0xE04A2F);
-            var creme    = Bloc.Couleur(0xF2E3B3);
-            var pepper   = Bloc.Couleur(0xC33A2A);
-            var trait    = Bloc.Couleur(0x1E1B26);
+            var trait   = Bloc.Couleur(0x1E1B26);
+            var jaune   = Bloc.Couleur(0xF0A93C);
+            var orange  = Bloc.Couleur(0xE8562A);
+            var creme   = Bloc.Couleur(0xF2DFA8);
+            var pepper  = Bloc.Couleur(0xC33A2A);
 
-            for (int i = 0; i < _px.Length; i++) _px[i] = fond;
+            // Le fond est celui du couvercle : l'etiquette est une plaque
+            // carree, et hors du disque elle doit se confondre avec le carton.
+            for (int i = 0; i < _px.Length; i++) _px[i] = Bloc.CartonClair;
 
-            // la pastille : couronne orange, coeur rouge
-            Disque(64f, 80f, 45f, orange);
-            Disque(64f, 80f, 38f, rouge);
+            Disque(64f, 64f, 52f, trait);     // le cerne sombre
+            Disque(64f, 64f, 47f, jaune);     // la couronne
+            Disque(64f, 64f, 40f, orange);    // le coeur
 
-            // La part, cerclee de sombre : sans le trait, la creme et
-            // l'orange se touchent et la pointe disparait.
-            Triangle(64f, 118f, 33f, 45f, 95f, 45f, 2.5f, trait);
-            Triangle(64f, 118f, 33f, 45f, 95f, 45f, 0f, creme);
+            // La part, cerclee comme sur le dessin : pointe vers le haut a
+            // droite, base vers le bas a gauche.
+            Triangle(94f, 90f, 32f, 60f, 58f, 26f, 3f, trait);
+            Triangle(94f, 90f, 32f, 60f, 58f, 26f, 0f, creme);
 
-            // le pepperoni, du plus haut au plus bas
-            Pastille(71f, 99f, 4.5f, pepper, trait);
-            Pastille(57f, 85f, 6.5f, pepper, trait);
-            Pastille(76f, 71f, 5.5f, pepper, trait);
-            Pastille(57f, 63f, 4.5f, pepper, trait);
-
-            Ecrire("PIZZAMAX", 17, 12, 2, creme);
+            Pastille(72f, 66f, 4f, pepper, trait);
+            Pastille(58f, 54f, 4.5f, pepper, trait);
+            Pastille(48f, 47f, 3.5f, pepper, trait);
 
             tex.SetPixels32(_px);
             tex.Apply(false);
@@ -126,49 +123,5 @@ namespace Pizzeria3D
         static float Cote(float px, float py, float ax, float ay, float bx, float by)
             => (px - bx) * (ay - by) - (ax - bx) * (py - by);
 
-        // Une fonte 5x7, juste les lettres du nom : importer une police pour
-        // huit caracteres serait le seul asset du projet.
-        static readonly string[] Alphabet = { "P", "I", "Z", "A", "M", "X" };
-        static readonly string[] Glyphes =
-        {
-            "11110" + "10001" + "10001" + "11110" + "10000" + "10000" + "10000",   // P
-            "11111" + "00100" + "00100" + "00100" + "00100" + "00100" + "11111",   // I
-            "11111" + "00001" + "00010" + "00100" + "01000" + "10000" + "11111",   // Z
-            "01110" + "10001" + "10001" + "11111" + "10001" + "10001" + "10001",   // A
-            "10001" + "11011" + "10101" + "10001" + "10001" + "10001" + "10001",   // M
-            "10001" + "10001" + "01010" + "00100" + "01010" + "10001" + "10001",   // X
-        };
-
-        static void Ecrire(string mot, int x0, int y0, int echelle, Color couleur)
-        {
-            var teinte = (Color32)couleur;
-            int x = x0;
-            foreach (char lettre in mot)
-            {
-                int index = -1;
-                for (int i = 0; i < Alphabet.Length; i++)
-                    if (Alphabet[i][0] == lettre) index = i;
-                if (index >= 0) Glyphe(Glyphes[index], x, y0, echelle, teinte);
-                x += 6 * echelle;
-            }
-        }
-
-        static void Glyphe(string forme, int x0, int y0, int echelle, Color32 teinte)
-        {
-            for (int l = 0; l < 7; l++)
-            for (int c = 0; c < 5; c++)
-            {
-                if (forme[l * 5 + c] != '1') continue;
-                // la premiere ligne du dessin est le HAUT de la lettre
-                int bx = x0 + c * echelle, by = y0 + (6 - l) * echelle;
-                for (int dy = 0; dy < echelle; dy++)
-                for (int dx = 0; dx < echelle; dx++)
-                {
-                    int x = bx + dx, y = by + dy;
-                    if (x < 0 || y < 0 || x >= Taille || y >= Taille) continue;
-                    _px[y * Taille + x] = teinte;
-                }
-            }
-        }
     }
 }

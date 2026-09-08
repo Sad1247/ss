@@ -24,8 +24,11 @@ namespace Pizzeria3D
             racine.transform.localPosition = new Vector3(0f, index * Reglages.EpaisseurPlateau, 0f);
             if (dansLaLongueur) racine.transform.localRotation = Quaternion.Euler(0f, 90f, 0f);
 
-            var corps = Bloc.Couleur(0xB4462F);
-            var rebord = Bloc.Couleur(0x8E3220);
+            // Ardoise, et non plus rouge : depuis que le carton a pizza est
+            // rouge lui aussi, deux piles rouges cote a cote au comptoir ne se
+            // distinguaient plus — or c'est tout l'interet du plateau.
+            var corps = Bloc.Couleur(0x3E4650);
+            var rebord = Bloc.Couleur(0x2B313A);
 
             Bloc.Boite("Fond", racine.transform, new Vector3(0f, 0.03f, 0f),
                        new Vector3(Cote, 0.06f, Profondeur), corps).SansCollision();

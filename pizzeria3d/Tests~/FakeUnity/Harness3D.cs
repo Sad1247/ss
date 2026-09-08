@@ -1929,11 +1929,24 @@ static class Harness3D
         // Le dessin lui-meme, releve au pixel : le fond sombre dans un coin,
         // la couronne orange, le rouge du disque, la creme de la part et
         // celle du nom dessous.
-        Check("le logo a son fond sombre", Pixel(image, 4, 4, 0x1E1B26));
-        Check("sa couronne orange", Pixel(image, 64, 122, 0xF5A623));
-        Check("son disque rouge", Pixel(image, 30, 80, 0xE04A2F));
-        Check("sa part de pizza", Pixel(image, 64, 60, 0xF2E3B3));
-        Check("et le nom de l'enseigne dessous", Pixel(image, 17, 13, 0xF2E3B3));
+        Check("le logo a son cerne sombre", Pixel(image, 64, 114, 0x1E1B26));
+        Check("sa couronne jaune", Pixel(image, 64, 108, 0xF0A93C));
+        Check("son coeur orange", Pixel(image, 30, 64, 0xE8562A));
+        Check("sa part de pizza", Pixel(image, 66, 58, 0xF2DFA8));
+
+        // Le carton du modele est rouge, et l'etiquette est une plaque
+        // carree : hors du disque, elle doit se confondre avec le couvercle,
+        // sans quoi on verrait un cadre pose dessus.
+        var couvercle = Piece(cartonTemoin.transform, "Couvercle");
+        var teinteCouvercle = couvercle != null
+            ? couvercle.gameObject.GetComponent<MeshRenderer>().sharedMaterial.color
+            : Color.white;
+        Check("le carton est rouge",
+              teinteCouvercle.r > 0.6f && teinteCouvercle.g < 0.35f && teinteCouvercle.b < 0.30f);
+        Check("le fond de l'etiquette est celui du couvercle",
+              Pixel(image, 4, 4, ((int)(teinteCouvercle.r * 255) << 16)
+                               | ((int)(teinteCouvercle.g * 255) << 8)
+                               | (int)(teinteCouvercle.b * 255)));
         // Une texture posee sur la peinture blanche partagee se serait
         // retrouvee sur tout ce qui est blanc dans la pizzeria.
         Check("le logo ne deteint pas sur la peinture blanche",
