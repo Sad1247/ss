@@ -20,7 +20,7 @@ namespace Pizzeria3D
     public sealed class Caissier : MonoBehaviour
     {
         enum Etat { Poste, VersTable, Travaille, VersFour, Ramasse, VersComptoir,
-                    VersSalle, VersPoubelle }
+                    VersSalle, VersPoubelle, SEnVa }
 
         public Comptoir Comptoir;
         public Four Four;
@@ -54,9 +54,64 @@ namespace Pizzeria3D
         /// <summary>Vrai quand il transporte les restes d'un repas.</summary>
         public bool PorteDesOrdures => _ordures != null;
 
+        /// <summary>
+        /// Vrai une fois embauche, et pour de bon : il rentre chez lui chaque
+        /// soir, ce qui eteint son objet, mais il reste de la maison.
+        /// </summary>
+        public bool Embauche { get; private set; }
+
+        GameObject _sac;
+        /// <summary>Vrai quand il a mis son sac a dos pour rentrer.</summary>
+        public bool PorteSonSac => _sac != null;
+        /// <summary>Vrai pendant qu'il quitte la pizzeria.</summary>
+        public bool SEnVa => _etat == Etat.SEnVa;
+
         void OnEnable()
         {
+            Embauche = true;
             if (Comptoir != null) Comptoir.CaissierPresent = true;
+        }
+
+        void OnDisable()
+        {
+            if (Comptoir != null) Comptoir.CaissierPresent = false;
+        }
+
+        /// <summary>Il revient prendre son service : sac range, retour au poste.</summary>
+        public void Reprendre()
+        {
+            gameObject.SetActive(true);
+            // Dit sans detour plutot que par OnEnable : la caisse doit etre
+            // tenue des cette image, pas a la suivante.
+            if (Comptoir != null) Comptoir.CaissierPresent = true;
+            transform.position = Poste;
+            _etat = Etat.Poste;
+            _passeParRelais = false;
+            RangerLeSac();
+        }
+
+        void PrendreLeSac()
+        {
+            if (_sac != null) return;
+            _sac = new GameObject("SacADos");
+            _sac.transform.SetParent(transform, false);
+            _sac.transform.localPosition = new Vector3(0f, 0.95f, -0.30f);
+            var toile = Bloc.Couleur(0x2E6B4F);
+            var sangle = Bloc.Couleur(0x1F4A36);
+            Bloc.Galet("Poche", _sac.transform, Vector3.zero,
+                       new Vector3(0.46f, 0.56f, 0.28f), toile).SansCollision();
+            Bloc.Boite("Rabat", _sac.transform, new Vector3(0f, 0.16f, -0.02f),
+                       new Vector3(0.42f, 0.18f, 0.26f), sangle).SansCollision();
+            foreach (float x in new[] { -0.14f, 0.14f })
+                Bloc.Boite("Bretelle", _sac.transform, new Vector3(x, 0.02f, 0.20f),
+                           new Vector3(0.07f, 0.52f, 0.06f), sangle).SansCollision();
+        }
+
+        void RangerLeSac()
+        {
+            if (_sac == null) return;
+            Destroy(_sac);
+            _sac = null;
         }
 
         void Awake()
@@ -81,13 +136,40 @@ namespace Pizzeria3D
                 case Etat.VersComptoir: Aller(Poste, Etat.Poste); break;
                 case Etat.VersSalle:    Aller(DevantLaSalle(), Etat.VersPoubelle, Debarrasser); break;
                 case Etat.VersPoubelle: Aller(Poubelle, Etat.Poste, Jeter); break;
+                case Etat.SEnVa:        Rentrer(); break;
             }
         }
 
         // ------------------------------------------------------------------
 
+        /// <summary>
+        /// L'heure de rentrer. Il pose ce qu'il porte, met son sac et sort par
+        /// la meme porte que les clients ; son objet s'eteint une fois dehors,
+        /// et le comptoir le rappellera demain a l'ouverture.
+        /// </summary>
+        void Rentrer()
+        {
+            PrendreLeSac();
+            var sortie = Comptoir != null ? Comptoir.PointDeSortie
+                                          : transform.position + Vector3.back * 12f;
+            // Le relais ne sert qu'a contourner le comptoir vers le four : en
+            // sortant, il prend le chemin des clients.
+            _passeParRelais = false;
+            if (!Avancer(sortie)) return;
+            if (Comptoir != null) Comptoir.CaissierPresent = false;
+            gameObject.SetActive(false);
+        }
+
+        /// <summary>Vrai des que sa journee est finie.</summary>
+        bool FinDeService => Horloge.Active != null
+                          && Horloge.Active.Heures >= Reglages.HeureDepartCaissier;
+
         void Attendre()
         {
+            // Sa journee est finie : il debarrasse ce qu'il a en main plus
+            // tard, demain. Le service passe avant, pas apres.
+            if (FinDeService) { Decharger(); _etat = Etat.SEnVa; return; }
+
             Decharger();
             if (!_portee.EstVide || Four == null || Comptoir == null || Table == null) return;
 

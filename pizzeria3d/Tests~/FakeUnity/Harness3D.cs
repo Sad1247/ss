@@ -122,6 +122,15 @@ static class Harness3D
         return p.r == ((rgb >> 16) & 255) && p.g == ((rgb >> 8) & 255) && p.b == (rgb & 255);
     }
 
+    /// <summary>Pose l'aiguille sur l'heure demandee, sans attendre le temps reel.</summary>
+    static void PoserLHeure(Horloge horloge, int heure)
+    {
+        float but = heure * 60f;
+        if (horloge.MinutesDepuisMinuit > but) but += 24f * 60f;
+        horloge.Avancer(but - horloge.MinutesDepuisMinuit);
+        Frames(2);
+    }
+
     /// <summary>Un de ces textes contient-il ce fragment ?</summary>
     static bool Contient(List<Text> textes, string fragment)
     {
@@ -534,6 +543,13 @@ static class Harness3D
         Batisseur.Monter();
         Frames(2);
 
+        // Le temps est arrete pour la plus grande partie des essais : sinon la
+        // journee defile sous eux, la pizzeria ferme a vingt et une heures et
+        // les clients cessent d'arriver au milieu d'une verification. Le
+        // service, lui, s'eprouve plus bas, l'horloge en main.
+        var pendule = UnityEngine.Object.FindObjectOfType<Horloge>();
+        if (pendule != null) pendule.Figee = true;
+
         Check("la camera de la scene est reutilisee, pas doublee",
               TousLes<UnityEngine.Camera>().Count == 1);
         // Trois lumieres : le soleil qui porte les ombres, un appoint froid,
@@ -562,7 +578,9 @@ static class Harness3D
         // Deux minutes de jeu par seconde reelle : trente secondes de manette
         // font une heure de service.
         float avantHorloge = horloge.MinutesDepuisMinuit;
+        horloge.Figee = false;
         Secondes(30f);
+        horloge.Figee = true;
         float ecoule = horloge.MinutesDepuisMinuit - avantHorloge;
         Check("le temps passe a vitesse doublee",
               Mathf.Abs(ecoule - 30f * Reglages.MinutesParSeconde) < 1f);
@@ -570,14 +588,14 @@ static class Harness3D
               Mathf.Abs(ecoule - 60f) < 1f);
 
         // L'heure s'affiche en haut de l'ecran, et c'est bien celle-la.
-        var pendule = Trouver("Pendule");
-        Check("l'heure s'affiche en haut de l'ecran", pendule != null);
-        var texteHeure = pendule != null ? Piece(pendule.transform, "Texte") : null;
+        var cadran = Trouver("Pendule");
+        Check("l'heure s'affiche en haut de l'ecran", cadran != null);
+        var texteHeure = cadran != null ? Piece(cadran.transform, "Texte") : null;
         var luHeure = texteHeure != null ? texteHeure.gameObject.GetComponent<Text>() : null;
         Check("elle est calee en haut, au centre",
-              pendule != null
-              && pendule.GetComponent<RectTransform>().anchorMin.y == 1f
-              && Mathf.Abs(pendule.GetComponent<RectTransform>().anchorMin.x - 0.5f) < 0.01f);
+              cadran != null
+              && cadran.GetComponent<RectTransform>().anchorMin.y == 1f
+              && Mathf.Abs(cadran.GetComponent<RectTransform>().anchorMin.x - 0.5f) < 0.01f);
         Check("et c'est bien l'heure de l'horloge",
               luHeure != null && luHeure.text == horloge.Affichage);
 
@@ -591,6 +609,10 @@ static class Harness3D
         horloge.Avancer(1f);
         Check("passe minuit, le jour suivant commence", horloge.Jour == jourAvantMinuit + 1);
         Check("et l'heure repart du debut", horloge.Heures == 0);
+
+        // On remet l'aiguille a l'ouverture pour la suite : le reste des
+        // essais se joue en plein service, horloge arretee.
+        horloge.Avancer(Reglages.HeureOuverture * 60f);
 
         Check("l'anticrenelage est pousse", QualitySettings.antiAliasing >= 8);
         Check("les ombres portent jusqu'au fond de la salle",
@@ -1637,17 +1659,30 @@ static class Harness3D
         Check("et la masse salariale aussi",
               Contient(lignesUI, "Masse salariale : " + Personnel.MasseSalariale + " / jour"));
 
-        // Le statut suit l'embauche pour de bon : poste vide, poste pourvu.
-        employe.SetActive(false);
-        Frames(2);
-        Check("un poste vacant se lit comme tel", Contient(lignesUI, "Poste vacant"));
-        Check("et il ne compte pas dans la paie",
-              Personnel.MasseSalariale == Reglages.SalairePatron);
-        employe.SetActive(true);
-        Frames(2);
-        Check("une fois embauche, il passe en poste", Contient(lignesUI, "En poste"));
+        // Chaque ligne dit ce que dit le registre, et rien d'autre.
+        bool statutsFideles = true;
+        for (int i = 0; i < Personnel.Fiches.Count; i++)
+        {
+            var attendu = Personnel.Fiches[i].EstEmbauche ? "En poste" : "Poste vacant";
+            if (ecranBureau.Statut(i) != attendu) statutsFideles = false;
+        }
+        Check("chaque ligne affiche le statut du registre", statutsFideles);
+        Check("le caissier embauche est en poste", Contient(lignesUI, "En poste"));
         Check("et la paie le compte",
               Personnel.MasseSalariale == Reglages.SalairePatron + Reglages.SalaireCaissier);
+
+        // La regle de la paie, eprouvee de face sur une fiche d'essai : un
+        // poste vacant ne se paie pas.
+        int paieAvant = Personnel.MasseSalariale;
+        bool posteTenu = false;
+        Personnel.Inscrire("Essai", "Poste d'essai", 30, () => posteTenu);
+        Check("un poste vacant ne compte pas dans la paie",
+              Personnel.MasseSalariale == paieAvant);
+        posteTenu = true;
+        Check("une fois pourvu, il s'y ajoute",
+              Personnel.MasseSalariale == paieAvant + 30);
+        Personnel.Retirer("Essai");
+        Check("la fiche d'essai est bien retiree", Personnel.MasseSalariale == paieAvant);
 
         // Les colonnes d'une meme ligne ne se marchent pas dessus : a
         // l'ecran, deux cadres qui se recouvrent, c'est du texte par-dessus
@@ -2117,6 +2152,60 @@ static class Harness3D
         }
         Check("le joueur encaisse les liasses laissees par le caissier",
               liasses.Count == 0 || Banque.Solde > soldeAvant);
+
+        // --- la fermeture, le soir ---
+        // Tout ce qui suit se joue l'horloge en main : on la pose a l'heure
+        // voulue au lieu d'attendre douze minutes de manette.
+        Placer(joueur, new Vector3(-9f, 0f, -9f));      // il ne gene rien
+        var enseigne = UnityEngine.Object.FindObjectOfType<Enseigne>();
+        Check("le comptoir a son panneau de service", enseigne != null);
+
+        PoserLHeure(horloge, Reglages.HeureFermeture - 1);
+        Check("une heure avant la fermeture, c'est encore ouvert",
+              horloge.Ouverte && enseigne.MontreOuvert);
+        int arriveesAvant = comptoir.Arrivees;
+        Secondes(Reglages.DelaiClient * 2f);
+        Check("et les clients continuent d'arriver", comptoir.Arrivees > arriveesAvant);
+
+        PoserLHeure(horloge, Reglages.HeureFermeture);
+        Check("a vingt et une heures, la pizzeria est fermee", !horloge.Ouverte);
+        Check("le panneau passe au rouge", !enseigne.MontreOuvert);
+        var panneauFerme = Piece(enseigne.transform, "Panneau");
+        var couleurFermee = panneauFerme.gameObject.GetComponent<MeshRenderer>().sharedMaterial.color;
+        Check("et il est bien rouge, pas vert",
+              couleurFermee.r > couleurFermee.g + 0.2f && couleurFermee.r > couleurFermee.b + 0.2f);
+        Check("le Hud l'annonce aussi", Contient(TousLes<Text>(), "FERME"));
+
+        arriveesAvant = comptoir.Arrivees;
+        Secondes(Reglages.DelaiClient * 3f);
+        Check("plus personne ne pousse la porte", comptoir.Arrivees == arriveesAvant);
+
+        // --- le caissier rentre chez lui ---
+        var employeCaissier = employe.GetComponent<Caissier>();
+        Check("a la fermeture, le caissier est encore la",
+              employe.activeSelf && !employeCaissier.PorteSonSac);
+
+        PoserLHeure(horloge, Reglages.HeureDepartCaissier);
+        bool sacVu = false;
+        for (int i = 0; i < 60 * 40 && employe.activeSelf; i++)
+        {
+            Frames(1);
+            if (employeCaissier.PorteSonSac) sacVu = true;
+        }
+        Check("a vingt-deux heures il prend son sac a dos", sacVu);
+        Check("et il s'en va", !employe.activeSelf);
+        Check("le comptoir n'est plus tenu par personne", !comptoir.CaissierPresent);
+        // Parti pour la nuit, il n'est pas licencie pour autant.
+        Check("il reste embauche au registre", employeCaissier.Embauche);
+
+        PoserLHeure(horloge, Reglages.HeureOuverture);
+        Frames(4);
+        Check("le lendemain a l'ouverture, il est de retour", employe.activeSelf);
+        Check("sans son sac", !employeCaissier.PorteSonSac);
+        Check("et de nouveau a son poste",
+              (employe.transform.position - employeCaissier.Poste).magnitude < 0.5f);
+        Check("le panneau repasse au vert", enseigne.MontreOuvert);
+        horloge.Figee = true;
 
         var erreurs = new List<string>();
         foreach (var l in Debug.Journal) if (l.StartsWith("ERROR")) erreurs.Add(l);

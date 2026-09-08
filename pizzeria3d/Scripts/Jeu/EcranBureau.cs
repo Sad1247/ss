@@ -36,6 +36,11 @@ namespace Pizzeria3D
         /// <summary>Combien de lignes de personnel sont affichees.</summary>
         public int Lignes => _statuts != null ? _statuts.Length : 0;
 
+        /// <summary>Le statut affiche sur la ligne demandee.</summary>
+        public string Statut(int ligne)
+            => _statuts != null && ligne >= 0 && ligne < _statuts.Length
+               ? _statuts[ligne].text : null;
+
         void Awake()
         {
             Construire();

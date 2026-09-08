@@ -40,6 +40,10 @@ namespace Pizzeria3D
         public static void Inscrire(string nom, string poste, int salaire, Func<bool> embauche = null)
             => _fiches.Add(new Fiche { Nom = nom, Poste = poste, Salaire = salaire, Embauche = embauche });
 
+        /// <summary>Raye une fiche du registre, par son nom.</summary>
+        public static void Retirer(string nom)
+            => _fiches.RemoveAll(f => f.Nom == nom);
+
         /// <summary>Vide le registre : la scene peut etre remontee d'un essai a l'autre.</summary>
         public static void Vider() => _fiches.Clear();
     }

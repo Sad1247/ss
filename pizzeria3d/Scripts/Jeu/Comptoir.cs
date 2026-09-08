@@ -23,8 +23,17 @@ namespace Pizzeria3D
         /// <summary>Vrai des qu'un employe tient la caisse a la place du joueur.</summary>
         public bool CaissierPresent;
 
+        /// <summary>
+        /// L'employe, meme rentre chez lui : c'est le comptoir qui le rappelle
+        /// a l'ouverture, lui-meme etant eteint et incapable de le faire.
+        /// </summary>
+        public Caissier Employe;
+
         readonly List<Client> _file = new List<Client>();
         float _compteurArrivee;
+
+        /// <summary>Combien de clients ont pousse la porte depuis l'ouverture.</summary>
+        public int Arrivees { get; private set; }
 
         public int PlacesLibres => Reglages.FileMax - _file.Count;
         public int TailleFile => _file.Count;
@@ -37,8 +46,21 @@ namespace Pizzeria3D
             if (Plateaux != null) Plateaux.Max = Reglages.PlateauxAuComptoir;
         }
 
+        /// <summary>
+        /// Rouvre : l'employe rentre de sa nuit. Un objet eteint n'execute
+        /// rien, c'est donc au comptoir de le reveiller.
+        /// </summary>
+        void RappelerLEmploye()
+        {
+            if (Employe == null || !Employe.Embauche) return;
+            if (Employe.gameObject.activeSelf) return;
+            if (Horloge.Active == null || !Horloge.Active.Ouverte) return;
+            Employe.Reprendre();
+        }
+
         void Update()
         {
+            RappelerLEmploye();
             Recevoir();
             FaireVenir();
             Ranger();
@@ -88,11 +110,15 @@ namespace Pizzeria3D
 
         void FaireVenir()
         {
+            // Passe l'heure de fermeture, plus personne n'entre. Ceux qui sont
+            // deja dans la file, eux, sont servis jusqu'au dernier.
+            if (Horloge.Active != null && !Horloge.Active.Ouverte) return;
             if (PlacesLibres <= 0) return;
             _compteurArrivee += Time.deltaTime;
             if (_compteurArrivee < Reglages.DelaiClient) return;
             _compteurArrivee = 0f;
             _file.Add(Client.Creer(this, _file.Count));
+            Arrivees++;
         }
 
         void Ranger()

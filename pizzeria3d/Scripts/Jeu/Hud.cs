@@ -28,7 +28,7 @@ namespace Pizzeria3D
         }
 
         static Hud _instance;
-        Text _argent, _indice, _annonce, _portees, _heure;
+        Text _argent, _indice, _annonce, _portees, _heure, _service;
         Joueur _joueur;
         float _tempsAnnonce;
 
@@ -78,9 +78,23 @@ namespace Pizzeria3D
             rh.sizeDelta = new Vector2(360f, 100f);
             pendule.AddComponent<Image>().color = Bloc.Couleur(0x1E2430);
 
-            _heure = Texte(pendule.transform, police, "", 46, TextAnchor.MiddleCenter,
+            _heure = Texte(pendule.transform, police, "", 46, TextAnchor.UpperCenter,
                            Bloc.Couleur(0xFFE7A8));
-            Etirer(_heure.GetComponent<RectTransform>());
+            var rt2 = _heure.GetComponent<RectTransform>();
+            rt2.anchorMin = new Vector2(0f, 1f); rt2.anchorMax = new Vector2(1f, 1f);
+            rt2.pivot = new Vector2(0.5f, 1f);
+            rt2.anchoredPosition = new Vector2(0f, -8f);
+            rt2.sizeDelta = new Vector2(0f, 56f);
+
+            // OUVERT / FERME sous l'heure : c'est la reponse a « pourquoi
+            // plus personne n'entre ? ».
+            _service = Texte(pendule.transform, police, "", 30, TextAnchor.UpperCenter,
+                             Bloc.Couleur(0x8CE99A));
+            var rs = _service.GetComponent<RectTransform>();
+            rs.anchorMin = new Vector2(0f, 1f); rs.anchorMax = new Vector2(1f, 1f);
+            rs.pivot = new Vector2(0.5f, 1f);
+            rs.anchoredPosition = new Vector2(0f, -62f);
+            rs.sizeDelta = new Vector2(0f, 34f);
 
             // pile portee : sans ce compteur, rien ne dit au joueur qu'il a
             // bien charge des pizzas au four
@@ -118,7 +132,13 @@ namespace Pizzeria3D
                     ? $"Pizzas portees : {_joueur.Portee.Nombre} / {Reglages.CapacitePortee}"
                     : "";
 
-            if (Horloge.Active != null) _heure.text = Horloge.Active.Affichage;
+            if (Horloge.Active != null)
+            {
+                _heure.text = Horloge.Active.Affichage;
+                bool ouverte = Horloge.Active.Ouverte;
+                _service.text = ouverte ? "OUVERT" : "FERME";
+                _service.color = ouverte ? Bloc.Couleur(0x8CE99A) : Bloc.Couleur(0xFF8A7A);
+            }
 
             _indice.text = Indice ?? "";
             if (_tempsAnnonce > 0f)

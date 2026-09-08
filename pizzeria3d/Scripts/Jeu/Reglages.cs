@@ -84,6 +84,13 @@ namespace Pizzeria3D
 
         /// <summary>L'heure a laquelle la pizzeria ouvre, le premier jour.</summary>
         public const int HeureOuverture = 9;
+        /// <summary>Passe cette heure, plus personne ne pousse la porte.</summary>
+        public const int HeureFermeture = 21;
+        /// <summary>
+        /// L'heure a laquelle le caissier prend son sac et rentre chez lui. Une
+        /// heure apres la fermeture : il finit de servir ceux qui sont entres.
+        /// </summary>
+        public const int HeureDepartCaissier = 22;
         /// <summary>
         /// Vitesse de l'horloge : deux minutes de jeu par seconde reelle. Une
         /// journee de service tient ainsi en douze minutes de jeu.

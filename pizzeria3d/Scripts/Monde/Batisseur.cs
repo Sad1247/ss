@@ -47,6 +47,7 @@ namespace Pizzeria3D
             // joueur qui longe le comptoir.
             var caissier = Caissier(racine.transform, comptoir, four.GetComponent<Four>(),
                                     table, new Vector3(3.6f, 0f, 2.05f));
+            comptoir.Employe = caissier.GetComponent<Caissier>();
             Zone(racine.transform, joueur, caissier, new Vector3(2.5f, 0f, 3.0f),
                  Reglages.PrixCaissier, "Embaucher un caissier");
             Zone(racine.transform, joueur, _piece, _pieceEtSaDalle,
@@ -70,8 +71,11 @@ namespace Pizzeria3D
             // caissier n'y figure en poste qu'une fois embauche.
             Personnel.Vider();
             Personnel.Inscrire("Vous", "Pizzaiolo", Reglages.SalairePatron);
+            // Embauche, et non presence : il rentre chez lui chaque soir, il
+            // n'en est pas moins de la maison.
+            var employeur = caissier.GetComponent<Caissier>();
             Personnel.Inscrire("Caissier", "Comptoir", Reglages.SalaireCaissier,
-                               () => caissier != null && caissier.activeSelf);
+                               () => employeur != null && employeur.Embauche);
 
             // L'horloge avant le Hud : celui-ci lit l'heure des sa premiere image.
             racine.AddComponent<Horloge>();
@@ -600,6 +604,19 @@ namespace Pizzeria3D
             var plateaux = new GameObject("Plateaux");
             plateaux.transform.SetParent(go.transform, false);
             plateaux.transform.localPosition = new Vector3(1.5f, 1.25f, 0f);
+
+            // Le panneau du service, pose sur le coin du comptoir, face aux
+            // clients qui arrivent — donc face a la camera.
+            var pied = new GameObject("Enseigne");
+            pied.transform.SetParent(go.transform, false);
+            pied.transform.localPosition = new Vector3(-1.35f, 1.23f, -0.72f);
+            Bloc.Boite("Montant", pied.transform, new Vector3(0f, 0.16f, 0f),
+                       new Vector3(0.06f, 0.32f, 0.06f), Bloc.Taupe).SansCollision();
+            var panneau = Bloc.Boite("Panneau", pied.transform, new Vector3(0f, 0.46f, 0f),
+                                     new Vector3(0.72f, 0.34f, 0.05f), Bloc.Couleur(0x36B04A))
+                              .SansCollision();
+            var enseigne = pied.AddComponent<Enseigne>();
+            enseigne.Panneau = panneau.GetComponent<MeshRenderer>();
 
             var file = new GameObject("PointFile");
             file.transform.SetParent(go.transform, false);

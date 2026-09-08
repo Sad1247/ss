@@ -26,13 +26,27 @@ namespace Pizzeria3D
         public string Heure => Heures.ToString("00") + ":" + Minutes.ToString("00");
         public string Affichage => "Jour " + Jour + "   " + Heure;
 
+        /// <summary>Vrai pendant le service : la pizzeria accueille du monde.</summary>
+        public bool Ouverte => Heures >= Reglages.HeureOuverture
+                            && Heures < Reglages.HeureFermeture;
+
+        /// <summary>
+        /// Arrete le temps. Sert au banc d'essai, qui doit pouvoir eprouver le
+        /// service sans que la journee defile sous lui — et servira a la pause.
+        /// </summary>
+        public bool Figee;
+
         void Awake()
         {
             Active = this;
             MinutesDepuisMinuit = Reglages.HeureOuverture * 60f;
         }
 
-        void Update() => Avancer(Reglages.MinutesParSeconde * Time.deltaTime);
+        void Update()
+        {
+            if (Figee) return;
+            Avancer(Reglages.MinutesParSeconde * Time.deltaTime);
+        }
 
         /// <summary>
         /// Fait avancer l'heure. Une boucle et non un simple test pour le
