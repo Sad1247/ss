@@ -312,6 +312,10 @@ namespace Pizzeria3D
             var p = go.AddComponent<PetitePiece>();
             p.Passage = seuil;
             p.Gond = gond;
+            p.Joueur = joueur;
+            // le pas de la porte : le porteur du gond, et non le gond lui-meme,
+            // qui est decale sur le montant
+            p.Seuil = gond.parent != null ? gond.parent.position : gond.position;
             p.DemiTerrainZ = centre.z + demiZ - 0.85f;
 
             // Les pans qui s'interposent entre la camera et la piece : son

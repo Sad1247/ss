@@ -22,7 +22,15 @@ namespace Pizzeria3D
 
         void Update()
         {
-            if (Joueur == null || Siege == null || Joueur.Assis) return;
+            if (Joueur == null || Siege == null) return;
+
+            if (Joueur.Assis)
+            {
+                // Ecarte du fauteuil autrement qu'a la manette, il resterait
+                // assis dans le vide, jambes pliees au milieu de la piece.
+                if (!Joueur.EstPres(Place, Rayon)) Joueur.SeLever();
+                return;
+            }
 
             // Les mains pleines, il reste debout : sa pile de pizzas resterait
             // suspendue en l'air pendant que le buste plonge dans le fauteuil.

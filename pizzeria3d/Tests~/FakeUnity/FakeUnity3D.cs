@@ -530,6 +530,9 @@ namespace UnityEngine
         public static float Min(float a, float b) => Math.Min(a, b);
         public static float Lerp(float a, float b, float t) => a + (b - a) * Clamp01(t);
         public static float Clamp(float v, float a, float b) => v < a ? a : v > b ? b : v;
+        public static float MoveTowards(float de, float vers, float pas)
+            => Abs(vers - de) <= pas ? vers : de + Sign(vers - de) * pas;
+        public static float Sign(float f) => f < 0f ? -1f : 1f;
         public static int Min(int a, int b) => Math.Min(a, b);
     }
 

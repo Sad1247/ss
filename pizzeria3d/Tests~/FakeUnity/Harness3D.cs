@@ -1410,6 +1410,39 @@ static class Harness3D
         Check("les mains pleines, il ne s'assoit pas", !joueur.Assis);
         joueur.Portee.Vider();
 
+        // --- la porte du bureau s'ouvre a l'approche, et se referme derriere ---
+        var porteDuBureau = laPiece.GetComponent<PetitePiece>();
+        var devantLaPorte = new Vector3(porte.transform.position.x, 0f,
+                                        porte.transform.position.z - 1.2f);
+        Placer(joueur, new Vector3(0f, 0f, 0f));        // au milieu de la salle
+        Secondes(1.5f);
+        Check("la porte du bureau reste fermee au repos", !porteDuBureau.Ouverte);
+        Placer(joueur, devantLaPorte);
+        Secondes(1.5f);
+        Check("elle s'ouvre quand le patron s'approche", porteDuBureau.Ouverte);
+        // Un pas au-dela du seuil : il est encore tout pres de la porte, et
+        // pourtant elle doit se refermer derriere lui.
+        Placer(joueur, new Vector3(porte.transform.position.x, 0f,
+                                   porte.transform.position.z + porteDuBureau.Profondeur + 0.3f));
+        Secondes(1.5f);
+        Check("et se referme derriere lui une fois entre", !porteDuBureau.Ouverte);
+        Placer(joueur, bureau.Place);
+        Secondes(1.5f);
+        Check("elle reste fermee pendant qu'il est a son bureau", !porteDuBureau.Ouverte);
+        Placer(joueur, devantLaPorte);
+        Secondes(1.5f);
+        Check("elle se rouvre pour le laisser ressortir", porteDuBureau.Ouverte);
+        // Elle pivote, elle ne saute pas d'une image a l'autre.
+        Placer(joueur, new Vector3(0f, 0f, 0f));
+        Frames(2);
+        Check("le battant pivote au lieu de claquer", porteDuBureau.Ouverte);
+        Secondes(1.5f);
+        Check("puis se referme", !porteDuBureau.Ouverte);
+        // Il s'est assis en chemin : ecarte du fauteuil, il doit se relever
+        // tout seul — sinon il traverse la suite des essais dans la pose du
+        // fauteuil.
+        Check("ecarte du fauteuil, il se releve", !joueur.Assis);
+
         Placer(joueur, new Vector3(0f, 0f, 0f));
         Frames(2);
         Check("et ils reviennent quand on ressort", TousVisibles(discrets));
