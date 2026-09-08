@@ -873,8 +873,9 @@ namespace Pizzeria3D
             var inoxClair = Bloc.Couleur(0xD5DBE1);
             var noir = Bloc.Couleur(0x22262B);
             var creux = Bloc.Couleur(0x101215);
-            var eau = Bloc.Couleur(0x7FC3E8);
-            var eauClaire = Bloc.Couleur(0xBEE4F6);
+            var eau = Bloc.Couleur(0x3E9BD0);
+            var eauDessus = Bloc.Couleur(0x9FD8F0);
+            var eauClaire = Bloc.Couleur(0xD5EFFC);
 
             Bloc.Boite("Socle", t, new Vector3(0f, 0.05f, 0f), new Vector3(0.58f, 0.10f, 0.54f),
                        noir).SansCollision();
@@ -903,17 +904,16 @@ namespace Pizzeria3D
                        new Vector3(0.26f, 0.02f, 0.13f), inoxClair)
                 .Poli(0.5f, 0.8f).SansCollision();
 
-            // La bonbonne : translucide, comme sur le modele — on voit le
-            // niveau de l'eau au travers. Un cylindre plein n'aurait ete
-            // qu'un bidon bleu.
-            var bonbonne = Bloc.Disque("Bonbonne", t, new Vector3(0f, 1.63f, 0f), 0.44f, 0.58f, eau);
-            bonbonne.GetComponent<MeshRenderer>().sharedMaterial = Bloc.Vitrage(eau, 0.62f);
-            bonbonne.SansCollision();
-            // Le dessus est fait de trois cercles emboites, comme sur le
-            // modele : le bord de la bonbonne, une couronne, le bouchon.
-            Bloc.Disque("Levre", t, new Vector3(0f, 1.925f, 0f), 0.30f, 0.03f, eauClaire)
+            // La bonbonne : un cylindre bleu franc, plus large que haut, dont
+            // la base s'enfonce dans le collier. Translucide, elle se delavait
+            // sur le fond clair de la piece au lieu de se voir.
+            Bloc.Disque("Bonbonne", t, new Vector3(0f, 1.57f, 0f), 0.50f, 0.44f, eau)
                 .SansCollision();
-            Bloc.Disque("Bouchon", t, new Vector3(0f, 1.945f, 0f), 0.16f, 0.04f, eauClaire)
+            // Le dessus, en deux cercles emboites : la surface de l'eau, puis
+            // le bouchon plus pale au centre.
+            Bloc.Disque("Levre", t, new Vector3(0f, 1.795f, 0f), 0.42f, 0.03f, eauDessus)
+                .SansCollision();
+            Bloc.Disque("Bouchon", t, new Vector3(0f, 1.815f, 0f), 0.20f, 0.03f, eauClaire)
                 .SansCollision();
 
             Obstacles.Ajouter(centrePiece + local, 0.60f, 0.55f);
