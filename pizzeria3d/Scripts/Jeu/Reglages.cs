@@ -92,10 +92,11 @@ namespace Pizzeria3D
         /// </summary>
         public const int HeureDepartCaissier = 22;
         /// <summary>
-        /// Vitesse de l'horloge : deux minutes de jeu par seconde reelle. Une
-        /// journee de service tient ainsi en douze minutes de jeu.
+        /// Vitesse de l'horloge : deux secondes de jeu par seconde reelle.
+        /// L'aiguille des secondes tourne donc deux fois plus vite qu'une
+        /// vraie ; l'avance rapide multiplie encore cela par quatre.
         /// </summary>
-        public const float MinutesParSeconde = 2f;
+        public const float SecondesParSeconde = 2f;
         /// <summary>La piece qui s'ouvre derriere la porte du fond.</summary>
         public const int PrixPetitePiece = 400;
         public const float DebitAchat = 45f;        // euros par seconde en restant dessus

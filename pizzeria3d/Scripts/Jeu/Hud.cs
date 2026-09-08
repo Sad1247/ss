@@ -28,8 +28,7 @@ namespace Pizzeria3D
         }
 
         static Hud _instance;
-        Text _argent, _indice, _annonce, _portees, _heure, _service, _vitesse;
-        Image _fondVitesse;
+        Text _argent, _indice, _annonce, _portees, _heure, _service;
         Joueur _joueur;
         float _tempsAnnonce;
 
@@ -66,7 +65,9 @@ namespace Pizzeria3D
 
             var police = Police();
 
-            var carte = new GameObject("Caisse", typeof(RectTransform));
+            // « CarteCaisse » et non « Caisse » : le tiroir-caisse du decor
+            // porte deja ce nom, et l'un se faisait passer pour l'autre.
+            var carte = new GameObject("CarteCaisse", typeof(RectTransform));
             carte.transform.SetParent(canvasGo.transform, false);
             var rt = carte.GetComponent<RectTransform>();
             rt.anchorMin = new Vector2(1f, 1f); rt.anchorMax = new Vector2(1f, 1f);
@@ -87,10 +88,12 @@ namespace Pizzeria3D
             rh.anchorMin = new Vector2(0.5f, 1f); rh.anchorMax = new Vector2(0.5f, 1f);
             rh.pivot = new Vector2(0.5f, 1f);
             rh.anchoredPosition = new Vector2(0f, -30f);
-            rh.sizeDelta = new Vector2(360f, 100f);
+            // 400 de large, pas plus : la carte de la caisse commence a 750
+            // sur les 1080 de reference, et les deux cadres se chevauchaient.
+            rh.sizeDelta = new Vector2(400f, 100f);
             pendule.AddComponent<Image>().color = Bloc.Couleur(0x1E2430);
 
-            _heure = Texte(pendule.transform, police, "", 46, TextAnchor.UpperCenter,
+            _heure = Texte(pendule.transform, police, "", 38, TextAnchor.UpperCenter,
                            Bloc.Couleur(0xFFE7A8));
             var rt2 = _heure.GetComponent<RectTransform>();
             rt2.anchorMin = new Vector2(0f, 1f); rt2.anchorMax = new Vector2(1f, 1f);
@@ -107,30 +110,6 @@ namespace Pizzeria3D
             rs.pivot = new Vector2(0.5f, 1f);
             rs.anchoredPosition = new Vector2(0f, -62f);
             rs.sizeDelta = new Vector2(0f, 34f);
-
-            // L'avance rapide : une touche au clavier, ce bouton au doigt.
-            // Sur telephone il n'y a pas de clavier — sans lui, la fonction
-            // n'existerait pas.
-            var bouton = new GameObject("BoutonVitesse", typeof(RectTransform));
-            bouton.transform.SetParent(canvasGo.transform, false);
-            var rb = bouton.GetComponent<RectTransform>();
-            rb.anchorMin = new Vector2(0.5f, 1f); rb.anchorMax = new Vector2(0.5f, 1f);
-            rb.pivot = new Vector2(0.5f, 1f);
-            rb.anchoredPosition = new Vector2(0f, -140f);
-            rb.sizeDelta = new Vector2(160f, 88f);
-            _fondVitesse = bouton.AddComponent<Image>();
-            _fondVitesse.color = Bloc.Couleur(0x1E2430);
-
-            _vitesse = Texte(bouton.transform, police, "x1", 44, TextAnchor.MiddleCenter,
-                             Color.white);
-            Etirer(_vitesse.GetComponent<RectTransform>());
-
-            var appui = bouton.AddComponent<Button>();
-            appui.targetGraphic = _fondVitesse;
-            appui.onClick.AddListener(() =>
-            {
-                if (Acceleration.Active != null) Acceleration.Active.Basculer();
-            });
 
             // pile portee : sans ce compteur, rien ne dit au joueur qu'il a
             // bien charge des pizzas au four
@@ -174,14 +153,6 @@ namespace Pizzeria3D
                 bool ouverte = Horloge.Active.Ouverte;
                 _service.text = ouverte ? "OUVERT" : "FERME";
                 _service.color = ouverte ? Bloc.Couleur(0x8CE99A) : Bloc.Couleur(0xFF8A7A);
-            }
-
-            if (Acceleration.Active != null)
-            {
-                bool rapide = Acceleration.Active.Rapide;
-                _vitesse.text = "x" + (int)Acceleration.Active.FacteurCourant;
-                _fondVitesse.color = rapide ? Bloc.Couleur(0xE9A123) : Bloc.Couleur(0x1E2430);
-                _vitesse.color = rapide ? Bloc.Couleur(0x2A1A00) : Color.white;
             }
 
             _indice.text = Indice ?? "";

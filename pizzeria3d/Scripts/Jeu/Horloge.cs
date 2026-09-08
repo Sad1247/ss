@@ -11,19 +11,28 @@ namespace Pizzeria3D
     {
         public static Horloge Active { get; private set; }
 
-        const float MinutesParJour = 24f * 60f;
+        const float SecondesParJour = 24f * 60f * 60f;
 
         /// <summary>Le jour de service, a partir de 1.</summary>
         public int Jour { get; private set; } = 1;
 
-        /// <summary>Minutes ecoulees depuis minuit, ce jour-la.</summary>
-        public float MinutesDepuisMinuit { get; private set; }
+        /// <summary>Secondes ecoulees depuis minuit, ce jour-la.</summary>
+        public float SecondesDepuisMinuit { get; private set; }
 
-        public int Heures => Mathf.FloorToInt(MinutesDepuisMinuit / 60f) % 24;
-        public int Minutes => Mathf.FloorToInt(MinutesDepuisMinuit % 60f);
+        /// <summary>Les memes, comptees en minutes.</summary>
+        public float MinutesDepuisMinuit => SecondesDepuisMinuit / 60f;
 
-        /// <summary>L'heure telle qu'elle s'ecrit a l'ecran.</summary>
-        public string Heure => Heures.ToString("00") + ":" + Minutes.ToString("00");
+        public int Heures => Mathf.FloorToInt(SecondesDepuisMinuit / 3600f) % 24;
+        public int Minutes => Mathf.FloorToInt(SecondesDepuisMinuit / 60f) % 60;
+        public int Secondes => Mathf.FloorToInt(SecondesDepuisMinuit) % 60;
+
+        /// <summary>
+        /// L'heure telle qu'elle s'ecrit a l'ecran, secondes comprises : sans
+        /// elles, l'aiguille paraitrait arretee — une minute de jeu dure une
+        /// demi-minute reelle.
+        /// </summary>
+        public string Heure => Heures.ToString("00") + ":" + Minutes.ToString("00")
+                             + ":" + Secondes.ToString("00");
         public string Affichage => "Jour " + Jour + "   " + Heure;
 
         /// <summary>Vrai pendant le service : la pizzeria accueille du monde.</summary>
@@ -39,13 +48,13 @@ namespace Pizzeria3D
         void Awake()
         {
             Active = this;
-            MinutesDepuisMinuit = Reglages.HeureOuverture * 60f;
+            SecondesDepuisMinuit = Reglages.HeureOuverture * 3600f;
         }
 
         void Update()
         {
             if (Figee) return;
-            Avancer(Reglages.MinutesParSeconde * Time.deltaTime);
+            AvancerSecondes(Reglages.SecondesParSeconde * Time.deltaTime);
         }
 
         /// <summary>
@@ -53,12 +62,14 @@ namespace Pizzeria3D
         /// passage de minuit : a vitesse doublee, une image longue peut sauter
         /// la barre des vingt-quatre heures.
         /// </summary>
-        public void Avancer(float minutes)
+        public void Avancer(float minutes) => AvancerSecondes(minutes * 60f);
+
+        public void AvancerSecondes(float secondes)
         {
-            MinutesDepuisMinuit += minutes;
-            while (MinutesDepuisMinuit >= MinutesParJour)
+            SecondesDepuisMinuit += secondes;
+            while (SecondesDepuisMinuit >= SecondesParJour)
             {
-                MinutesDepuisMinuit -= MinutesParJour;
+                SecondesDepuisMinuit -= SecondesParJour;
                 Jour++;
             }
         }

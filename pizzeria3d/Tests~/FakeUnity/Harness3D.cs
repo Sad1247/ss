@@ -572,19 +572,20 @@ static class Harness3D
         Check("et l'horloge part de la, au premier jour",
               horloge != null && horloge.Jour == 1
               && horloge.Heures == Reglages.HeureOuverture && horloge.Minutes == 0);
-        Check("l'heure s'ecrit sur deux chiffres",
-              horloge != null && horloge.Heure.Length == 5 && horloge.Heure[2] == ':');
+        Check("l'heure porte ses secondes",
+              horloge != null && horloge.Heure.Length == 8
+              && horloge.Heure[2] == ':' && horloge.Heure[5] == ':');
 
-        // Deux minutes de jeu par seconde reelle : trente secondes de manette
-        // font une heure de service.
-        float avantHorloge = horloge.MinutesDepuisMinuit;
+        // Deux secondes de jeu par seconde reelle, mesurees sur trente
+        // secondes de manette.
+        float avantHorloge = horloge.SecondesDepuisMinuit;
         horloge.Figee = false;
         Secondes(30f);
         horloge.Figee = true;
-        float ecoule = horloge.MinutesDepuisMinuit - avantHorloge;
-        Check("le temps passe a vitesse doublee",
-              Mathf.Abs(ecoule - 30f * Reglages.MinutesParSeconde) < 1f);
-        Check("une demi-minute de jeu fait une heure de service",
+        float ecoule = horloge.SecondesDepuisMinuit - avantHorloge;
+        Check("les secondes passent deux fois plus vite",
+              Mathf.Abs(ecoule - 30f * Reglages.SecondesParSeconde) < 1f);
+        Check("trente secondes de manette font une minute de jeu",
               Mathf.Abs(ecoule - 60f) < 1f);
 
         // L'heure s'affiche en haut de l'ecran, et c'est bien celle-la.
@@ -596,6 +597,19 @@ static class Harness3D
               cadran != null
               && cadran.GetComponent<RectTransform>().anchorMin.y == 1f
               && Mathf.Abs(cadran.GetComponent<RectTransform>().anchorMin.x - 0.5f) < 0.01f);
+        // La pendule et la carte de la caisse ne se marchent pas dessus.
+        var carteCaisse = Trouver("CarteCaisse");
+        if (cadran != null && carteCaisse != null)
+        {
+            var rCad = cadran.GetComponent<RectTransform>();
+            var rCar = carteCaisse.GetComponent<RectTransform>();
+            // la pendule est centree en haut, la carte accrochee au coin droit
+            float droiteCadran = 540f + rCad.anchoredPosition.x + rCad.sizeDelta.x * 0.5f;
+            float gaucheCarte = 1080f + rCar.anchoredPosition.x - rCar.sizeDelta.x;
+            Check("elle ne chevauche pas la carte de la caisse", droiteCadran < gaucheCarte);
+        }
+        else Check("elle ne chevauche pas la carte de la caisse", false);
+
         Check("et c'est bien l'heure de l'horloge",
               luHeure != null && luHeure.text == horloge.Affichage);
 
@@ -638,9 +652,9 @@ static class Harness3D
 
         // Mesure de face : en avance rapide, l'horloge avance quatre fois plus.
         horloge.Figee = false;
-        float avantRapide = horloge.MinutesDepuisMinuit;
+        float avantRapide = horloge.SecondesDepuisMinuit;
         Secondes(10f);
-        float enRapide = horloge.MinutesDepuisMinuit - avantRapide;
+        float enRapide = horloge.SecondesDepuisMinuit - avantRapide;
 
         Input.Enfoncer(avance.Touche);
         Frames(1);
@@ -649,29 +663,16 @@ static class Harness3D
         Check("la meme touche revient a la vitesse normale",
               !avance.Rapide && Time.timeScale == 1f);
 
-        float avantNormal = horloge.MinutesDepuisMinuit;
+        float avantNormal = horloge.SecondesDepuisMinuit;
         Secondes(10f);
-        float enNormal = horloge.MinutesDepuisMinuit - avantNormal;
+        float enNormal = horloge.SecondesDepuisMinuit - avantNormal;
         horloge.Figee = true;
         Check("dix secondes en rapide valent quatre fois dix secondes normales",
               Mathf.Abs(enRapide - 4f * enNormal) < 2f);
 
-        // Le doigt aussi : sur telephone il n'y a pas de clavier.
-        var boutonVitesse = Trouver("BoutonVitesse");
-        Check("un bouton du Hud fait la meme chose", boutonVitesse != null);
-        var appuiVitesse = boutonVitesse != null
-            ? boutonVitesse.GetComponent<Button>() : null;
-        Check("il est cliquable", appuiVitesse != null && appuiVitesse.Cliquer());
-        Frames(1);
-        Check("le doigt aussi passe en x4", avance.Rapide && Time.timeScale == 4f);
-        var lireVitesse = boutonVitesse != null ? Piece(boutonVitesse.transform, "Texte") : null;
-        Check("et le bouton affiche x4",
-              lireVitesse != null && lireVitesse.gameObject.GetComponent<Text>().text == "x4");
-        appuiVitesse.Cliquer();
-        Frames(1);
-        Check("un second appui revient a x1",
-              !avance.Rapide && lireVitesse.gameObject.GetComponent<Text>().text == "x1");
-        Check("et le temps d'Unity avec", Time.timeScale == 1f);
+        // Plus de bouton de vitesse a l'ecran : la touche seule commande.
+        Check("aucun bouton de vitesse n'encombre le Hud", Trouver("BoutonVitesse") == null);
+
 
         Check("l'anticrenelage est pousse", QualitySettings.antiAliasing >= 8);
         Check("les ombres portent jusqu'au fond de la salle",
