@@ -81,6 +81,14 @@ namespace Pizzeria3D
         /// </summary>
         public const int SalairePatron = 0;
         public const int SalaireCaissier = 45;
+
+        /// <summary>L'heure a laquelle la pizzeria ouvre, le premier jour.</summary>
+        public const int HeureOuverture = 9;
+        /// <summary>
+        /// Vitesse de l'horloge : deux minutes de jeu par seconde reelle. Une
+        /// journee de service tient ainsi en douze minutes de jeu.
+        /// </summary>
+        public const float MinutesParSeconde = 2f;
         /// <summary>La piece qui s'ouvre derriere la porte du fond.</summary>
         public const int PrixPetitePiece = 400;
         public const float DebitAchat = 45f;        // euros par seconde en restant dessus

@@ -28,7 +28,7 @@ namespace Pizzeria3D
 
         GameObject _ecran;
         Text[] _statuts;
-        Text _masse;
+        Text _masse, _pendule;
 
         /// <summary>Vrai quand l'ecran est affiche par-dessus le jeu.</summary>
         public bool Ouvert => _ecran != null && _ecran.activeSelf;
@@ -66,6 +66,9 @@ namespace Pizzeria3D
                 _statuts[i].color = en ? Vert : Gris;
             }
             _masse.text = "Masse salariale : " + Personnel.MasseSalariale + " / jour";
+
+            // La barre du haut porte l'heure, comme sur un vrai bureau.
+            if (Horloge.Active != null) _pendule.text = Horloge.Active.Affichage;
         }
 
         void Construire()
@@ -92,9 +95,9 @@ namespace Pizzeria3D
             // bandes qu'on reconnait le bureau au premier coup d'oeil
             var barre = Cadre("BarreHaut", _ecran.transform, DockSombre,
                               new Vector2(0.5f, 1f), new Vector2(0f, -22f), new Vector2(980f, 44f));
-            var heure = Hud.Texte(barre.transform, police, "Pizzeria OS", 26,
-                                  TextAnchor.MiddleCenter, Color.white);
-            Hud.Etirer(heure.GetComponent<RectTransform>());
+            _pendule = Hud.Texte(barre.transform, police, "Pizzeria OS", 26,
+                                 TextAnchor.MiddleCenter, Color.white);
+            Hud.Etirer(_pendule.GetComponent<RectTransform>());
 
             var dock = Cadre("Dock", _ecran.transform, DockSombre,
                              new Vector2(0f, 0.5f), new Vector2(44f, -22f), new Vector2(88f, 716f));

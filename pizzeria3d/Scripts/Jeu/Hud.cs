@@ -28,7 +28,7 @@ namespace Pizzeria3D
         }
 
         static Hud _instance;
-        Text _argent, _indice, _annonce, _portees;
+        Text _argent, _indice, _annonce, _portees, _heure;
         Joueur _joueur;
         float _tempsAnnonce;
 
@@ -67,6 +67,21 @@ namespace Pizzeria3D
             _argent = Texte(carte.transform, police, "0", 56, TextAnchor.MiddleCenter, Bloc.Couleur(0x18400F));
             Etirer(_argent.GetComponent<RectTransform>());
 
+            // L'heure, en haut au centre : la caisse tient le coin droit et la
+            // pile portee le coin gauche, c'est la seule place libre.
+            var pendule = new GameObject("Pendule", typeof(RectTransform));
+            pendule.transform.SetParent(canvasGo.transform, false);
+            var rh = pendule.GetComponent<RectTransform>();
+            rh.anchorMin = new Vector2(0.5f, 1f); rh.anchorMax = new Vector2(0.5f, 1f);
+            rh.pivot = new Vector2(0.5f, 1f);
+            rh.anchoredPosition = new Vector2(0f, -30f);
+            rh.sizeDelta = new Vector2(360f, 100f);
+            pendule.AddComponent<Image>().color = Bloc.Couleur(0x1E2430);
+
+            _heure = Texte(pendule.transform, police, "", 46, TextAnchor.MiddleCenter,
+                           Bloc.Couleur(0xFFE7A8));
+            Etirer(_heure.GetComponent<RectTransform>());
+
             // pile portee : sans ce compteur, rien ne dit au joueur qu'il a
             // bien charge des pizzas au four
             _portees = Texte(canvasGo.transform, police, "", 44, TextAnchor.UpperLeft, Color.white);
@@ -102,6 +117,8 @@ namespace Pizzeria3D
                 _portees.text = _joueur.Portee.Nombre > 0
                     ? $"Pizzas portees : {_joueur.Portee.Nombre} / {Reglages.CapacitePortee}"
                     : "";
+
+            if (Horloge.Active != null) _heure.text = Horloge.Active.Affichage;
 
             _indice.text = Indice ?? "";
             if (_tempsAnnonce > 0f)

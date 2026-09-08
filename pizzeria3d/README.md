@@ -77,7 +77,8 @@ Scripts/Jeu/
   Caissier.cs   l'employe : une pizza, son carton, sa boite, puis le comptoir
   Emballage.cs  le plan : reserve de cartons, rond rouge, rond vert, poste
   Banque.cs     la caisse
-  Hud.cs        compteur d'argent et indice contextuel
+  Hud.cs        compteur d'argent, heure du jour et indice contextuel
+  Horloge.cs    l'heure de la pizzeria, deux minutes de jeu par seconde reelle
 
 Scripts/Monde/
   Bloc.cs       fabrique de primitives colorees, la palette, les finis mat et poli
@@ -95,7 +96,7 @@ Scripts/Monde/
 
 Tests~/FakeUnity/            (ignore par Unity : le ~ final)
   FakeUnity3D.cs  faux runtime Unity (hierarchie, transforms, entrees, cycle de vie)
-  Harness3D.cs    317 verifications qui jouent la boucle complete
+  Harness3D.cs    329 verifications qui jouent la boucle complete
 ```
 
 ## Regarder la scene sans Unity
@@ -109,6 +110,7 @@ endroit ? ».
 DUMP_SCENE=/tmp/scene.txt mono h3d.exe
 DUMP_LOGO=/tmp/logo.ppm mono h3d.exe     # la texture du logo, seule
 DUMP_UI=/tmp/ui.txt mono h3d.exe         # la mise en page de l'ecran du bureau
+DUMP_UI_CIBLE=HudCanvas DUMP_UI=... mono h3d.exe   # ou celle du Hud
 python3 'pizzeria3d/Tests~/Rendu/interface.py' /tmp/ui.txt ui.png 0.55
 python3 'pizzeria3d/Tests~/Rendu/rendu.py' /tmp/scene.txt vue.png
 # cadrage : zoom=52 centre=11.5,4.6  (coordonnees ecran, pas monde)
@@ -157,7 +159,7 @@ partie. Le remettre a 0.
 
 ## Ce qui est verifie, et ce qui ne l'est pas
 
-La logique tourne : les 317 verifications ci-dessus s'executent hors editeur.
+La logique tourne : les 329 verifications ci-dessus s'executent hors editeur.
 Le **rendu 3D n'a jamais ete affiche** — positions, echelles, cadrage de la
 camera et couleurs ont ete poses sans jamais etre vus. C'est la premiere chose
 a corriger a l'oeil au lancement.

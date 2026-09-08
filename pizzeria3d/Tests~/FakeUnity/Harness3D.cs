@@ -405,7 +405,7 @@ static class Harness3D
     /// </summary>
     static void DumpUI(string chemin)
     {
-        var canvas = Trouver("EcranBureauCanvas");
+        var canvas = Trouver(Environment.GetEnvironmentVariable("DUMP_UI_CIBLE") ?? "EcranBureauCanvas");
         using (var f = new System.IO.StreamWriter(chemin))
         {
             f.WriteLine("1080 1920");
@@ -547,6 +547,50 @@ static class Harness3D
         // l'ancienne resterait sans ombres dans son coin.
         Check("la lumiere de la scene est reutilisee, pas doublee",
               UnityEngine.Object.FindObjectOfType<Light>().shadows == LightShadows.Soft);
+
+        // --- l'horloge de la pizzeria ---
+        var horloge = UnityEngine.Object.FindObjectOfType<Horloge>();
+        Check("la pizzeria a son horloge", horloge != null);
+        Check("la pizzeria ouvre le matin",
+              Reglages.HeureOuverture >= 6 && Reglages.HeureOuverture <= 11);
+        Check("et l'horloge part de la, au premier jour",
+              horloge != null && horloge.Jour == 1
+              && horloge.Heures == Reglages.HeureOuverture && horloge.Minutes == 0);
+        Check("l'heure s'ecrit sur deux chiffres",
+              horloge != null && horloge.Heure.Length == 5 && horloge.Heure[2] == ':');
+
+        // Deux minutes de jeu par seconde reelle : trente secondes de manette
+        // font une heure de service.
+        float avantHorloge = horloge.MinutesDepuisMinuit;
+        Secondes(30f);
+        float ecoule = horloge.MinutesDepuisMinuit - avantHorloge;
+        Check("le temps passe a vitesse doublee",
+              Mathf.Abs(ecoule - 30f * Reglages.MinutesParSeconde) < 1f);
+        Check("une demi-minute de jeu fait une heure de service",
+              Mathf.Abs(ecoule - 60f) < 1f);
+
+        // L'heure s'affiche en haut de l'ecran, et c'est bien celle-la.
+        var pendule = Trouver("Pendule");
+        Check("l'heure s'affiche en haut de l'ecran", pendule != null);
+        var texteHeure = pendule != null ? Piece(pendule.transform, "Texte") : null;
+        var luHeure = texteHeure != null ? texteHeure.gameObject.GetComponent<Text>() : null;
+        Check("elle est calee en haut, au centre",
+              pendule != null
+              && pendule.GetComponent<RectTransform>().anchorMin.y == 1f
+              && Mathf.Abs(pendule.GetComponent<RectTransform>().anchorMin.x - 0.5f) < 0.01f);
+        Check("et c'est bien l'heure de l'horloge",
+              luHeure != null && luHeure.text == horloge.Affichage);
+
+        // minuit passe, on change de jour
+        // On pousse l'aiguille jusqu'a la barre plutot que d'attendre douze
+        // minutes de manette : c'est le meme chemin de code que l'ecoulement.
+        int jourAvantMinuit = horloge.Jour;
+        horloge.Avancer(24f * 60f - horloge.MinutesDepuisMinuit - 0.5f);
+        Check("avant minuit, on est encore le meme jour",
+              horloge.Jour == jourAvantMinuit && horloge.Heures == 23);
+        horloge.Avancer(1f);
+        Check("passe minuit, le jour suivant commence", horloge.Jour == jourAvantMinuit + 1);
+        Check("et l'heure repart du debut", horloge.Heures == 0);
 
         Check("l'anticrenelage est pousse", QualitySettings.antiAliasing >= 8);
         Check("les ombres portent jusqu'au fond de la salle",

@@ -73,6 +73,8 @@ namespace Pizzeria3D
             Personnel.Inscrire("Caissier", "Comptoir", Reglages.SalaireCaissier,
                                () => caissier != null && caissier.activeSelf);
 
+            // L'horloge avant le Hud : celui-ci lit l'heure des sa premiere image.
+            racine.AddComponent<Horloge>();
             racine.AddComponent<Hud>();
             var ecran = racine.AddComponent<EcranBureau>();
             ecran.Joueur = joueur;
