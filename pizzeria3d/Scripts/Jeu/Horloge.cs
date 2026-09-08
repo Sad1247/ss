@@ -24,15 +24,12 @@ namespace Pizzeria3D
 
         public int Heures => Mathf.FloorToInt(SecondesDepuisMinuit / 3600f) % 24;
         public int Minutes => Mathf.FloorToInt(SecondesDepuisMinuit / 60f) % 60;
-        public int Secondes => Mathf.FloorToInt(SecondesDepuisMinuit) % 60;
-
         /// <summary>
-        /// L'heure telle qu'elle s'ecrit a l'ecran, secondes comprises : sans
-        /// elles, l'aiguille paraitrait arretee — une minute de jeu dure une
-        /// demi-minute reelle.
+        /// L'heure telle qu'elle s'ecrit a l'ecran. Sans les secondes : a ce
+        /// rythme elles defileraient trop vite pour se lire, et la minute
+        /// change deja plus de deux fois par seconde.
         /// </summary>
-        public string Heure => Heures.ToString("00") + ":" + Minutes.ToString("00")
-                             + ":" + Secondes.ToString("00");
+        public string Heure => Heures.ToString("00") + ":" + Minutes.ToString("00");
         public string Affichage => "Jour " + Jour + "   " + Heure;
 
         /// <summary>Vrai pendant le service : la pizzeria accueille du monde.</summary>

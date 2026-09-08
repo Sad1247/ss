@@ -572,21 +572,23 @@ static class Harness3D
         Check("et l'horloge part de la, au premier jour",
               horloge != null && horloge.Jour == 1
               && horloge.Heures == Reglages.HeureOuverture && horloge.Minutes == 0);
-        Check("l'heure porte ses secondes",
-              horloge != null && horloge.Heure.Length == 8
-              && horloge.Heure[2] == ':' && horloge.Heure[5] == ':');
+        Check("l'heure s'ecrit en heures et minutes, sans les secondes",
+              horloge != null && horloge.Heure.Length == 5 && horloge.Heure[2] == ':');
 
-        // Deux secondes de jeu par seconde reelle, mesurees sur trente
-        // secondes de manette.
+        // La vitesse annoncee, mesuree sur trente secondes de manette.
         float avantHorloge = horloge.SecondesDepuisMinuit;
         horloge.Figee = false;
         Secondes(30f);
         horloge.Figee = true;
         float ecoule = horloge.SecondesDepuisMinuit - avantHorloge;
-        Check("les secondes passent deux fois plus vite",
-              Mathf.Abs(ecoule - 30f * Reglages.SecondesParSeconde) < 1f);
-        Check("trente secondes de manette font une minute de jeu",
-              Mathf.Abs(ecoule - 60f) < 1f);
+        Check("le temps s'ecoule a la vitesse annoncee",
+              Mathf.Abs(ecoule - 30f * Reglages.SecondesParSeconde) < 5f);
+        // Une journee entiere en dix minutes de manette au plus : au-dela, on
+        // attend son soir au lieu de le jouer.
+        Check("une journee tient en dix minutes de manette",
+              24f * 3600f / Reglages.SecondesParSeconde <= 600.5f);
+        Check("et il en faut tout de meme plusieurs pour la traverser",
+              24f * 3600f / Reglages.SecondesParSeconde > 120f);
 
         // L'heure s'affiche en haut de l'ecran, et c'est bien celle-la.
         var cadran = Trouver("Pendule");
@@ -667,8 +669,10 @@ static class Harness3D
         Secondes(10f);
         float enNormal = horloge.SecondesDepuisMinuit - avantNormal;
         horloge.Figee = true;
+        // Tolerance relative : une image d'avance ou de retard pese
+        // maintenant plusieurs secondes de jeu.
         Check("dix secondes en rapide valent quatre fois dix secondes normales",
-              Mathf.Abs(enRapide - 4f * enNormal) < 2f);
+              Mathf.Abs(enRapide - 4f * enNormal) < 0.02f * enRapide);
 
         // Plus de bouton de vitesse a l'ecran : la touche seule commande.
         Check("aucun bouton de vitesse n'encombre le Hud", Trouver("BoutonVitesse") == null);

@@ -88,12 +88,12 @@ namespace Pizzeria3D
             rh.anchorMin = new Vector2(0.5f, 1f); rh.anchorMax = new Vector2(0.5f, 1f);
             rh.pivot = new Vector2(0.5f, 1f);
             rh.anchoredPosition = new Vector2(0f, -30f);
-            // 400 de large, pas plus : la carte de la caisse commence a 750
+            // 360 de large, pas plus : la carte de la caisse commence a 750
             // sur les 1080 de reference, et les deux cadres se chevauchaient.
-            rh.sizeDelta = new Vector2(400f, 100f);
+            rh.sizeDelta = new Vector2(360f, 100f);
             pendule.AddComponent<Image>().color = Bloc.Couleur(0x1E2430);
 
-            _heure = Texte(pendule.transform, police, "", 38, TextAnchor.UpperCenter,
+            _heure = Texte(pendule.transform, police, "", 44, TextAnchor.UpperCenter,
                            Bloc.Couleur(0xFFE7A8));
             var rt2 = _heure.GetComponent<RectTransform>();
             rt2.anchorMin = new Vector2(0f, 1f); rt2.anchorMax = new Vector2(1f, 1f);

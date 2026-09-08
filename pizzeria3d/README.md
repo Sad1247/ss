@@ -78,7 +78,7 @@ Scripts/Jeu/
   Emballage.cs  le plan : reserve de cartons, rond rouge, rond vert, poste
   Banque.cs     la caisse
   Hud.cs        compteur d'argent, heure du jour et indice contextuel
-  Horloge.cs    l'heure de la pizzeria, deux secondes de jeu par seconde reelle
+  Horloge.cs    l'heure de la pizzeria : une journee tient en dix minutes
   Enseigne.cs   le panneau OUVERT / FERME pose sur le comptoir
   Acceleration.cs l'avance rapide au x4, a la barre d'espace
 
@@ -98,7 +98,7 @@ Scripts/Monde/
 
 Tests~/FakeUnity/            (ignore par Unity : le ~ final)
   FakeUnity3D.cs  faux runtime Unity (hierarchie, transforms, entrees, cycle de vie)
-  Harness3D.cs    359 verifications qui jouent la boucle complete
+  Harness3D.cs    360 verifications qui jouent la boucle complete
 ```
 
 ## Regarder la scene sans Unity
@@ -161,7 +161,7 @@ partie. Le remettre a 0.
 
 ## Ce qui est verifie, et ce qui ne l'est pas
 
-La logique tourne : les 359 verifications ci-dessus s'executent hors editeur.
+La logique tourne : les 360 verifications ci-dessus s'executent hors editeur.
 Le **rendu 3D n'a jamais ete affiche** — positions, echelles, cadrage de la
 camera et couleurs ont ete poses sans jamais etre vus. C'est la premiere chose
 a corriger a l'oeil au lancement.
