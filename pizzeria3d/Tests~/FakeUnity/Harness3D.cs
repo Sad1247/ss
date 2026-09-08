@@ -1685,9 +1685,15 @@ static class Harness3D
         Check("avec sa bonbonne et ses deux robinets",
               fontaine != null && Dedans(fontaine.transform, "Bonbonne") == 1
                                && Dedans(fontaine.transform, "Robinet") == 2);
+        // Le rouge et le bleu se distinguent vraiment l'un de l'autre, et non
+        // d'une piece voisine quelconque.
+        var chaud = CouleurDe(fontaine.transform, "RobinetChaud");
+        var froid = CouleurDe(fontaine.transform, "RobinetFroid");
         Check("l'un chaud, l'autre froid",
-              fontaine != null
-              && !MemeCouleur(fontaine.transform, "Robinet", fontaine.transform, "Goulot"));
+              chaud.r > chaud.b + 0.3f && froid.b > froid.r + 0.3f);
+        // La bonbonne repose sur le collier noir, elle ne flotte pas.
+        Check("sa bonbonne repose sur un collier",
+              fontaine != null && Dedans(fontaine.transform, "Collier") == 1);
         // Elle tient dans la piece, loin du bureau, et l'on ne la traverse pas.
         if (fontaine != null && Empreinte(fontaine.transform, out float fx0, out float fx1,
                                           out float fz0, out float fz1))
