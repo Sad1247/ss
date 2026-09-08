@@ -120,6 +120,14 @@ static class Harness3D
         }
     }
 
+    /// <summary>Un pixel d'une texture, compare a une couleur attendue.</summary>
+    static bool Pixel(Texture2D tex, int x, int y, int rgb)
+    {
+        if (tex == null || tex.Pixels == null) return false;
+        var p = tex.Pixels[y * tex.width + x];
+        return p.r == ((rgb >> 16) & 255) && p.g == ((rgb >> 8) & 255) && p.b == (rgb & 255);
+    }
+
     /// <summary>Ou se trouve vraiment un objet, une fois tout compose.</summary>
     static Vector3 PositionReelle(Transform t)
     {
@@ -364,7 +372,30 @@ static class Harness3D
         foreach (var e in racine.transform.Enfants)
             if (e.gameObject.name == "Garniture")
                 tex = e.gameObject.GetComponent<MeshRenderer>().sharedMaterial.mainTexture as Texture2D;
+        DumpTexture(tex, chemin);
+    }
 
+    /// <summary>
+    /// La couleur sous laquelle dessiner un materiau : la sienne, ou la
+    /// moyenne de son image quand il en porte une.
+    /// </summary>
+    static Color Teinte(Material m)
+    {
+        if (!(m.mainTexture is Texture2D tex) || tex.Pixels == null) return m.color;
+
+        float r = 0f, v = 0f, b = 0f, poids = 0f;
+        foreach (var p in tex.Pixels)
+        {
+            float a = p.a / 255f;
+            r += p.r * a; v += p.g * a; b += p.b * a; poids += a;
+        }
+        if (poids <= 0f) return m.color;
+        return new Color(r / poids / 255f, v / poids / 255f, b / poids / 255f, 1f);
+    }
+
+    /// <summary>Ecrit une texture en PPM, pour la regarder hors du jeu.</summary>
+    static void DumpTexture(Texture2D tex, string chemin)
+    {
         int w = tex.width, h = tex.height;
         using (var fs = new System.IO.FileStream(chemin, System.IO.FileMode.Create))
         {
@@ -422,7 +453,10 @@ static class Harness3D
                                     p.z + t.localPosition.z);
                 }
 
-                var c2 = r.sharedMaterial.color;
+                // Un materiau imprime est blanc : c'est sa texture qui porte
+                // la couleur. Sans cette moyenne, le logo des cartons se
+                // dessinait en carre blanc, et le dessin mentait.
+                var c2 = Teinte(r.sharedMaterial);
                 int rgb = ((int)(c2.r * 255) << 16) | ((int)(c2.g * 255) << 8) | (int)(c2.b * 255);
                 int alpha = (int)(Mathf.Clamp01(c2.a) * 255);
                 f.WriteLine($"{go.name}|{go.Primitive}|{p.x:0.###} {p.y:0.###} {p.z:0.###}|" +
@@ -440,6 +474,13 @@ static class Harness3D
         if (Environment.GetEnvironmentVariable("DUMP_PIZZA") is string chemin && chemin.Length > 0)
         {
             DumpPizza(chemin);
+            return;
+        }
+
+        if (Environment.GetEnvironmentVariable("DUMP_LOGO") is string cheminLogo
+            && cheminLogo.Length > 0)
+        {
+            DumpTexture(Logo.Materiau().mainTexture as Texture2D, cheminLogo);
             return;
         }
 
@@ -1873,6 +1914,31 @@ static class Harness3D
         var erreurs = new List<string>();
         foreach (var l in Debug.Journal) if (l.StartsWith("ERROR")) erreurs.Add(l);
         if (dumpScene) DumpScene(Environment.GetEnvironmentVariable("DUMP_SCENE"));
+
+        // --- le logo de l'enseigne, imprime sur les cartons ---
+        // Fabrique a part et detruit aussitot : un carton egare au milieu de
+        // la salle fausserait les comptes des autres controles.
+        var bacLogo = new GameObject("BacLogo");
+        var cartonTemoin = Boite3D.Creer(bacLogo.transform, 0);
+        var etiquette = Piece(cartonTemoin.transform, "Etiquette");
+        Check("le carton porte une etiquette", etiquette != null);
+        var peinture = etiquette != null
+            ? etiquette.gameObject.GetComponent<MeshRenderer>().sharedMaterial : null;
+        var image = peinture != null ? peinture.mainTexture as Texture2D : null;
+        Check("elle est imprimee, et non peinte a plat", image != null);
+        // Le dessin lui-meme, releve au pixel : le fond sombre dans un coin,
+        // la couronne orange, le rouge du disque, la creme de la part et
+        // celle du nom dessous.
+        Check("le logo a son fond sombre", Pixel(image, 4, 4, 0x1E1B26));
+        Check("sa couronne orange", Pixel(image, 64, 122, 0xF5A623));
+        Check("son disque rouge", Pixel(image, 30, 80, 0xE04A2F));
+        Check("sa part de pizza", Pixel(image, 64, 60, 0xF2E3B3));
+        Check("et le nom de l'enseigne dessous", Pixel(image, 17, 13, 0xF2E3B3));
+        // Une texture posee sur la peinture blanche partagee se serait
+        // retrouvee sur tout ce qui est blanc dans la pizzeria.
+        Check("le logo ne deteint pas sur la peinture blanche",
+              Bloc.Peinture(Color.white).mainTexture == null);
+        UnityEngine.Object.Destroy(bacLogo);
 
         Check("aucune erreur Unity remontee", erreurs.Count == 0);
         foreach (var e in erreurs) Console.WriteLine("      " + e);

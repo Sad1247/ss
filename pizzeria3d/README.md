@@ -80,7 +80,8 @@ Scripts/Monde/
   Bloc.cs       fabrique de primitives colorees + la palette
   Pile.cs       une pile de pizzas nues ou en boite (joueur, four, comptoir, sac)
   Pizza3D.cs    la pizza : pate en volume, garniture en texture generee
-  Boite3D.cs    le carton a pizza : couvercle, rainure et etiquette
+  Boite3D.cs    le carton a pizza : couvercle, rainure et logo imprime
+  Logo.cs       le logo de l'enseigne, dessine pixel par pixel a l'execution
   Plateau3D.cs  le plateau de la salle, pour le repas sur place
   Bulle.cs      la bulle au-dessus d'un client, et le nombre qu'il attend
   Fumee.cs      les bouffees qui sortent de la cheminee
@@ -91,7 +92,7 @@ Scripts/Monde/
 
 Tests~/FakeUnity/            (ignore par Unity : le ~ final)
   FakeUnity3D.cs  faux runtime Unity (hierarchie, transforms, entrees, cycle de vie)
-  Harness3D.cs    274 verifications qui jouent la boucle complete
+  Harness3D.cs    282 verifications qui jouent la boucle complete
 ```
 
 ## Regarder la scene sans Unity
@@ -103,6 +104,7 @@ endroit ? ».
 
 ```bash
 DUMP_SCENE=/tmp/scene.txt mono h3d.exe
+DUMP_LOGO=/tmp/logo.ppm mono h3d.exe     # la texture du logo, seule
 python3 'pizzeria3d/Tests~/Rendu/rendu.py' /tmp/scene.txt vue.png
 # cadrage : zoom=52 centre=11.5,4.6  (coordonnees ecran, pas monde)
 ```
@@ -148,7 +150,7 @@ partie. Le remettre a 0.
 
 ## Ce qui est verifie, et ce qui ne l'est pas
 
-La logique tourne : les 274 verifications ci-dessus s'executent hors editeur.
+La logique tourne : les 282 verifications ci-dessus s'executent hors editeur.
 Le **rendu 3D n'a jamais ete affiche** — positions, echelles, cadrage de la
 camera et couleurs ont ete poses sans jamais etre vus. C'est la premiere chose
 a corriger a l'oeil au lancement.

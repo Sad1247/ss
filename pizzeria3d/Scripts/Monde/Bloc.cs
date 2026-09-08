@@ -52,6 +52,29 @@ namespace Pizzeria3D
             return m;
         }
 
+        static readonly System.Collections.Generic.Dictionary<string, Material> _impressions =
+            new System.Collections.Generic.Dictionary<string, Material>();
+
+        /// <summary>
+        /// Une peinture qui porte une image. Elle ne passe surtout pas par le
+        /// cache des couleurs : celui-ci partage un materiau par teinte, et y
+        /// poser une texture l'imprimerait sur tout ce qui est de la meme
+        /// couleur — le blanc, par exemple, sert deja ailleurs.
+        /// </summary>
+        public static Material Impression(string nom, Texture2D image)
+        {
+            if (_impressions.TryGetValue(nom, out var connu) && connu != null) return connu;
+
+            var m = new Material(Shader());
+            m.color = Color.white;
+            m.mainTexture = image;
+            if (m.HasProperty("_Smoothness")) m.SetFloat("_Smoothness", 0.05f);
+            if (m.HasProperty("_Glossiness")) m.SetFloat("_Glossiness", 0.05f);
+            if (m.HasProperty("_Metallic")) m.SetFloat("_Metallic", 0f);
+            _impressions[nom] = m;
+            return m;
+        }
+
         static readonly System.Collections.Generic.Dictionary<int, Material> _vitrages =
             new System.Collections.Generic.Dictionary<int, Material>();
 

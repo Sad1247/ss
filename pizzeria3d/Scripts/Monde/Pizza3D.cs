@@ -76,8 +76,9 @@ namespace Pizzeria3D
             if (_pate == null) _pate = Bloc.Peinture(Bloc.Couleur(0xD9A867));
             if (_garniture == null)
             {
-                _garniture = Bloc.Peinture(Color.white);
-                _garniture.mainTexture = Texture();
+                // Materiau a elle : posee sur la peinture blanche partagee,
+                // sa texture se serait retrouvee sur tout ce qui est blanc.
+                _garniture = Bloc.Impression("pizza", Texture());
             }
         }
 
