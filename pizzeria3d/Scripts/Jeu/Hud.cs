@@ -111,7 +111,7 @@ namespace Pizzeria3D
             }
         }
 
-        static Font Police()
+        public static Font Police()
         {
             Font f = null;
             try { f = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf"); } catch { }
@@ -119,13 +119,13 @@ namespace Pizzeria3D
             return f;
         }
 
-        static void Etirer(RectTransform rt)
+        public static void Etirer(RectTransform rt)
         {
             rt.anchorMin = Vector2.zero; rt.anchorMax = Vector2.one;
             rt.offsetMin = Vector2.zero; rt.offsetMax = Vector2.zero;
         }
 
-        static Text Texte(Transform parent, Font police, string contenu, int taille,
+        public static Text Texte(Transform parent, Font police, string contenu, int taille,
                           TextAnchor ancre, Color couleur)
         {
             var go = new GameObject("Texte", typeof(RectTransform));

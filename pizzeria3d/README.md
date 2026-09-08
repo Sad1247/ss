@@ -70,6 +70,8 @@ Scripts/Jeu/
   ZoneAchat.cs  la dalle verte : l'argent s'ecoule, l'objet apparait
   PetitePiece.cs la piece du fond : porte automatique, pas libere, terrain etendu
   Bureau.cs      le bureau de la piece : le patron s'y assoit en s'arretant devant
+  Personnel.cs   le registre du personnel : poste, salaire, embauche
+  EcranBureau.cs l'ecran de l'ordinateur, ouvert quand le patron s'assoit
   MursDiscrets.cs escamote les murs qui cachent le joueur entre dans la piece
   Caissier.cs   l'employe : une pizza, son carton, sa boite, puis le comptoir
   Emballage.cs  le plan : reserve de cartons, rond rouge, rond vert, poste
@@ -92,7 +94,7 @@ Scripts/Monde/
 
 Tests~/FakeUnity/            (ignore par Unity : le ~ final)
   FakeUnity3D.cs  faux runtime Unity (hierarchie, transforms, entrees, cycle de vie)
-  Harness3D.cs    283 verifications qui jouent la boucle complete
+  Harness3D.cs    295 verifications qui jouent la boucle complete
 ```
 
 ## Regarder la scene sans Unity
@@ -105,6 +107,8 @@ endroit ? ».
 ```bash
 DUMP_SCENE=/tmp/scene.txt mono h3d.exe
 DUMP_LOGO=/tmp/logo.ppm mono h3d.exe     # la texture du logo, seule
+DUMP_UI=/tmp/ui.txt mono h3d.exe         # la mise en page de l'ecran du bureau
+python3 'pizzeria3d/Tests~/Rendu/interface.py' /tmp/ui.txt ui.png 0.55
 python3 'pizzeria3d/Tests~/Rendu/rendu.py' /tmp/scene.txt vue.png
 # cadrage : zoom=52 centre=11.5,4.6  (coordonnees ecran, pas monde)
 ```
@@ -150,7 +154,7 @@ partie. Le remettre a 0.
 
 ## Ce qui est verifie, et ce qui ne l'est pas
 
-La logique tourne : les 283 verifications ci-dessus s'executent hors editeur.
+La logique tourne : les 295 verifications ci-dessus s'executent hors editeur.
 Le **rendu 3D n'a jamais ete affiche** — positions, echelles, cadrage de la
 camera et couleurs ont ete poses sans jamais etre vus. C'est la premiere chose
 a corriger a l'oeil au lancement.

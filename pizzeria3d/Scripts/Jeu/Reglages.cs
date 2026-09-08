@@ -75,6 +75,12 @@ namespace Pizzeria3D
 
         // --- zone d'achat ---
         public const int PrixCaissier = 250;
+        /// <summary>
+        /// Salaires affiches sur l'ecran du bureau. Ils ne sont pas encore
+        /// preleves : la fiche de paie se lit, elle ne se paie pas.
+        /// </summary>
+        public const int SalairePatron = 0;
+        public const int SalaireCaissier = 45;
         /// <summary>La piece qui s'ouvre derriere la porte du fond.</summary>
         public const int PrixPetitePiece = 400;
         public const float DebitAchat = 45f;        // euros par seconde en restant dessus

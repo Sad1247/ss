@@ -208,8 +208,14 @@ namespace UnityEngine
 
     public class RectTransform : Transform
     {
-        public Vector2 anchorMin, anchorMax, offsetMin, offsetMax;
-        public Vector2 pivot, anchoredPosition, sizeDelta;
+        // Les valeurs par defaut d'Unity pour un objet d'interface neuf :
+        // ancre et pivot au centre. A zero, tout ce qui n'y touche pas se
+        // retrouvait cale par un coin.
+        public Vector2 anchorMin = new Vector2(0.5f, 0.5f);
+        public Vector2 anchorMax = new Vector2(0.5f, 0.5f);
+        public Vector2 offsetMin, offsetMax;
+        public Vector2 pivot = new Vector2(0.5f, 0.5f);
+        public Vector2 anchoredPosition, sizeDelta;
     }
 
     /// <summary>Pilote le cycle de vie a la place du moteur.</summary>
@@ -596,7 +602,7 @@ namespace UnityEngine
     public enum VerticalWrapMode { Truncate, Overflow }
     public enum RenderMode { ScreenSpaceOverlay, ScreenSpaceCamera, WorldSpace }
 
-    public class Canvas : Behaviour { public RenderMode renderMode; }
+    public class Canvas : Behaviour { public RenderMode renderMode; public int sortingOrder; public bool overrideSorting; }
 
     [AttributeUsage(AttributeTargets.All)] public class SerializeField : Attribute { }
     [AttributeUsage(AttributeTargets.All)] public class TooltipAttribute : Attribute { public TooltipAttribute(string s) { } }

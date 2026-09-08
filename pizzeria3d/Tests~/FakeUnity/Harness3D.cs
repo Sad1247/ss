@@ -120,6 +120,13 @@ static class Harness3D
         }
     }
 
+    /// <summary>Un de ces textes contient-il ce fragment ?</summary>
+    static bool Contient(List<Text> textes, string fragment)
+    {
+        foreach (var t in textes) if (t.text.Contains(fragment)) return true;
+        return false;
+    }
+
     /// <summary>Un pixel d'une texture, compare a une couleur attendue.</summary>
     static bool Pixel(Texture2D tex, int x, int y, int rgb)
     {
@@ -393,6 +400,58 @@ static class Harness3D
         return new Color(r / poids / 255f, v / poids / 255f, b / poids / 255f, 1f);
     }
 
+    /// <summary>
+    /// Ecrit la mise en page d'un canevas : une ligne par element, avec son
+    /// cadre resolu en pixels. Le faux moteur ne calcule aucune mise en page —
+    /// on refait ici les regles d'ancrage d'Unity, les seules qu'on utilise.
+    /// </summary>
+    static void DumpUI(string chemin)
+    {
+        var canvas = Trouver("EcranBureauCanvas");
+        using (var f = new System.IO.StreamWriter(chemin))
+        {
+            f.WriteLine("1080 1920");
+            EcrireUI(f, canvas.transform, 0f, 0f, 1080f, 1920f);
+        }
+        Console.WriteLine("interface ecrite dans " + chemin);
+    }
+
+    static void EcrireUI(System.IO.StreamWriter f, Transform t, float cx, float cy,
+                         float largeur, float hauteur)
+    {
+        foreach (var e in t.Enfants)
+        {
+            if (!e.gameObject.ActifDansHierarchie) continue;
+            var rt = e as RectTransform;
+            float w = largeur, h = hauteur, x = cx, y = cy;
+            if (rt != null)
+            {
+                w = (rt.anchorMax.x - rt.anchorMin.x) * largeur + rt.sizeDelta.x;
+                h = (rt.anchorMax.y - rt.anchorMin.y) * hauteur + rt.sizeDelta.y;
+                float ax = (rt.anchorMin.x + rt.anchorMax.x) * 0.5f - 0.5f;
+                float ay = (rt.anchorMin.y + rt.anchorMax.y) * 0.5f - 0.5f;
+                x = cx + ax * largeur + rt.anchoredPosition.x + (0.5f - rt.pivot.x) * w;
+                y = cy + ay * hauteur + rt.anchoredPosition.y + (0.5f - rt.pivot.y) * h;
+            }
+
+            var image = e.gameObject.GetComponent<Image>();
+            var texte = e.gameObject.GetComponent<Text>();
+            if (image != null)
+            {
+                var c = image.color;
+                f.WriteLine($"boite|{x}|{y}|{w}|{h}|{Hex(c)}|0|");
+            }
+            if (texte != null && texte.text.Length > 0)
+                f.WriteLine($"texte|{x}|{y}|{w}|{h}|{Hex(texte.color)}|{texte.fontSize}|"
+                            + (int)texte.alignment + "|" + texte.text);
+
+            EcrireUI(f, e, x, y, w, h);
+        }
+    }
+
+    static string Hex(Color c)
+        => $"{(int)(c.r * 255):x2}{(int)(c.g * 255):x2}{(int)(c.b * 255):x2}";
+
     /// <summary>Ecrit une texture en PPM, pour la regarder hors du jeu.</summary>
     static void DumpTexture(Texture2D tex, string chemin)
     {
@@ -483,6 +542,8 @@ static class Harness3D
             DumpTexture(Logo.Materiau().mainTexture as Texture2D, cheminLogo);
             return;
         }
+
+        var dumpUI = Environment.GetEnvironmentVariable("DUMP_UI");
 
         bool dumpScene = Environment.GetEnvironmentVariable("DUMP_SCENE") is string ds && ds.Length > 0;
 
@@ -1465,6 +1526,66 @@ static class Harness3D
         Check("les mains pleines, il ne s'assoit pas", !joueur.Assis);
         joueur.Portee.Vider();
 
+        // --- l'ecran de l'ordinateur, quand le patron s'assoit ---
+        var ecranBureau = UnityEngine.Object.FindObjectOfType<EcranBureau>();
+        Check("le bureau a son ecran d'ordinateur", ecranBureau != null);
+        Check("ferme tant qu'il n'est pas assis", ecranBureau != null && !ecranBureau.Ouvert);
+
+        joueur.Portee.Vider();
+        Placer(joueur, bureau.Place);
+        Secondes(0.5f);
+        Check("il s'ouvre quand il s'assoit", joueur.Assis && ecranBureau.Ouvert);
+        Check("il montre une ligne par employe",
+              ecranBureau.Lignes == Personnel.Fiches.Count && ecranBureau.Lignes >= 2);
+
+        // Ce que la fenetre affiche vient du registre, et non d'une copie
+        // ecrite a la main quelque part.
+        var lignesUI = new List<Text>();
+        var fenetreUI = Trouver("Fenetre");
+        if (fenetreUI != null)
+            foreach (var e in fenetreUI.transform.Enfants)
+            {
+                var txt = e.gameObject.GetComponent<Text>();
+                if (txt != null && txt.text.Length > 0) lignesUI.Add(txt);
+            }
+        Check("les salaires y sont ecrits",
+              Contient(lignesUI, Reglages.SalaireCaissier + " / jour"));
+        Check("et la masse salariale aussi",
+              Contient(lignesUI, "Masse salariale : " + Personnel.MasseSalariale + " / jour"));
+
+        // Le statut suit l'embauche pour de bon : poste vide, poste pourvu.
+        employe.SetActive(false);
+        Frames(2);
+        Check("un poste vacant se lit comme tel", Contient(lignesUI, "Poste vacant"));
+        Check("et il ne compte pas dans la paie",
+              Personnel.MasseSalariale == Reglages.SalairePatron);
+        employe.SetActive(true);
+        Frames(2);
+        Check("une fois embauche, il passe en poste", Contient(lignesUI, "En poste"));
+        Check("et la paie le compte",
+              Personnel.MasseSalariale == Reglages.SalairePatron + Reglages.SalaireCaissier);
+
+        // Les colonnes d'une meme ligne ne se marchent pas dessus : a
+        // l'ecran, deux cadres qui se recouvrent, c'est du texte par-dessus
+        // du texte.
+        bool colonnesQuiSeCroisent = false;
+        for (int a1 = 0; a1 < lignesUI.Count; a1++)
+        for (int b1 = a1 + 1; b1 < lignesUI.Count; b1++)
+        {
+            var ra = lignesUI[a1].GetComponent<RectTransform>();
+            var rb = lignesUI[b1].GetComponent<RectTransform>();
+            if (Mathf.Abs(ra.anchoredPosition.y - rb.anchoredPosition.y) > 1f) continue;
+            float ax0 = ra.anchoredPosition.x, ax1 = ax0 + ra.sizeDelta.x;
+            float bx0 = rb.anchoredPosition.x, bx1 = bx0 + rb.sizeDelta.x;
+            if (ax0 < bx1 && bx0 < ax1) colonnesQuiSeCroisent = true;
+        }
+        Check("ses colonnes ne se chevauchent pas", !colonnesQuiSeCroisent);
+
+        // et il se referme des qu'il se leve
+        PousserVers(joueur, bureau.Place + new Vector3(-1.5f, 0f, -1.2f), 0.6f);
+        Frames(2);
+        Check("il se referme quand il se leve", !joueur.Assis && !ecranBureau.Ouvert);
+
         // --- l'ordinateur du bureau ---
         var ordi = Trouver("Ordinateur");
         Check("le bureau a son ordinateur", ordi != null);
@@ -1913,6 +2034,12 @@ static class Harness3D
 
         var erreurs = new List<string>();
         foreach (var l in Debug.Journal) if (l.StartsWith("ERROR")) erreurs.Add(l);
+        if (dumpUI != null && dumpUI.Length > 0)
+        {
+            Placer(joueur, bureau.Place);
+            Secondes(1.5f);
+            DumpUI(dumpUI);
+        }
         if (dumpScene) DumpScene(Environment.GetEnvironmentVariable("DUMP_SCENE"));
 
         // --- le logo de l'enseigne, imprime sur les cartons ---

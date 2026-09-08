@@ -66,7 +66,15 @@ namespace Pizzeria3D
             employe.Salle = tableSalle;
             employe.Poubelle = poubelle + new Vector3(-1.0f, 0f, 0f);   // il s'arrete devant
 
+            // Le registre du personnel, et l'ecran du bureau qui le lit. Le
+            // caissier n'y figure en poste qu'une fois embauche.
+            Personnel.Vider();
+            Personnel.Inscrire("Vous", "Pizzaiolo", Reglages.SalairePatron);
+            Personnel.Inscrire("Caissier", "Comptoir", Reglages.SalaireCaissier,
+                               () => caissier != null && caissier.activeSelf);
+
             racine.AddComponent<Hud>();
+            racine.AddComponent<EcranBureau>().Joueur = joueur;
             racine.AddComponent<Manette>();
             Debug.Log("Pizzeria : scene prete. Maintiens le clic et glisse pour te deplacer.");
         }
