@@ -738,8 +738,6 @@ namespace Pizzeria3D
             // pile de papiers, un sous-main. La lampe se tient a l'autre bout
             // que le fauteuil : au milieu, elle passait devant le visage de
             // celui qui s'assoit.
-            Bloc.Boite("SousMain", t, new Vector3(0.10f, 0.815f, 0f),
-                       new Vector3(0.72f, 0.02f, 0.46f), Bloc.Couleur(0x2E3A46)).SansCollision();
             Bloc.Boite("Papiers", t, new Vector3(0.62f, 0.83f, 0.06f),
                        new Vector3(0.30f, 0.06f, 0.40f), Bloc.Couleur(0xF6F1E6)).SansCollision();
 
@@ -765,16 +763,21 @@ namespace Pizzeria3D
 
         /// <summary>
         /// L'ordinateur portable du bureau : coque d'aluminium, clavier
-        /// sombre et pave tactile, capot releve. L'ecran est tourne vers la
-        /// camera et non vers le fauteuil : de dos, on ne verrait qu'une
-        /// plaque grise, et l'on ne reconnaitrait rien.
+        /// sombre et pave tactile, capot releve. Il est pose droit, dans
+        /// l'axe du meuble, l'ecran tourne vers le mur — donc vers celui qui
+        /// s'assoit, comme un portable pose sur un vrai bureau.
         /// </summary>
         static Transform Ordinateur(Transform parent, Vector3 local)
         {
             var go = new GameObject("Ordinateur");
             go.transform.SetParent(parent, false);
             go.transform.localPosition = local;
-            go.transform.localRotation = Quaternion.Euler(0f, 18f, 0f);
+            // Droit dans l'axe du bureau, ecran vers le mur : le demi-tour
+            // met le pave tactile du cote du fauteuil et l'ecran en face.
+            go.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
+            // Un portable, pas une station de travail : a pleine taille il
+            // mangeait la moitie du plan.
+            go.transform.localScale = new Vector3(0.82f, 0.82f, 0.82f);
             var t = go.transform;
 
             var alu = Bloc.Couleur(0xC9CDD2);

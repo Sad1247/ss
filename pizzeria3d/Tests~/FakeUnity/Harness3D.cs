@@ -93,6 +93,41 @@ static class Harness3D
     /// <summary>Compte a n'importe quelle profondeur : une pizza posee sur un
     /// plateau est petite-fille de la pile, pas fille.</summary>
     /// <summary>
+    /// Position, taille et cap d'un objet, rotations et echelles des parents
+    /// comprises : le faux Transform, lui, les ignore. Sans cette composition,
+    /// un objet retourne par son porteur se mesurait a sa place d'origine.
+    /// </summary>
+    static void Composer(Transform t, out Vector3 p, out Vector3 e, out float ry)
+    {
+        p = t.localPosition;
+        e = t.localScale;
+        ry = Angle(t.localRotation);
+        for (var q = t.parent; q != null; q = q.parent)
+        {
+            var s = q.localScale;
+            p = new Vector3(p.x * s.x, p.y * s.y, p.z * s.z);
+            float a = Angle(q.localRotation);
+            if (Mathf.Abs(a) > 0.01f)
+            {
+                float r = a * Mathf.Deg2Rad;
+                float c = Mathf.Cos(r), si = Mathf.Sin(r);
+                p = new Vector3(p.x * c + p.z * si, p.y, -p.x * si + p.z * c);
+                ry += a;
+            }
+            e = new Vector3(e.x * s.x, e.y * s.y, e.z * s.z);
+            p = new Vector3(p.x + q.localPosition.x, p.y + q.localPosition.y,
+                            p.z + q.localPosition.z);
+        }
+    }
+
+    /// <summary>Ou se trouve vraiment un objet, une fois tout compose.</summary>
+    static Vector3 PositionReelle(Transform t)
+    {
+        Composer(t, out var p, out _, out _);
+        return p;
+    }
+
+    /// <summary>
     /// L'emprise au sol de tout ce qui pend a un point du plan : c'est elle
     /// qui dit si deux tas se rentrent dedans, pas la distance entre leurs
     /// piquets.
@@ -109,28 +144,7 @@ static class Harness3D
             for (var m = go.transform; m != null; m = m.parent) if (m == t) { sien = true; break; }
             if (!sien) continue;
 
-            // Composition a la main, comme pour le dessin de la scene : le
-            // faux Transform ignore rotations et echelles des parents. Sans
-            // elle, un plateau pose en travers se mesurait large ET profond.
-            var p = go.transform.localPosition;
-            var e = go.transform.localScale;
-            float ry = Angle(go.transform.localRotation);
-            for (var q = go.transform.parent; q != null; q = q.parent)
-            {
-                var s2 = q.localScale;
-                p = new Vector3(p.x * s2.x, p.y * s2.y, p.z * s2.z);
-                float a = Angle(q.localRotation);
-                if (Mathf.Abs(a) > 0.01f)
-                {
-                    float r2 = a * Mathf.Deg2Rad;
-                    float c2 = Mathf.Cos(r2), s3 = Mathf.Sin(r2);
-                    p = new Vector3(p.x * c2 + p.z * s3, p.y, -p.x * s3 + p.z * c2);
-                    ry += a;
-                }
-                e = new Vector3(e.x * s2.x, e.y * s2.y, e.z * s2.z);
-                p = new Vector3(p.x + q.localPosition.x, p.y + q.localPosition.y,
-                                p.z + q.localPosition.z);
-            }
+            Composer(go.transform, out var p, out var e, out float ry);
 
             float rad = ry * Mathf.Deg2Rad;
             float co = Mathf.Abs(Mathf.Cos(rad)), si = Mathf.Abs(Mathf.Sin(rad));
@@ -1426,8 +1440,8 @@ static class Harness3D
         // vide a cote du meuble.
         var coque = ordi != null ? Piece(ordi.transform, "Socle") : null;
         Check("il repose sur le dessus du bureau",
-              coque != null && coque.position.y > bureau.transform.position.y + 0.80f
-                            && coque.position.y < bureau.transform.position.y + 0.90f);
+              coque != null && PositionReelle(coque).y > bureau.transform.position.y + 0.80f
+                            && PositionReelle(coque).y < bureau.transform.position.y + 0.90f);
         if (ordi != null && Empreinte(ordi.transform, out float ox0, out float ox1,
                                       out float oz0, out float oz1))
         {
@@ -1435,8 +1449,27 @@ static class Harness3D
             Check("et tient entierement sur le plan",
                   ox0 > plan.x - 1.0f && ox1 < plan.x + 1.0f &&
                   oz0 > plan.z - 0.425f && oz1 < plan.z + 0.425f);
+            // Pose droit : de biais, son emprise s'elargit des deux cotes a
+            // la fois. Et assez petit pour ne pas manger le plan.
+            Check("il est pose droit dans l'axe du meuble", ox1 - ox0 < 0.66f);
+            Check("et il ne mange pas le plan", (ox1 - ox0) < 0.40f * 2.0f);
         }
-        else Check("et tient entierement sur le plan", false);
+        else
+        {
+            Check("et tient entierement sur le plan", false);
+            Check("il est pose droit dans l'axe du meuble", false);
+            Check("et il ne mange pas le plan", false);
+        }
+        // Ecran vers le mur, pave tactile vers le fauteuil : c'est celui qui
+        // s'assoit qui doit voir l'affichage, pas la pelouse.
+        var capot = ordi != null ? Piece(ordi.transform, "Capot") : null;
+        var pave = ordi != null ? Piece(ordi.transform, "PaveTactile") : null;
+        Check("l'ecran est tourne vers le mur",
+              capot != null && pave != null
+              && PositionReelle(capot).z < PositionReelle(pave).z);
+        // et plus de sous-main noir sur le bois
+        Check("le plan n'a plus son sous-main",
+              Piece(bureau.transform, "SousMain") == null);
 
         // --- la porte du bureau s'ouvre a l'approche, et se referme derriere ---
         var porteDuBureau = laPiece.GetComponent<PetitePiece>();

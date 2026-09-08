@@ -91,7 +91,7 @@ Scripts/Monde/
 
 Tests~/FakeUnity/            (ignore par Unity : le ~ final)
   FakeUnity3D.cs  faux runtime Unity (hierarchie, transforms, entrees, cycle de vie)
-  Harness3D.cs    270 verifications qui jouent la boucle complete
+  Harness3D.cs    274 verifications qui jouent la boucle complete
 ```
 
 ## Regarder la scene sans Unity
@@ -106,6 +106,11 @@ DUMP_SCENE=/tmp/scene.txt mono h3d.exe
 python3 'pizzeria3d/Tests~/Rendu/rendu.py' /tmp/scene.txt vue.png
 # cadrage : zoom=52 centre=11.5,4.6  (coordonnees ecran, pas monde)
 ```
+
+Deux limites a connaitre : il ne compose que les rotations autour de Y — un
+objet penche se dessine droit — et il trie par objet, si bien que deux plaques
+minces collees l'une a l'autre peuvent passer l'une devant l'autre a tort. Unity,
+lui, a un tampon de profondeur.
 
 ## Verifier sans Unity
 
@@ -143,7 +148,7 @@ partie. Le remettre a 0.
 
 ## Ce qui est verifie, et ce qui ne l'est pas
 
-La logique tourne : les 270 verifications ci-dessus s'executent hors editeur.
+La logique tourne : les 274 verifications ci-dessus s'executent hors editeur.
 Le **rendu 3D n'a jamais ete affiche** — positions, echelles, cadrage de la
 camera et couleurs ont ete poses sans jamais etre vus. C'est la premiere chose
 a corriger a l'oeil au lancement.
