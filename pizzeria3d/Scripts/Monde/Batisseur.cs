@@ -378,9 +378,9 @@ namespace Pizzeria3D
             // trois lumieres par pixel : sans cela, la lumiere d'appoint et
             // celle de contre-jour passent en calcul par sommet et disparaissent
             QualitySettings.pixelLightCount = 4;
-            // Le nom moderne : masterTextureLimit est obsolete depuis Unity
-            // 2022 et l'editeur reecrivait le fichier a chaque ouverture, ce
-            // qui bloquait les mises a jour du depot.
+            // Le nom en vigueur depuis Unity 2022. L'ancien etant obsolete,
+            // l'editeur reecrivait le fichier a chaque ouverture du projet,
+            // ce qui bloquait les mises a jour du depot.
             QualitySettings.globalTextureMipmapLimit = 0;   // textures a pleine taille
             QualitySettings.anisotropicFiltering = AnisotropicFiltering.ForceEnable;
             QualitySettings.vSyncCount = 1;
