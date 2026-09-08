@@ -536,8 +536,46 @@ static class Harness3D
 
         Check("la camera de la scene est reutilisee, pas doublee",
               TousLes<UnityEngine.Camera>().Count == 1);
+        // Trois lumieres : le soleil qui porte les ombres, un appoint froid,
+        // un contre-jour. Une seule donnait des aplats sans relief.
+        var lumieres = TousLes<Light>();
+        Check("la scene est eclairee a trois lumieres", lumieres.Count == 3);
+        int porteuses = 0;
+        foreach (var l in lumieres) if (l.shadows != LightShadows.None) porteuses++;
+        Check("une seule d'entre elles porte les ombres", porteuses == 1);
+        // C'est bien celle de la scene qui sert de soleil : creee en double,
+        // l'ancienne resterait sans ombres dans son coin.
         Check("la lumiere de la scene est reutilisee, pas doublee",
-              TousLes<Light>().Count == 1);
+              UnityEngine.Object.FindObjectOfType<Light>().shadows == LightShadows.Soft);
+
+        Check("l'anticrenelage est pousse", QualitySettings.antiAliasing >= 8);
+        Check("les ombres portent jusqu'au fond de la salle",
+              QualitySettings.shadowDistance >= 40f);
+        Check("et se decoupent finement",
+              QualitySettings.shadowResolution == ShadowResolution.VeryHigh
+              && QualitySettings.shadowCascades >= 4);
+        // Sans assez de lumieres par pixel, l'appoint et le contre-jour
+        // passent en calcul par sommet : ils disparaissent.
+        Check("les trois lumieres sont calculees par pixel",
+              QualitySettings.pixelLightCount >= 3);
+        Check("l'ambiante est un degrade, pas un aplat",
+              RenderSettings.ambientMode == UnityEngine.Rendering.AmbientMode.Trilight);
+        Check("son ciel est plus froid que le rebond du sol",
+              RenderSettings.ambientSkyColor.b > RenderSettings.ambientGroundColor.b);
+
+        // Le metal a sa matiere : peint du meme fini mat que le carton, un
+        // plan de travail en inox ne ressemble a rien.
+        var inox = Trouver("Comptoir");
+        var dessusInox = inox != null ? Piece(inox.transform, "Dessus") : null;
+        var matiere = dessusInox != null
+            ? dessusInox.gameObject.GetComponent<MeshRenderer>().sharedMaterial : null;
+        Check("le plan de travail a un fini metallique",
+              matiere != null && matiere.GetFloat("_Metallic") > 0.5f
+                              && matiere.GetFloat("_Smoothness") > 0.3f);
+        Check("mais le decor peint reste mat",
+              Bloc.Peinture(Bloc.Machine).GetFloat("_Smoothness") < 0.2f);
+        Check("et le metal poli ne deteint pas sur la peinture partagee",
+              matiere != Bloc.Peinture(Bloc.Metal));
         Check("c'est bien la camera d'origine qui sert",
               UnityEngine.Object.FindObjectOfType<UnityEngine.Camera>() == camScene);
 
@@ -2060,10 +2098,26 @@ static class Harness3D
         // Le dessin lui-meme, releve au pixel : le fond sombre dans un coin,
         // la couronne orange, le rouge du disque, la creme de la part et
         // celle du nom dessous.
-        Check("le logo a son cerne sombre", Pixel(image, 64, 114, 0x1E1B26));
-        Check("sa couronne jaune", Pixel(image, 64, 108, 0xF0A93C));
-        Check("son coeur orange", Pixel(image, 30, 64, 0xE8562A));
-        Check("sa part de pizza", Pixel(image, 66, 58, 0xF2DFA8));
+        // Releves exprimes en 128es : la texture peut grandir sans que les
+        // points de controle se retrouvent ailleurs sur le dessin.
+        int T = image != null ? image.width / 128 : 1;
+        Check("le logo est dessine assez finement", image != null && image.width >= 256);
+        Check("le logo a son cerne sombre", Pixel(image, 64 * T, 114 * T, 0x1E1B26));
+        Check("sa couronne jaune", Pixel(image, 64 * T, 108 * T, 0xF0A93C));
+        Check("son coeur orange", Pixel(image, 30 * T, 64 * T, 0xE8562A));
+        Check("sa part de pizza", Pixel(image, 66 * T, 58 * T, 0xF2DFA8));
+
+        // Les bords sont adoucis : sans cela, les arrondis du logo montent en
+        // escalier des qu'on approche la camera du couvercle.
+        int melanges = 0;
+        if (image != null && image.Pixels != null)
+            foreach (var q in image.Pixels)
+            {
+                int rgb = (q.r << 16) | (q.g << 8) | q.b;
+                if (rgb != 0xCB3A2A && rgb != 0x1E1B26 && rgb != 0xF0A93C
+                    && rgb != 0xE8562A && rgb != 0xF2DFA8 && rgb != 0xC33A2A) melanges++;
+            }
+        Check("ses bords sont adoucis", melanges > 400);
 
         // Le carton du modele est rouge, et l'etiquette est une plaque
         // carree : hors du disque, elle doit se confondre avec le couvercle,
@@ -2075,7 +2129,7 @@ static class Harness3D
         Check("le carton est rouge",
               teinteCouvercle.r > 0.6f && teinteCouvercle.g < 0.35f && teinteCouvercle.b < 0.30f);
         Check("le fond de l'etiquette est celui du couvercle",
-              Pixel(image, 4, 4, ((int)(teinteCouvercle.r * 255) << 16)
+              Pixel(image, 4 * T, 4 * T, ((int)(teinteCouvercle.r * 255) << 16)
                                | ((int)(teinteCouvercle.g * 255) << 8)
                                | (int)(teinteCouvercle.b * 255)));
         // Une texture posee sur la peinture blanche partagee se serait

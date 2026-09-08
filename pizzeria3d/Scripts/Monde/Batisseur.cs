@@ -361,33 +361,81 @@ namespace Pizzeria3D
         /// </summary>
         static void Qualite()
         {
-            QualitySettings.antiAliasing = 4;              // bords nets
+            QualitySettings.antiAliasing = 8;              // bords nets, meme sur les arretes obliques
             QualitySettings.shadows = ShadowQuality.All;
-            QualitySettings.shadowResolution = ShadowResolution.High;
+            QualitySettings.shadowResolution = ShadowResolution.VeryHigh;
+            // La camera voit toute la pizzeria d'un coup : une portee d'ombre
+            // courte les faisait disparaitre au fond de la salle.
+            QualitySettings.shadowDistance = 45f;
+            QualitySettings.shadowCascades = 4;
+            // trois lumieres par pixel : sans cela, la lumiere d'appoint et
+            // celle de contre-jour passent en calcul par sommet et disparaissent
+            QualitySettings.pixelLightCount = 4;
+            QualitySettings.masterTextureLimit = 0;        // textures a pleine taille
+            QualitySettings.anisotropicFiltering = AnisotropicFiltering.ForceEnable;
+            QualitySettings.vSyncCount = 1;
+            Application.targetFrameRate = 60;
 
-            // Lumiere ambiante chaude et uniforme : elle remonte les faces a
-            // l'ombre sans grisailler les couleurs, comme dans la reference.
-            RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
-            RenderSettings.ambientLight = new Color(0.72f, 0.74f, 0.78f);
+            // Ambiante en degrade plutot qu'uniforme : ciel clair et frais au
+            // -dessus, rebond chaud du sol en dessous. C'est ce qui donne du
+            // volume aux faces a l'ombre, la ou une ambiante plate aplatit tout.
+            RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Trilight;
+            RenderSettings.ambientSkyColor = new Color(0.62f, 0.70f, 0.82f);
+            RenderSettings.ambientEquatorColor = new Color(0.60f, 0.60f, 0.60f);
+            RenderSettings.ambientGroundColor = new Color(0.42f, 0.36f, 0.28f);
+            RenderSettings.ambientIntensity = 1f;
+            RenderSettings.fog = false;                    // le style ne supporte pas la brume
         }
 
+        /// <summary>
+        /// Un eclairage a trois lumieres, comme en studio : le soleil qui
+        /// porte les ombres, un appoint froid du cote oppose pour que les
+        /// faces a l'ombre ne virent pas au noir, et un contre-jour qui
+        /// detache les silhouettes du fond. Une seule directionnelle donnait
+        /// des aplats sans relief.
+        /// </summary>
         static void Lumiere(Transform parent)
         {
             // Une scene neuve contient deja une lumiere directionnelle : en
             // ajouter une seconde surexpose tout. On reprend celle qui existe.
-            var l = Object.FindObjectOfType<Light>();
-            if (l == null)
-            {
-                var go = new GameObject("Soleil");
-                go.transform.SetParent(parent, false);
-                l = go.AddComponent<Light>();
-            }
-            l.type = LightType.Directional;
-            l.color = Bloc.Couleur(0xFFF6E2);              // soleil legerement chaud
-            l.intensity = 1.35f;
-            l.shadows = LightShadows.Soft;                 // les ombres portees font le relief
-            l.shadowStrength = 0.45f;
-            l.transform.rotation = Quaternion.Euler(52f, -35f, 0f);
+            var soleil = Object.FindObjectOfType<Light>();
+            if (soleil == null) soleil = NouvelleLumiere(parent, "Soleil");
+
+            soleil.type = LightType.Directional;
+            soleil.color = Bloc.Couleur(0xFFF3DC);         // soleil legerement chaud
+            soleil.intensity = 1.25f;
+            soleil.shadows = LightShadows.Soft;            // les ombres portees font le relief
+            soleil.shadowStrength = 0.55f;
+            // Biais serres : trop laches, l'ombre se decolle du pied des murs
+            // et l'objet parait flotter.
+            soleil.shadowBias = 0.02f;
+            soleil.shadowNormalBias = 0.15f;
+            soleil.renderMode = LightRenderMode.ForcePixel;
+            soleil.transform.rotation = Quaternion.Euler(52f, -35f, 0f);
+
+            var appoint = NouvelleLumiere(parent, "Appoint");
+            appoint.type = LightType.Directional;
+            appoint.color = Bloc.Couleur(0xBFD4F2);        // rebond du ciel, franchement froid
+            appoint.intensity = 0.38f;
+            appoint.shadows = LightShadows.None;           // une seule source porte les ombres
+            appoint.renderMode = LightRenderMode.ForcePixel;
+            appoint.transform.rotation = Quaternion.Euler(28f, 155f, 0f);
+
+            var contre = NouvelleLumiere(parent, "ContreJour");
+            contre.type = LightType.Directional;
+            contre.color = Bloc.Couleur(0xFFE3B8);
+            contre.intensity = 0.22f;
+            contre.shadows = LightShadows.None;
+            contre.renderMode = LightRenderMode.ForcePixel;
+            // de derriere et de haut : c'est le liset qui detoure les tetes
+            contre.transform.rotation = Quaternion.Euler(18f, 118f, 0f);
+        }
+
+        static Light NouvelleLumiere(Transform parent, string nom)
+        {
+            var go = new GameObject(nom);
+            go.transform.SetParent(parent, false);
+            return go.AddComponent<Light>();
         }
 
         static void Camera(Transform parent, Transform cible)
@@ -480,7 +528,7 @@ namespace Pizzeria3D
             Bloc.Boite("Plan", t, new Vector3(0f, 0.55f, 0f), new Vector3(4.2f, 1.1f, 1.2f),
                        Bloc.Machine).SansCollision();
             Bloc.Boite("Dessus", t, new Vector3(0f, 1.15f, 0f), new Vector3(4.4f, 0.16f, 1.4f),
-                       Bloc.Metal).SansCollision();
+                       Bloc.Metal).Poli(0.5f, 0.75f).SansCollision();
             Bloc.Boite("Bandeau", t, new Vector3(0f, 0.20f, -0.61f), new Vector3(4.2f, 0.30f, 0.04f),
                        Bloc.MachineBis).SansCollision();
 
@@ -537,7 +585,7 @@ namespace Pizzeria3D
             Bloc.Boite("Plan", go.transform, new Vector3(0f, 0.55f, 0f), new Vector3(3.6f, 1.1f, 1.8f),
                        Bloc.Machine).SansCollision();
             Bloc.Boite("Dessus", go.transform, new Vector3(0f, 1.15f, 0f), new Vector3(3.8f, 0.16f, 2f),
-                       Bloc.Metal).SansCollision();
+                       Bloc.Metal).Poli(0.5f, 0.75f).SansCollision();
             var caisse = Caisse.Creer(go.transform, new Vector3(-1.05f, 1.15f, 0f));
 
             Obstacles.Ajouter(go.transform.position, 3.9f, 2.1f);
@@ -730,7 +778,7 @@ namespace Pizzeria3D
                        bois).SansCollision();
             // le champ clair : sans lui, le plan se confond avec les caissons
             Bloc.Boite("Chant", t, new Vector3(0f, 0.70f, -0.44f), new Vector3(2.00f, 0.04f, 0.03f),
-                       laiton).SansCollision();
+                       laiton).Poli(0.62f, 0.9f).SansCollision();
 
             foreach (float x in new[] { -0.68f, 0.68f })
             {
@@ -802,13 +850,13 @@ namespace Pizzeria3D
 
             // la coque posee a plat, son clavier creuse et son pave tactile
             Bloc.Boite("Socle", t, new Vector3(0f, 0.018f, 0f),
-                       new Vector3(0.74f, 0.035f, 0.52f), alu).SansCollision();
+                       new Vector3(0.74f, 0.035f, 0.52f), alu).Poli(0.62f, 0.9f).SansCollision();
             Bloc.Boite("Clavier", t, new Vector3(0f, 0.038f, 0.07f),
                        new Vector3(0.62f, 0.006f, 0.24f), dalle).SansCollision();
             Bloc.Boite("PaveTactile", t, new Vector3(0f, 0.038f, -0.14f),
                        new Vector3(0.22f, 0.006f, 0.13f), clair).SansCollision();
             Bloc.Boite("Charniere", t, new Vector3(0f, 0.035f, 0.265f),
-                       new Vector3(0.74f, 0.03f, 0.04f), aluSombre).SansCollision();
+                       new Vector3(0.74f, 0.03f, 0.04f), aluSombre).Poli(0.55f, 0.9f).SansCollision();
 
             // Tout le capot pend a un pivot pose sur la charniere : c'est lui
             // qu'on fait tourner pour ouvrir et fermer le portable.
@@ -820,7 +868,7 @@ namespace Pizzeria3D
             // Le dos d'aluminium, puis l'ecran pose devant. D'une seule boite,
             // l'affichage aurait l'epaisseur du capot.
             Bloc.Boite("Dos", cp, new Vector3(0f, 0.23f, 0.010f),
-                       new Vector3(0.74f, 0.48f, 0.025f), alu).SansCollision();
+                       new Vector3(0.74f, 0.48f, 0.025f), alu).Poli(0.62f, 0.9f).SansCollision();
             Bloc.Boite("Ecran", cp, new Vector3(0f, 0.235f, -0.005f),
                        new Vector3(0.70f, 0.44f, 0.008f), dalle).SansCollision();
             Bloc.Boite("Affichage", cp, new Vector3(0f, 0.235f, -0.010f),
@@ -864,12 +912,13 @@ namespace Pizzeria3D
                                          new Vector3(sx * 0.22f, 0.09f, sz * 0.22f),
                                          new Vector3(0.09f, 0.07f, 0.46f), acier);
                 branche.transform.localRotation = Quaternion.Euler(0f, i * 72f, 0f);
-                branche.SansCollision();
+                branche.Poli(0.5f, 0.85f).SansCollision();
                 Bloc.Bille("Roulette", t, new Vector3(sx * 0.43f, 0.06f, sz * 0.43f), 0.12f,
                            cuir).SansCollision();
             }
 
-            Bloc.Disque("Verin", t, new Vector3(0f, 0.28f, 0f), 0.13f, 0.40f, acier).SansCollision();
+            Bloc.Disque("Verin", t, new Vector3(0f, 0.28f, 0f), 0.13f, 0.40f, acier)
+                .Poli(0.5f, 0.85f).SansCollision();
             Bloc.Disque("Embase", t, new Vector3(0f, 0.44f, 0f), 0.34f, 0.06f, cuir).SansCollision();
 
             // assise capitonnee, cerclee de laiton

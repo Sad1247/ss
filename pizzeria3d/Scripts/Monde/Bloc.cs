@@ -168,6 +168,37 @@ namespace Pizzeria3D
             return go;
         }
 
+        static readonly System.Collections.Generic.Dictionary<int, Material> _polis =
+            new System.Collections.Generic.Dictionary<int, Material>();
+
+        /// <summary>
+        /// Donne a une piece un fini metallique : l'inox d'un plan de travail,
+        /// l'aluminium d'un portable. Tout le decor est mat a dessein, mais
+        /// peindre le metal du meme fini que le carton lui otait sa matiere —
+        /// c'est le seul reflet qui manque au style.
+        /// </summary>
+        public static GameObject Poli(this GameObject go, float brillance = 0.55f,
+                                      float metal = 0.80f)
+        {
+            var rendu = go.GetComponent<Renderer>();
+            if (rendu == null || rendu.sharedMaterial == null) return go;
+
+            var c = rendu.sharedMaterial.color;
+            int cle = ((int)(c.r * 255) << 24) | ((int)(c.g * 255) << 16) | ((int)(c.b * 255) << 8)
+                    | (int)(Mathf.Clamp01(brillance) * 15f) | ((int)(Mathf.Clamp01(metal) * 15f) << 4);
+            if (!_polis.TryGetValue(cle, out var connu) || connu == null)
+            {
+                connu = new Material(Shader());
+                connu.color = c;
+                if (connu.HasProperty("_Smoothness")) connu.SetFloat("_Smoothness", brillance);
+                if (connu.HasProperty("_Glossiness")) connu.SetFloat("_Glossiness", brillance);
+                if (connu.HasProperty("_Metallic")) connu.SetFloat("_Metallic", metal);
+                _polis[cle] = connu;
+            }
+            rendu.sharedMaterial = connu;
+            return go;
+        }
+
         /// <summary>Retire le collider : la plupart des objets sont purement decoratifs.</summary>
         public static GameObject SansCollision(this GameObject go)
         {

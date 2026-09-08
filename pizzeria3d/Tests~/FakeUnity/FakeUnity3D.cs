@@ -428,7 +428,12 @@ namespace UnityEngine
     {
         public LightType type; public Color color; public float intensity;
         public LightShadows shadows; public float shadowStrength;
+        public float shadowBias = 0.05f, shadowNormalBias = 0.4f;
+        public LightRenderMode renderMode;
     }
+
+    public enum LightRenderMode { Auto, ForcePixel, ForceVertex }
+    public enum AnisotropicFiltering { Disable, Enable, ForceEnable }
 
     public enum ShadowQuality { Disable, HardOnly, All }
     public enum ShadowResolution { Low, Medium, High, VeryHigh }
@@ -438,12 +443,26 @@ namespace UnityEngine
         public static int antiAliasing;
         public static ShadowQuality shadows;
         public static ShadowResolution shadowResolution;
+        public static float shadowDistance;
+        public static int shadowCascades;
+        public static int pixelLightCount;
+        public static int vSyncCount;
+        public static int masterTextureLimit;
+        public static AnisotropicFiltering anisotropicFiltering;
+    }
+
+    public static class Application
+    {
+        public static int targetFrameRate;
     }
 
     public static class RenderSettings
     {
         public static Rendering.AmbientMode ambientMode;
         public static Color ambientLight;
+        public static Color ambientSkyColor, ambientEquatorColor, ambientGroundColor;
+        public static float ambientIntensity = 1f;
+        public static bool fog;
     }
 
     namespace Rendering

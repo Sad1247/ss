@@ -15,7 +15,10 @@ namespace Pizzeria3D
     public static class Pizza3D
     {
         const int Taille = 256;
-        const int Segments = 40;
+        // 64 quartiers de cercle : a 40, le bord de la pizza montrait ses
+        // facettes des que la camera s'en approchait. Le maillage est partage
+        // par toutes les pizzas, le cout ne se paie qu'une fois.
+        const int Segments = 64;
 
         static Material _pate, _garniture;
         static Mesh _disque;
