@@ -304,7 +304,10 @@ namespace Pizzeria3D
             Mur(t, new Vector3(0f, 1.6f, demiZ - 0.2f), new Vector3(demiX * 2f + 0.4f, 3.2f, 0.4f),
                 centre);
 
-            // La piece reste vide : c'est un espace a amenager, pas un coin repas.
+            // Le bureau du patron, cale contre le mur de droite. Son fauteuil
+            // est derriere, adosse au fond : assis, il regarde la porte — donc
+            // la camera. Devant le plan, on ne verrait que son dos.
+            AmenagerBureau(t, new Vector3(1.25f, 0f, 0.55f), centre, joueur);
 
             var p = go.AddComponent<PetitePiece>();
             p.Passage = seuil;
@@ -689,6 +692,134 @@ namespace Pizzeria3D
         }
 
         /// <summary>Une chaise : quatre montants, une assise, un dossier.</summary>
+        /// <summary>
+        /// Le bureau du patron : un plan de bois sombre sur deux caissons a
+        /// tiroirs, sa lampe, ses papiers — et le fauteuil de direction ou le
+        /// joueur vient s'asseoir. La piece n'etait qu'un volume vide.
+        /// </summary>
+        static Bureau AmenagerBureau(Transform parent, Vector3 local, Vector3 centrePiece,
+                                     Joueur joueur)
+        {
+            var go = new GameObject("Bureau");
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = local;
+            var t = go.transform;
+
+            var bois = Bloc.Couleur(0x6B4423);
+            var boisSombre = Bloc.Couleur(0x4A2E17);
+            var laiton = Bloc.Couleur(0xD9A441);
+
+            Bloc.Boite("Plateau", t, new Vector3(0f, 0.76f, 0f), new Vector3(2.00f, 0.10f, 0.85f),
+                       bois).SansCollision();
+            // le champ clair : sans lui, le plan se confond avec les caissons
+            Bloc.Boite("Chant", t, new Vector3(0f, 0.70f, -0.44f), new Vector3(2.00f, 0.04f, 0.03f),
+                       laiton).SansCollision();
+
+            foreach (float x in new[] { -0.68f, 0.68f })
+            {
+                Bloc.Boite("Caisson", t, new Vector3(x, 0.35f, 0.02f),
+                           new Vector3(0.58f, 0.71f, 0.78f), boisSombre).SansCollision();
+                // trois tiroirs, marques par leur poignee
+                for (int i = 0; i < 3; i++)
+                {
+                    float y = 0.16f + i * 0.22f;
+                    Bloc.Boite("Tiroir", t, new Vector3(x, y, -0.38f),
+                               new Vector3(0.50f, 0.18f, 0.03f), bois).SansCollision();
+                    Bloc.Boite("Poignee", t, new Vector3(x, y, -0.41f),
+                               new Vector3(0.22f, 0.04f, 0.03f), laiton).SansCollision();
+                }
+            }
+
+            // De quoi faire un bureau plutot qu'une table : une lampe, une
+            // pile de papiers, un sous-main. La lampe se tient a l'autre bout
+            // que le fauteuil : au milieu, elle passait devant le visage de
+            // celui qui s'assoit.
+            Bloc.Boite("SousMain", t, new Vector3(0.10f, 0.815f, 0f),
+                       new Vector3(0.72f, 0.02f, 0.46f), Bloc.Couleur(0x2E3A46)).SansCollision();
+            Bloc.Boite("Papiers", t, new Vector3(0.62f, 0.83f, 0.06f),
+                       new Vector3(0.30f, 0.06f, 0.40f), Bloc.Couleur(0xF6F1E6)).SansCollision();
+            Bloc.Disque("PiedLampe", t, new Vector3(-0.80f, 0.83f, 0.18f), 0.20f, 0.05f,
+                        laiton).SansCollision();
+            Bloc.Boite("TigeLampe", t, new Vector3(-0.80f, 0.98f, 0.18f),
+                       new Vector3(0.04f, 0.30f, 0.04f), laiton).SansCollision();
+            Bloc.Galet("AbatJour", t, new Vector3(-0.80f, 1.14f, 0.18f),
+                       new Vector3(0.30f, 0.18f, 0.30f), Bloc.Couleur(0x2F6B4F)).SansCollision();
+
+            // Le meuble barre le passage ; le fauteuil, non — on doit pouvoir
+            // aller s'y asseoir.
+            Obstacles.Ajouter(centrePiece + local, 2.20f, 0.95f);
+
+            var siege = FauteuilDeDirection(t, new Vector3(0f, 0f, 0.90f));
+
+            var bureau = go.AddComponent<Bureau>();
+            bureau.Joueur = joueur;
+            bureau.Siege = siege;
+            return bureau;
+        }
+
+        /// <summary>
+        /// Le fauteuil de direction : cuir capitonne, accoudoirs, pietement
+        /// etoile a roulettes. Il tourne le dos au mur du fond — celui qui s'y
+        /// assoit fait face au bureau, et donc a la camera.
+        /// </summary>
+        static Transform FauteuilDeDirection(Transform parent, Vector3 local)
+        {
+            var go = new GameObject("Fauteuil");
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = local;
+            var t = go.transform;
+
+            var cuir = Bloc.Couleur(0x2A2E38);
+            var cuirClair = Bloc.Couleur(0x3B414F);
+            var acier = Bloc.Couleur(0x9AA3AD);
+            var laiton = Bloc.Couleur(0xD9A441);
+
+            // le pietement etoile : cinq branches et leurs roulettes
+            for (int i = 0; i < 5; i++)
+            {
+                float a = i * 72f * Mathf.Deg2Rad;
+                float sx = Mathf.Sin(a), sz = Mathf.Cos(a);
+                var branche = Bloc.Boite("Branche", t,
+                                         new Vector3(sx * 0.22f, 0.09f, sz * 0.22f),
+                                         new Vector3(0.09f, 0.07f, 0.46f), acier);
+                branche.transform.localRotation = Quaternion.Euler(0f, i * 72f, 0f);
+                branche.SansCollision();
+                Bloc.Bille("Roulette", t, new Vector3(sx * 0.43f, 0.06f, sz * 0.43f), 0.12f,
+                           cuir).SansCollision();
+            }
+
+            Bloc.Disque("Verin", t, new Vector3(0f, 0.28f, 0f), 0.13f, 0.40f, acier).SansCollision();
+            Bloc.Disque("Embase", t, new Vector3(0f, 0.44f, 0f), 0.34f, 0.06f, cuir).SansCollision();
+
+            // assise capitonnee, cerclee de laiton
+            Bloc.Galet("Assise", t, new Vector3(0f, 0.48f, 0f),
+                       new Vector3(0.68f, 0.22f, 0.66f), cuir).SansCollision();
+            Bloc.Boite("Passepoil", t, new Vector3(0f, 0.50f, -0.31f),
+                       new Vector3(0.62f, 0.04f, 0.04f), laiton).SansCollision();
+
+            // dossier haut, legerement incline, et son appuie-tete
+            var dossier = Bloc.Boite("Dossier", t, new Vector3(0f, 1.03f, 0.31f),
+                                     new Vector3(0.66f, 0.98f, 0.16f), cuir);
+            dossier.transform.localRotation = Quaternion.Euler(-9f, 0f, 0f);
+            dossier.SansCollision();
+            var coussin = Bloc.Galet("Capiton", t, new Vector3(0f, 1.00f, 0.23f),
+                                     new Vector3(0.54f, 0.80f, 0.12f), cuirClair);
+            coussin.transform.localRotation = Quaternion.Euler(-9f, 0f, 0f);
+            coussin.SansCollision();
+            Bloc.Galet("AppuieTete", t, new Vector3(0f, 1.54f, 0.36f),
+                       new Vector3(0.46f, 0.24f, 0.18f), cuir).SansCollision();
+
+            foreach (float x in new[] { -0.37f, 0.37f })
+            {
+                Bloc.Boite("Montant", t, new Vector3(x, 0.66f, 0.10f),
+                           new Vector3(0.07f, 0.30f, 0.07f), acier).SansCollision();
+                Bloc.Galet("Accoudoir", t, new Vector3(x, 0.82f, -0.02f),
+                           new Vector3(0.13f, 0.10f, 0.46f), cuir).SansCollision();
+            }
+
+            return t;
+        }
+
         static Transform Chaise(Transform parent, Vector3 local, float cap, Color bois, Color assise)
         {
             var go = new GameObject("Chaise");

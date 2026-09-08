@@ -23,12 +23,44 @@ namespace Pizzeria3D
             Portee.Max = Reglages.CapacitePortee;
         }
 
+        /// <summary>
+        /// Assis au fauteuil du bureau. La manette le remet debout : c'est le
+        /// seul moyen d'en sortir, et il n'y a rien a apprendre pour cela.
+        /// </summary>
+        public bool Assis { get; private set; }
+
         void Update()
         {
-            Deplacer(Direction() * Reglages.VitesseJoueur * Time.deltaTime);
+            var direction = Direction();
+            if (Assis)
+            {
+                if (direction.sqrMagnitude <= 0f) return;
+                SeLever();
+            }
+
+            Deplacer(direction * Reglages.VitesseJoueur * Time.deltaTime);
             if (_compteurTransfert > 0f) _compteurTransfert -= Time.deltaTime;
             // bras tendus tant qu'il tient quelque chose, pendants sinon
             if (_demarche != null) _demarche.BrasPortent = !Portee.EstVide;
+        }
+
+        /// <summary>Le pose sur un siege, le regard tourne vers son bureau.</summary>
+        public void Asseoir(Vector3 place, Vector3 regard)
+        {
+            Assis = true;
+            transform.position = new Vector3(place.x, Reglages.HauteurAssise, place.z);
+            if (regard.sqrMagnitude > 0.0001f)
+                transform.rotation = Quaternion.LookRotation(regard.normalized, Vector3.up);
+            if (_demarche != null) _demarche.Assis = true;
+        }
+
+        /// <summary>Le remet sur ses pieds, la ou etait le siege.</summary>
+        public void SeLever()
+        {
+            Assis = false;
+            var p = transform.position;
+            transform.position = new Vector3(p.x, 0f, p.z);
+            if (_demarche != null) _demarche.Assis = false;
         }
 
         Transform _camera;

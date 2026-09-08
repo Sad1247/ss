@@ -1361,10 +1361,54 @@ static class Harness3D
         Frames(2);
         Check("une fois dedans, ils s'effacent", AucunVisible(discrets));
         Check("mais la piece reste, elle", laPiece.activeSelf);
-        Check("elle est vide de tout mobilier",
-              Compte(laPiece.transform, "Table", false) == 0 &&
-              Compte(laPiece.transform, "Tabouret", false) == 0 &&
-              Compte(laPiece.transform, "Pied", false) == 0);
+
+        // --- le bureau du patron, et son fauteuil ---
+        var bureau = laPiece.GetComponent<Bureau>() ?? Trouver("Bureau")?.GetComponent<Bureau>();
+        Check("la piece a son bureau", bureau != null);
+        Check("et son fauteuil de direction", bureau != null && bureau.Siege != null);
+        Check("le fauteuil a son pietement a roulettes",
+              bureau != null && Dedans(bureau.Siege, "Roulette") == 5);
+        Check("et son dossier haut",
+              bureau != null && Dedans(bureau.Siege, "Dossier") == 1
+                             && Dedans(bureau.Siege, "AppuieTete") == 1);
+        // Le meuble arrete, le fauteuil non : sinon on ne peut pas aller s'y
+        // asseoir.
+        Check("le bureau barre le passage",
+              bureau != null && Obstacles.Bloque(bureau.transform.position, Reglages.RayonJoueur));
+        Check("mais on peut se tenir au fauteuil",
+              bureau != null && !Obstacles.Bloque(bureau.Place, Reglages.RayonJoueur));
+
+        // Il s'installe en s'arretant devant, sans rien avoir a apprendre.
+        joueur.Portee.Vider();
+        Placer(joueur, bureau.Place + new Vector3(0f, 0f, -0.5f));
+        Secondes(0.5f);
+        Check("le patron s'assoit a son bureau", joueur.Assis);
+        var assiette = joueur.transform.position;
+        Check("il est bien pose sur le fauteuil",
+              Mathf.Abs(assiette.x - bureau.Place.x) < 0.05f &&
+              Mathf.Abs(assiette.z - bureau.Place.z) < 0.05f &&
+              Mathf.Abs(assiette.y - Reglages.HauteurAssise) < 0.01f);
+        var pasDuPatron = joueur.GetComponent<Demarche>();
+        Check("et il en a la pose", pasDuPatron != null && pasDuPatron.Assis);
+        // Assis, il regarde son bureau — donc la camera : de dos, on ne
+        // verrait rien de lui.
+        var regard = joueur.transform.rotation * Vector3.forward;
+        var versLePlan = bureau.transform.position - bureau.Place;
+        Check("il fait face a son plan de travail",
+              regard.x * versLePlan.x + regard.z * versLePlan.z > 0.9f * versLePlan.magnitude);
+
+        // et la manette le remet debout : c'est la seule facon d'en sortir
+        PousserVers(joueur, bureau.Place + new Vector3(-1.5f, 0f, -1.2f), 0.6f);
+        Check("la manette le remet debout", !joueur.Assis);
+        Check("il ne reste pas assis en l'air", joueur.transform.position.y == 0f);
+        Check("il a quitte le fauteuil", !joueur.EstPres(bureau.Place, 0.3f));
+
+        // Les mains pleines, il reste debout : la pile resterait suspendue.
+        joueur.Portee.Ajouter();
+        Placer(joueur, bureau.Place);
+        Secondes(0.5f);
+        Check("les mains pleines, il ne s'assoit pas", !joueur.Assis);
+        joueur.Portee.Vider();
 
         Placer(joueur, new Vector3(0f, 0f, 0f));
         Frames(2);
