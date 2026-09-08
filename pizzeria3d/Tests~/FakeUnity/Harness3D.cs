@@ -1679,6 +1679,34 @@ static class Harness3D
         Check("les mains pleines, il ne s'assoit pas", !joueur.Assis);
         joueur.Portee.Vider();
 
+        // --- la fontaine a eau ---
+        var fontaine = Trouver("Fontaine");
+        Check("la piece a sa fontaine a eau", fontaine != null);
+        Check("avec sa bonbonne et ses deux robinets",
+              fontaine != null && Dedans(fontaine.transform, "Bonbonne") == 1
+                               && Dedans(fontaine.transform, "Robinet") == 2);
+        Check("l'un chaud, l'autre froid",
+              fontaine != null
+              && !MemeCouleur(fontaine.transform, "Robinet", fontaine.transform, "Goulot"));
+        // Elle tient dans la piece, loin du bureau, et l'on ne la traverse pas.
+        if (fontaine != null && Empreinte(fontaine.transform, out float fx0, out float fx1,
+                                          out float fz0, out float fz1))
+        {
+            var salle = laPiece.transform.position;
+            Check("elle est bien dans la piece",
+                  fx0 > salle.x - 2.75f && fx1 < salle.x + 2.75f && fz1 < salle.z + 2.1f);
+            Check("et ne se cogne pas au bureau",
+                  !SeChevauchent(fontaine.transform, bureau.transform));
+        }
+        else
+        {
+            Check("elle est bien dans la piece", false);
+            Check("et ne se cogne pas au bureau", false);
+        }
+        Check("on ne la traverse pas",
+              fontaine != null
+              && Obstacles.Bloque(PositionReelle(fontaine.transform), Reglages.RayonJoueur));
+
         // --- l'ecran de l'ordinateur, quand le patron s'assoit ---
         var ecranBureau = UnityEngine.Object.FindObjectOfType<EcranBureau>();
         Check("le bureau a son ecran d'ordinateur", ecranBureau != null);

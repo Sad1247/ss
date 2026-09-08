@@ -333,6 +333,10 @@ namespace Pizzeria3D
             // la camera. Devant le plan, on ne verrait que son dos.
             AmenagerBureau(t, new Vector3(1.25f, 0f, 0.55f), centre, joueur);
 
+            // La fontaine a eau, dans le coin gauche du fond : le bureau tient
+            // le cote droit, c'est le seul mur libre.
+            Fontaine(t, new Vector3(-2.05f, 0f, 1.65f), centre);
+
             var p = go.AddComponent<PetitePiece>();
             p.Passage = seuil;
             p.Gond = gond;
@@ -851,6 +855,57 @@ namespace Pizzeria3D
             bureau.Siege = siege;
             if (_portable != null) _portable.Bureau = bureau;
             return bureau;
+        }
+
+        /// <summary>
+        /// La fontaine a eau : colonne d'inox, bonbonne bleue sur son col,
+        /// facade noire avec ses deux robinets et la grille d'egouttage.
+        /// </summary>
+        static Transform Fontaine(Transform parent, Vector3 local, Vector3 centrePiece)
+        {
+            var go = new GameObject("Fontaine");
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = local;
+            var t = go.transform;
+
+            var inox = Bloc.Metal;
+            var sombre = Bloc.Couleur(0x23262B);
+            var noir = Bloc.Couleur(0x15171A);
+            var eau = Bloc.Couleur(0x8FC4EE);
+            var eauClaire = Bloc.Couleur(0xB6DCF5);
+
+            Bloc.Boite("Socle", t, new Vector3(0f, 0.03f, 0f), new Vector3(0.50f, 0.06f, 0.46f),
+                       sombre).SansCollision();
+            Bloc.Boite("Colonne", t, new Vector3(0f, 0.56f, 0f), new Vector3(0.44f, 1.00f, 0.40f),
+                       inox).Poli(0.55f, 0.85f).SansCollision();
+
+            // La facade noire ou l'on sert : c'est elle qui fait reconnaitre
+            // l'appareil, plus que la colonne.
+            Bloc.Boite("Facade", t, new Vector3(0f, 0.86f, -0.20f),
+                       new Vector3(0.34f, 0.30f, 0.03f), noir).SansCollision();
+            foreach (float x in new[] { -0.08f, 0.08f })
+                Bloc.Boite("Robinet", t, new Vector3(x, 0.92f, -0.235f),
+                           new Vector3(0.05f, 0.10f, 0.06f),
+                           x < 0f ? Bloc.Couleur(0xC0392B) : Bloc.Couleur(0x2F6FB5))
+                    .SansCollision();
+            Bloc.Boite("Grille", t, new Vector3(0f, 0.70f, -0.205f),
+                       new Vector3(0.28f, 0.03f, 0.09f), sombre).SansCollision();
+            // le renfoncement brillant du bas, comme sur le modele
+            Bloc.Boite("Niche", t, new Vector3(0f, 0.30f, -0.19f),
+                       new Vector3(0.28f, 0.34f, 0.04f), inox).Poli(0.6f, 0.9f).SansCollision();
+
+            // le col, puis la bonbonne posee dessus
+            Bloc.Disque("Col", t, new Vector3(0f, 1.10f, 0f), 0.26f, 0.12f,
+                        Bloc.Couleur(0xE7E9EC)).SansCollision();
+            Bloc.Disque("Goulot", t, new Vector3(0f, 1.20f, 0f), 0.18f, 0.14f, eau).SansCollision();
+            Bloc.Galet("Bonbonne", t, new Vector3(0f, 1.48f, 0f), new Vector3(0.50f, 0.58f, 0.50f),
+                       eau).SansCollision();
+            // le reflet clair sur le haut de la bonbonne
+            Bloc.Galet("Reflet", t, new Vector3(0f, 1.66f, 0f), new Vector3(0.34f, 0.22f, 0.34f),
+                       eauClaire).SansCollision();
+
+            Obstacles.Ajouter(centrePiece + local, 0.55f, 0.50f);
+            return t;
         }
 
         /// <summary>
