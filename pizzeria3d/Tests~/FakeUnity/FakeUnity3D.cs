@@ -449,7 +449,7 @@ namespace UnityEngine
         public static int shadowCascades;
         public static int pixelLightCount;
         public static int vSyncCount;
-        public static int masterTextureLimit;
+        public static int globalTextureMipmapLimit;
         public static AnisotropicFiltering anisotropicFiltering;
     }
 
