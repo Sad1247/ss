@@ -108,10 +108,10 @@ def main(source, sortie, largeur=1100, hauteur=900, zoom=None,
     for nom, forme, p, s, q, coul, alpha in objets:
         coins, faces = boite(p, s, q)
         prof = max(dot(c, FWD) for c in coins)
-        dessins.append((prof, nom, forme, coins, faces, coul, alpha))
+        dessins.append((prof, nom, forme, coins, faces, coul, alpha, p, s))
     dessins.sort(key=lambda o: -o[0])
 
-    for _prof, nom, forme, coins, faces, coul, alpha in dessins:
+    for _prof, nom, forme, coins, faces, coul, alpha, pos, taille in dessins:
         # une vitre se peint par-dessus, en laissant voir le fond
         if alpha < 0.99:
             calque = Image.new("RGBA", img.size, (0, 0, 0, 0))
@@ -129,9 +129,14 @@ def main(source, sortie, largeur=1100, hauteur=900, zoom=None,
             continue
 
         if forme in ("Sphere", "Capsule", "Cylinder"):
-            xs = [ecran(c)[0] for c in coins]
-            ys = [ecran(c)[1] for c in coins]
-            d.ellipse([min(xs), min(ys), max(xs), max(ys)],
+            # La silhouette de l'ellipsoide, et non le cadre de son cube : les
+            # coins d'un cube se projettent bien plus loin que la boule qu'il
+            # contient, et toutes les spheres paraissaient d'un tiers trop
+            # grosses. Demi-etendue exacte le long de chaque axe de l'ecran.
+            cxe, cye = ecran(pos)
+            rx = 0.5 * math.sqrt(sum((taille[i] * RIGHT[i]) ** 2 for i in range(3))) * zoom
+            ry = 0.5 * math.sqrt(sum((taille[i] * UP[i]) ** 2 for i in range(3))) * zoom
+            d.ellipse([cxe - rx, cye - ry, cxe + rx, cye + ry],
                       fill=teinte(coul, 1.0), outline=teinte(coul, .75))
             continue
         for i, f in enumerate(faces):

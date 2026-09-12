@@ -1811,6 +1811,26 @@ static class Harness3D
         Secondes(1.5f);
         Check("et le capot se rabat derriere lui", portable.Ferme);
 
+        // --- le globe du bureau ---
+        var globe = Trouver("Globe");
+        Check("le bureau a son globe terrestre", globe != null);
+        Check("avec sa sphere, son arceau et son socle",
+              globe != null && Dedans(globe.transform, "Terre") == 1
+                            && Dedans(globe.transform, "Arceau") >= 8
+                            && Dedans(globe.transform, "SocleGlobe") == 1);
+        Check("la terre est bleue, les continents non",
+              globe != null && CouleurDe(globe.transform, "Terre").b
+                             > CouleurDe(globe.transform, "Terre").r + 0.2f
+                            && Dedans(globe.transform, "Continent") >= 4);
+        // Il repose sur le plan, comme le portable.
+        var socleGlobe = globe != null ? Piece(globe.transform, "SocleGlobe") : null;
+        Check("il repose sur le dessus du bureau",
+              socleGlobe != null
+              && PositionReelle(socleGlobe).y > bureau.transform.position.y + 0.80f
+              && PositionReelle(socleGlobe).y < bureau.transform.position.y + 0.92f);
+        // Et la lampe qu'on prenait pour une planete a disparu.
+        Check("la lampe a laisse la place", Trouver("AbatJour") == null);
+
         // --- l'ordinateur du bureau ---
         var ordi = Trouver("Ordinateur");
         Check("le bureau a son ordinateur", ordi != null);

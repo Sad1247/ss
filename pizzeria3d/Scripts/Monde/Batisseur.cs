@@ -837,12 +837,7 @@ namespace Pizzeria3D
                        new Vector3(0.30f, 0.06f, 0.40f), Bloc.Couleur(0xF6F1E6)).SansCollision();
 
             Ordinateur(t, new Vector3(-0.05f, 0.81f, 0.02f));
-            Bloc.Disque("PiedLampe", t, new Vector3(-0.80f, 0.83f, 0.18f), 0.20f, 0.05f,
-                        laiton).SansCollision();
-            Bloc.Boite("TigeLampe", t, new Vector3(-0.80f, 0.98f, 0.18f),
-                       new Vector3(0.04f, 0.30f, 0.04f), laiton).SansCollision();
-            Bloc.Galet("AbatJour", t, new Vector3(-0.80f, 1.14f, 0.18f),
-                       new Vector3(0.30f, 0.18f, 0.30f), Bloc.Couleur(0x2F6B4F)).SansCollision();
+            Globe(t, new Vector3(-0.78f, 0.81f, 0.16f));
 
             // Le meuble barre le passage ; le fauteuil, non — on doit pouvoir
             // aller s'y asseoir.
@@ -855,6 +850,67 @@ namespace Pizzeria3D
             bureau.Siege = siege;
             if (_portable != null) _portable.Bureau = bureau;
             return bureau;
+        }
+
+        /// <summary>
+        /// Le globe terrestre du bureau : socle noir, arceau meridien et la
+        /// sphere bleue tachee de continents. Il remplace la lampe, qu'on
+        /// prenait de toute facon pour une planete posee sur un pied.
+        /// </summary>
+        static Transform Globe(Transform parent, Vector3 local)
+        {
+            var go = new GameObject("Globe");
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = local;
+            var t = go.transform;
+
+            var fonte = Bloc.Couleur(0x1D2026);
+            var ocean = Bloc.Couleur(0x2E93D0);
+
+            Bloc.Galet("SocleGlobe", t, new Vector3(0f, 0.03f, 0f),
+                       new Vector3(0.26f, 0.06f, 0.20f), fonte).SansCollision();
+            Bloc.Boite("PivotGlobe", t, new Vector3(0f, 0.07f, 0f),
+                       new Vector3(0.05f, 0.06f, 0.05f), fonte).SansCollision();
+
+            // L'arceau : une suite de petits segments poses en cercle. Il
+            // n'existe pas de tore parmi les primitives, et c'est lui qui fait
+            // le globe d'ecole plutot qu'une bille sur un pied.
+            const float rayonArceau = 0.155f, hauteurCentre = 0.215f;
+            for (int i = 0; i <= 12; i++)
+            {
+                float angle = -150f + i * 25f;          // ouvert par le bas, comme sur le modele
+                float rad = angle * Mathf.Deg2Rad;
+                var segment = Bloc.Boite("Arceau", t,
+                                         new Vector3(Mathf.Sin(rad) * rayonArceau,
+                                                     hauteurCentre + Mathf.Cos(rad) * rayonArceau,
+                                                     0f),
+                                         new Vector3(0.016f, 0.072f, 0.016f), fonte);
+                segment.transform.localRotation = Quaternion.Euler(0f, 0f, -angle);
+                segment.SansCollision();
+            }
+
+            Bloc.Bille("Terre", t, new Vector3(0f, hauteurCentre, 0f), 0.22f, ocean).SansCollision();
+
+            // Les continents : des taches posees sur la sphere, du cote ou la
+            // camera regarde. Peintes tout autour, on n'en verrait la moitie.
+            var terres = new[] { 0xF2D98C, 0xE9A7C0, 0xE8A45C, 0x8FCB6E, 0xF2D98C };
+            var placements = new[]
+            {
+                new Vector3( 0.040f,  0.015f, -0.080f),
+                new Vector3(-0.020f,  0.060f, -0.078f),
+                new Vector3( 0.070f,  0.045f, -0.045f),
+                new Vector3( 0.062f, -0.042f, -0.055f),
+                new Vector3( 0.015f, -0.060f, -0.075f),
+            };
+            var tailles = new[] { 0.085f, 0.060f, 0.050f, 0.045f, 0.040f };
+            for (int i = 0; i < placements.Length; i++)
+                Bloc.Galet("Continent", t,
+                           new Vector3(placements[i].x, hauteurCentre + placements[i].y,
+                                       placements[i].z),
+                           new Vector3(tailles[i], tailles[i] * 0.8f, tailles[i] * 0.5f),
+                           Bloc.Couleur(terres[i])).SansCollision();
+
+            return t;
         }
 
         /// <summary>
