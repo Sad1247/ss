@@ -875,7 +875,7 @@ namespace Pizzeria3D
             // L'arceau : une suite de petits segments poses en cercle. Il
             // n'existe pas de tore parmi les primitives, et c'est lui qui fait
             // le globe d'ecole plutot qu'une bille sur un pied.
-            const float rayonArceau = 0.155f, hauteurCentre = 0.215f;
+            const float rayonArceau = 0.128f, hauteurCentre = 0.215f;
             for (int i = 0; i <= 12; i++)
             {
                 float angle = -150f + i * 25f;          // ouvert par le bas, comme sur le modele
@@ -884,8 +884,8 @@ namespace Pizzeria3D
                                          new Vector3(Mathf.Sin(rad) * rayonArceau,
                                                      hauteurCentre + Mathf.Cos(rad) * rayonArceau,
                                                      0f),
-                                         new Vector3(0.016f, 0.072f, 0.016f), fonte);
-                segment.transform.localRotation = Quaternion.Euler(0f, 0f, -angle);
+                                         new Vector3(0.014f, 0.062f, 0.014f), fonte);
+                segment.transform.localRotation = Quaternion.Euler(0f, 0f, 90f - angle);
                 segment.SansCollision();
             }
 
