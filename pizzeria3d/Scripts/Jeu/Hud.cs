@@ -51,7 +51,16 @@ namespace Pizzeria3D
                 var evenements = new GameObject("EventSystem");
                 evenements.transform.SetParent(transform, false);
                 evenements.AddComponent<UnityEngine.EventSystems.EventSystem>();
+                // StandaloneInputModule lit la souris via l'ancienne classe
+                // Input : sous le nouveau systeme d'entrees (actif par defaut
+                // sur Unity 6, voir Doigt.cs), elle ne repond plus et aucun
+                // bouton ne recoit jamais de clic, meme visible et cliquable
+                // a l'oeil. Meme bascule que Doigt.cs, pour le meme motif.
+#if ENABLE_INPUT_SYSTEM && !ENABLE_LEGACY_INPUT_MANAGER
+                evenements.AddComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
+#else
                 evenements.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
+#endif
             }
 
             var canvasGo = new GameObject("HudCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));

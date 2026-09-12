@@ -36,7 +36,10 @@ namespace Pizzeria3D
         {
             Doigt.Lire();
 
-            if (Doigt.Presse)
+            // Un doigt pose sur un bouton de l'interface ne fait pas surgir
+            // le joystick : sans ce garde-fou, cliquer sur l'ordinateur
+            // faisait aussi marcher — voire se lever — le personnage assis.
+            if (Doigt.Presse && !SurUnBouton())
             {
                 _origine = Doigt.Position;
                 _tenu = true;
@@ -65,6 +68,13 @@ namespace Pizzeria3D
             EstVisible = visible;
             if (_socle != null) _socle.gameObject.SetActive(visible);
             if (_bouton != null) _bouton.gameObject.SetActive(visible);
+        }
+
+        /// <summary>Vrai si l'EventSystem dit que le doigt est deja sur un element d'interface.</summary>
+        static bool SurUnBouton()
+        {
+            var es = UnityEngine.EventSystems.EventSystem.current;
+            return es != null && es.IsPointerOverGameObject();
         }
 
         // ------------------------------------------------------------------

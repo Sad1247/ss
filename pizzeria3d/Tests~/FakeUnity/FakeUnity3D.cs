@@ -514,7 +514,19 @@ namespace UnityEngine
         /// Sans lui, aucun bouton d'interface ne recoit de clic dans Unity :
         /// c'est lui qui distribue les evenements aux elements survolés.
         /// </summary>
-        public class EventSystem : Behaviour { public static EventSystem current; }
+        public class EventSystem : Behaviour
+        {
+            public static EventSystem current;
+            public EventSystem() { current = this; }
+
+            /// <summary>
+            /// Le banc d'essai ne simule pas de position d'ecran reelle pour
+            /// la souris : ce commutateur, pilote par le test, en tient lieu
+            /// pour verifier que le code de jeu reagit bien a la reponse.
+            /// </summary>
+            public static bool SimulerSurUI;
+            public bool IsPointerOverGameObject() => SimulerSurUI;
+        }
 
         /// <summary>Le module qui lit la souris et le doigt pour l'EventSystem.</summary>
         public class StandaloneInputModule : Behaviour { }

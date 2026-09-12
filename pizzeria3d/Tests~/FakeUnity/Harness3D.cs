@@ -1113,6 +1113,18 @@ static class Harness3D
         Check("la manette existe", manette != null);
         Check("la manette est cachee au repos", !manette.EstVisible);
 
+        // Un doigt qui se pose sur un bouton d'interface ne doit pas faire
+        // surgir le joystick : sinon cliquer sur l'ordinateur levait aussi
+        // le personnage assis, ou le faisait marcher pendant le clic.
+        UnityEngine.EventSystems.EventSystem.SimulerSurUI = true;
+        Input.mousePosition = new Vector3(500f, 500f, 0f);
+        Input.Boutons[0] = true;
+        Frames(1);
+        Check("un doigt pose sur l'interface ne fait pas surgir la manette", !manette.EstVisible);
+        Input.Boutons[0] = false;
+        Frames(1);
+        UnityEngine.EventSystems.EventSystem.SimulerSurUI = false;
+
         var depart = joueur.transform.position;
         Input.mousePosition = new Vector3(500f, 500f, 0f);
         Input.Boutons[0] = true;
