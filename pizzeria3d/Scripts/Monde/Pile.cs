@@ -44,6 +44,10 @@ namespace Pizzeria3D
         public Forme SommetForme =>
             _elements.Count > 0 ? _elements[_elements.Count - 1].Forme : Forme.Nue;
 
+        /// <summary>L'objet du dessus, ou null si la pile est vide.</summary>
+        public GameObject SommetObjet =>
+            _elements.Count > 0 ? _elements[_elements.Count - 1].Objet : null;
+
         public bool Ajouter() => Ajouter(Forme.Nue);
         public bool Ajouter(bool emballe) => Ajouter(emballe ? Forme.Boite : Forme.Nue);
 

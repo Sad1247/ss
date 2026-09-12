@@ -1027,27 +1027,23 @@ static class Harness3D
               table != null && MemeCouleur(table.transform, "Plan", comptoir.transform, "Plan") &&
               MemeCouleur(table.transform, "Dessus", comptoir.transform, "Dessus"));
 
-        // Les deux ronds de travail : le rouge d'abord, le vert au milieu du
-        // plan — c'est la que ce qui est pret attend d'etre emporte.
-        if (table != null && table.Preparation != null && table.Assemblage != null)
+        // Le rond de travail, au milieu du plan — c'est la que le carton se
+        // pose et se garnit d'un seul geste, sans rond intermediaire.
+        if (table != null && table.Assemblage != null)
         {
-            var rouge = table.Preparation.transform.localPosition;
             var vert = table.Assemblage.transform.localPosition;
-            Check("le plan a ses deux ronds de travail", true);
-            Check("le rouge est avant le vert", rouge.x < vert.x);
-            // Au milieu, mais pas au centimetre : les quatre emplacements du
+            Check("le plan a son rond de travail", true);
+            // Au milieu, mais pas au centimetre : les trois emplacements du
             // dessus doivent tenir cote a cote sans se toucher, et c'est cette
             // contrainte-la qui fixe le pas.
-            Check("le vert est au milieu du plan", Mathf.Abs(vert.x) < 0.6f);
-            Check("les deux sont poses sur le dessus",
-                  Mathf.Abs(rouge.y - vert.y) < 0.01f && vert.y > 1f);
+            Check("il est au milieu du plan", Mathf.Abs(vert.x) < 0.6f);
+            Check("il est pose sur le dessus", vert.y > 1f);
         }
         else
         {
-            Check("le plan a ses deux ronds de travail", false);
-            Check("le rouge est avant le vert", false);
-            Check("le vert est au milieu du plan", false);
-            Check("les deux sont poses sur le dessus", false);
+            Check("le plan a son rond de travail", false);
+            Check("il est au milieu du plan", false);
+            Check("il est pose sur le dessus", false);
         }
 
         Check("des plateaux propres attendent sur le plan",
@@ -1927,14 +1923,14 @@ static class Harness3D
         // s'arreter au premier ratait la marche quand le caissier portait deja
         // une pizza a la premiere image.
         bool aPorte = false, aMarche = false, aEmballe = false, aTouche = false, reserveEntamee = false;
-        // le geste decompose : carton au rond rouge, puis au rond vert, puis
-        // une pizza rapportee du four et glissee dedans
-        bool auRouge = false, auVert = false, aRapporteUnePizza = false, aGarni = false;
+        // le geste decompose : carton pose directement sur le rond du plan,
+        // puis une pizza rapportee du four et glissee dedans
+        bool auVert = false, aRapporteUnePizza = false, aGarni = false;
         bool boiteVideAbandonnee = false;
         bool tropDePizzasNues = false;
         int porteeMax = 0, nuesMax = 0, pretesAvant = 0;
         for (int i = 0; i < 60 * 120 &&
-             !(aPorte && aMarche && aEmballe && aTouche && auRouge && auVert && aGarni); i++)
+             !(aPorte && aMarche && aEmballe && aTouche && auVert && aGarni); i++)
         {
             Frames(1);
             porteeMax = Mathf.Max(porteeMax, navetteur.Portees);
@@ -1943,13 +1939,11 @@ static class Harness3D
             if (navetteur.PorteeEmballee) aEmballe = true;
             if (table.Reserve < Reglages.BoitesEnReserve) reserveEntamee = true;
 
-            if (table.Preparation.Nombre > 0) auRouge = true;
             if (table.Assemblage.Nombre > 0) auVert = true;
 
             // Aucune boite vide ne doit attendre toute seule : un carton ne
             // sort qu'une fois la pizza en main, et il la recoit aussitot.
-            int cartons = table.Preparation.Nombre + table.Assemblage.Nombre;
-            if (cartons > navetteur.Pretes + (navetteur.PorteeNue ? 1 : 0))
+            if (table.Assemblage.Nombre > navetteur.Pretes + (navetteur.PorteeNue ? 1 : 0))
                 boiteVideAbandonnee = true;
             if (navetteur.PorteeNue)
             {
@@ -1971,8 +1965,7 @@ static class Harness3D
               porteeMax == 3 && porteeMax == Reglages.CapacitePorteeCaissier);
         Check("il marche pour de bon, membres animes", aMarche);
         Check("il fait un detour par le plan de mise en boite", aTouche);
-        Check("il sort un carton sur le rond rouge", auRouge);
-        Check("il le fait glisser sur le rond vert", auVert);
+        Check("il sort un carton sur le rond du plan", auVert);
         Check("il rapporte une pizza du four", aRapporteUnePizza);
         Check("une seule pizza a la fois, sa boite l'attend",
               !tropDePizzasNues && nuesMax == 1);
@@ -2117,12 +2110,13 @@ static class Harness3D
             if (Trouver("PlateauTable") != null) plateauSurLaTable = true;
             if (comptoir.Plateaux.Nombre > 0) plateauAuComptoir = true;
             // il se dresse la ou l'on emballe, puis voyage dans ses mains
-            if (table.Preparation.SommetForme == Pile.Forme.PlateauVide ||
-                table.Assemblage.SommetForme == Pile.Forme.PlateauVide) plateauAuPlan = true;
+            if (table.Assemblage.SommetForme == Pile.Forme.PlateauVide) plateauAuPlan = true;
             // Un plateau qui attend sa pizza reste vide : il ne s'en cree pas
-            // une par magie en sortant de la pile.
-            if (table.Preparation.SommetForme == Pile.Forme.PlateauVide &&
-                Dedans(table.Preparation.transform, "Pizza") > 0) plateauNePasVide = true;
+            // une par magie en sortant de la pile. On ne regarde que le
+            // dessus : la pile peut deja porter d'autres boites garnies.
+            if (table.Assemblage.SommetForme == Pile.Forme.PlateauVide &&
+                table.Assemblage.SommetObjet != null &&
+                Dedans(table.Assemblage.SommetObjet.transform, "Pizza") > 0) plateauNePasVide = true;
             if (navetteur.PortePlateau)
             {
                 caissierPorteLePlateau = true;
@@ -2225,33 +2219,31 @@ static class Harness3D
         // Sans plateau sous la main il partait prendre un carton : le client
         // de la salle voyait sa pizza emboitee, ou n'etait jamais servi.
         bool cartonAuLieuDuPlateau = false;
-        bool preparationVide = table.Preparation.EstVide;
+        bool assemblageVide = table.Assemblage.EstVide;
         for (int i = 0; i < 60 * 60; i++)
         {
             table.PlateauxEnPile.Vider();       // tous les plateaux sont dehors
             // l'etat se lit AVANT l'image : c'est lui qui a decide du geste
             bool manque = comptoir.UnPlateauManque;
-            bool fourneeVierge = table.Assemblage.EstVide;   // donc aucune boite garnie
             Frames(1);
-            if (preparationVide && manque && fourneeVierge
-                && table.Preparation.SommetForme == Pile.Forme.Boite)
+            if (assemblageVide && manque && table.Assemblage.SommetForme == Pile.Forme.Boite)
                 cartonAuLieuDuPlateau = true;
-            preparationVide = table.Preparation.EstVide;
+            assemblageVide = table.Assemblage.EstVide;
         }
         Check("sans plateau propre, il attend au lieu d'emballer", !cartonAuLieuDuPlateau);
         table.Garnir();
 
-        // --- les quatre emplacements du plan se tiennent a distance ---
-        // Le carton pose sur le rond rouge touchait le tas de la reserve :
-        // on voyait deux cartons passer l'un dans l'autre.
+        // --- les trois emplacements du plan se tiennent a distance ---
+        // Le carton pose sur le rond touchait le tas de la reserve : on
+        // voyait deux cartons passer l'un dans l'autre.
         var emplacements = new[] { table.Boites.transform, table.PlateauxEnPile.transform,
-                                   table.Preparation.transform, table.Assemblage.transform };
+                                   table.Assemblage.transform };
         bool sInterpenetrent = false, deborde = false;
-        bool ronsGarnis = false;
+        bool rondGarni = false;
         for (int i = 0; i < 60 * 90; i++)
         {
             Frames(1);
-            if (!table.Preparation.EstVide && !table.Assemblage.EstVide) ronsGarnis = true;
+            if (!table.Assemblage.EstVide) rondGarni = true;
             for (int a1 = 0; a1 < emplacements.Length; a1++)
             {
                 if (Empreinte(emplacements[a1], out float x0, out float x1, out float z0, out float z1))
@@ -2265,7 +2257,7 @@ static class Harness3D
                     if (SeChevauchent(emplacements[a1], emplacements[b1])) sInterpenetrent = true;
             }
         }
-        Check("on voit le caissier emballer, les deux ronds garnis", ronsGarnis);
+        Check("on voit le caissier emballer, le rond garni", rondGarni);
         Check("rien ne s'interpenetre sur le plan d'emballage", !sInterpenetrent);
         Check("et rien ne deborde du plan", !deborde);
 

@@ -15,8 +15,7 @@ namespace Pizzeria3D
     {
         public Pile Boites;        // la reserve de cartons, dans le coin du plan
         public Pile PlateauxEnPile; // la pile de plateaux propres — et vides
-        public Pile Preparation;   // le rond rouge : le carton qu'on vient de sortir
-        public Pile Assemblage;    // le rond vert : les boites qu'on garnit
+        public Pile Assemblage;    // le rond du plan : les boites qu'on garnit
         public Transform Poste;    // ou le caissier se place pour travailler
 
         float _compteurReappro;
@@ -38,7 +37,6 @@ namespace Pizzeria3D
                 PlateauxEnPile.Max = Reglages.PlateauxSurLePlan;
                 while (!PlateauxEnPile.EstPleine) PlateauxEnPile.Ajouter(Pile.Forme.PlateauVide);
             }
-            if (Preparation != null) Preparation.Max = 1;
             if (Assemblage != null) Assemblage.Max = Reglages.CapacitePorteeCaissier + 1;
             if (Boites == null) return;
             Boites.Max = Reglages.BoitesEnReserve;

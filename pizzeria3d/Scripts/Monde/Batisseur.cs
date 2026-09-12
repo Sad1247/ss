@@ -558,27 +558,23 @@ namespace Pizzeria3D
             // Un seul tas de cartons, dans le coin arriere gauche du plan :
             // etales cote a cote, ils occupaient tout le meuble.
             //
-            // Les quatre emplacements du dessus — reserve, rond rouge, rond
-            // vert, plateaux — sont espaces d'au moins une largeur de carton :
-            // trop proches, le carton pose sur le rond rouge rentrait dans le
-            // tas de la reserve, et l'on voyait deux cartons s'interpenetrer.
+            // Les trois emplacements du dessus — reserve, rond de travail,
+            // plateaux — sont espaces d'au moins une largeur de carton :
+            // trop proches, le carton pose sur le rond rentrait dans le tas
+            // de la reserve, et l'on voyait deux cartons s'interpenetrer.
             var rangee = new GameObject("Boites");
             rangee.transform.SetParent(t, false);
             rangee.transform.localPosition = new Vector3(-1.74f, 1.23f, 0.26f);
 
-            // Les deux ronds de travail, sur le dessus : le carton sort de la
-            // reserve, se pose au premier, glisse au second, et c'est la qu'il
-            // recoit sa pizza.
             // la pile de plateaux propres, a l'autre bout du plan
             var plateaux = new GameObject("PlateauxPropres");
             plateaux.transform.SetParent(t, false);
             plateaux.transform.localPosition = new Vector3(1.60f, 1.23f, 0.10f);
 
-            var rouge = new GameObject("Preparation");
-            rouge.transform.SetParent(t, false);
-            rouge.transform.localPosition = new Vector3(-0.68f, 1.23f, 0f);
-
-            // ce qui est pret attend au milieu du plan, entre les deux reserves
+            // Le rond de travail, au milieu du plan : le carton sort
+            // directement de la reserve et s'y pose, garni aussitot — un seul
+            // geste, une seule pile a l'ecran, plutot que deux ronds et un
+            // carton qui glisse de l'un a l'autre.
             var vert = new GameObject("Assemblage");
             vert.transform.SetParent(t, false);
             vert.transform.localPosition = new Vector3(0.35f, 1.23f, 0f);
@@ -590,7 +586,6 @@ namespace Pizzeria3D
             var e = go.AddComponent<Emballage>();
             e.Boites = rangee.AddComponent<Pile>();
             e.PlateauxEnPile = plateaux.AddComponent<Pile>();
-            e.Preparation = rouge.AddComponent<Pile>();
             e.Assemblage = vert.AddComponent<Pile>();
             e.Poste = poste.transform;
             e.Garnir();

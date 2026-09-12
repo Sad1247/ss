@@ -4,9 +4,9 @@ namespace Pizzeria3D
 {
     /// <summary>
     /// L'employe embauche a la caisse. Son travail, pizza par pizza : il va
-    /// chercher UNE pizza au four, revient au plan, sort un carton de la
-    /// reserve sur le rond rouge, le fait glisser au rond vert et y depose sa
-    /// pizza. Une fois sa poignee de boites prete, il la porte au comptoir.
+    /// chercher UNE pizza au four, revient au plan, sort directement un
+    /// carton de la reserve sur le rond du plan et y depose sa pizza. Une
+    /// fois sa poignee de boites prete, il la porte au comptoir.
     ///
     /// Sauf pour qui mange sur place : celle-la ne passe pas par le carton,
     /// elle est dressee sur un plateau au comptoir.
@@ -194,7 +194,7 @@ namespace Pizzeria3D
         /// <summary>
         /// Le geste, decompose. Un seul pas par appel, espace par le delai
         /// d'emballage : sinon tout se ferait dans la meme image et on ne
-        /// verrait jamais le carton passer d'un rond a l'autre.
+        /// verrait jamais le carton se poser sur le plan.
         /// </summary>
         void Travailler()
         {
@@ -212,10 +212,11 @@ namespace Pizzeria3D
                 return;
             }
 
-            // 3. Pizza en main : de quoi la recevoir sort sur le rond rouge.
-            //    Un plateau si quelqu'un mange sur place et n'a pas le sien —
-            //    sa pizza ne passe pas par le carton — un carton sinon.
-            if (Table.Preparation.EstVide && Table.Assemblage.Nombre <= _pleines)
+            // 2. Pizza en main : de quoi la recevoir sort directement sur le
+            //    rond du plan. Un plateau si quelqu'un mange sur place et n'a
+            //    pas le sien — sa pizza ne passe pas par le carton — un
+            //    carton sinon.
+            if (Table.Assemblage.Nombre <= _pleines)
             {
                 // Un plateau part seul : le client de la salle attend debout,
                 // et son plateau n'a rien a faire au milieu d'une fournee de
@@ -229,30 +230,20 @@ namespace Pizzeria3D
                     // repartirait avec un carton, ou ne serait jamais servi.
                     if (!Table.PrendrePlateau()) return;
 
-                    Table.Preparation.Ajouter(Pile.Forme.PlateauVide);
+                    Table.Assemblage.Ajouter(Pile.Forme.PlateauVide);
                     _plateauEnCours = true;
                     _compteurTransfert = Reglages.DelaiEmballage;
                     return;
                 }
                 if (Table.PrendreBoite())
                 {
-                    Table.Preparation.Ajouter(true);
+                    Table.Assemblage.Ajouter(true);
                     _compteurTransfert = Reglages.DelaiEmballage;
                 }
                 return;                              // reserve vide : il attend
             }
 
-            // 4. le carton glisse du rond rouge au rond vert
-            if (!Table.Preparation.EstVide)
-            {
-                var forme = Table.Preparation.SommetForme;
-                Table.Preparation.Retirer();
-                Table.Assemblage.Ajouter(forme);
-                _compteurTransfert = Reglages.DelaiEmballage;
-                return;
-            }
-
-            // 5. La pizza entre dans la boite ouverte — ou se pose sur le
+            // 3. La pizza entre dans la boite ouverte — ou se pose sur le
             //    plateau, qui n'etait qu'un plateau vide jusque-la.
             _portee.Retirer();
             if (Table.Assemblage.SommetForme == Pile.Forme.PlateauVide)
