@@ -28,7 +28,7 @@ namespace Pizzeria3D
         {
             if (Sortie == null || Sortie.EstPleine) return;
             _compteur += Time.deltaTime;
-            if (_compteur < Reglages.DureeCuisson) return;
+            if (_compteur < Comptabilite.DureeCuissonActuelle) return;
             _compteur = 0f;
             Sortie.Ajouter();
         }

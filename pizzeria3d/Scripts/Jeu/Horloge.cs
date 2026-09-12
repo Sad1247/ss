@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace Pizzeria3D
@@ -42,6 +43,12 @@ namespace Pizzeria3D
         /// </summary>
         public bool Figee;
 
+        /// <summary>
+        /// Sonne a minuit, avec le jour qui vient de se terminer : c'est le
+        /// signal qui cloture la comptabilite et paie le personnel.
+        /// </summary>
+        public event Action<int> JourClos;
+
         void Awake()
         {
             Active = this;
@@ -67,6 +74,7 @@ namespace Pizzeria3D
             while (SecondesDepuisMinuit >= SecondesParJour)
             {
                 SecondesDepuisMinuit -= SecondesParJour;
+                JourClos?.Invoke(Jour);
                 Jour++;
             }
         }

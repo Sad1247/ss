@@ -138,6 +138,18 @@ static class Harness3D
         return false;
     }
 
+    /// <summary>Cet objet est-il l'ancetre, ou lui-meme ?</summary>
+    static bool EstDescendant(Transform enfant, Transform ancetre)
+    {
+        var courant = enfant;
+        while (courant != null)
+        {
+            if (courant == ancetre) return true;
+            courant = courant.parent;
+        }
+        return false;
+    }
+
     /// <summary>Ou se trouve vraiment un objet, une fois tout compose.</summary>
     static Vector3 PositionReelle(Transform t)
     {
@@ -1744,23 +1756,37 @@ static class Harness3D
         Check("le capot se leve progressivement", capotEnChemin);
         Check("le capot finit leve", portable.Ouvert);
         Check("et l'ecran s'affiche alors", joueur.Assis && ecranBureau.Ouvert);
+
+        // --- un vrai terminal de gestion : plus de texte bizarre sur le deplacement ---
+        var piedEcran = new List<Text>();
+        var ecranOrdiGo = Trouver("EcranOrdi");
+        if (ecranOrdiGo != null)
+            foreach (var t in TousLes<Text>()) if (EstDescendant(t.transform, ecranOrdiGo.transform)) piedEcran.Add(t);
+        Check("plus de mention d'un geste pour refermer", !Contient(piedEcran, "Bouge pour"));
+
+        // --- l'onglet par defaut : la vue d'ensemble, comme un vrai tableau de bord ---
+        Check("l'ecran s'ouvre sur la vue d'ensemble", ecranBureau.Onglet == "Apercu");
+        Check("l'argent affiche est le vrai solde", ecranBureau.Valeur("Argent") == Banque.Solde + " $");
+        Check("le benefice du jour se lit aussi",
+              ecranBureau.Valeur("Benefice") == Comptabilite.BeneficeJour + " $");
+        Check("et le nombre de clients recus",
+              ecranBureau.Valeur("Clients") == comptoir.Arrivees.ToString());
+
+        // --- la navigation laterale change reellement d'onglet ---
+        var boutonPersonnel = Trouver("OngletPersonnel")?.GetComponent<Button>();
+        Check("un bouton Personnel dans la barre laterale", boutonPersonnel != null);
+        bool clicPersonnel = boutonPersonnel != null && boutonPersonnel.Cliquer();
+        Check("il bascule vers l'onglet Personnel",
+              clicPersonnel && ecranBureau.Onglet == "Personnel");
+        Check("la page vue d'ensemble se cache", !Trouver("PageApercu").activeSelf);
+        Check("la page personnel s'affiche", Trouver("PagePersonnel").activeSelf);
+
         Check("il montre une ligne par employe",
               ecranBureau.Lignes == Personnel.Fiches.Count && ecranBureau.Lignes >= 2);
-
-        // Ce que la fenetre affiche vient du registre, et non d'une copie
-        // ecrite a la main quelque part.
-        var lignesUI = new List<Text>();
-        var fenetreUI = Trouver("Fenetre");
-        if (fenetreUI != null)
-            foreach (var e in fenetreUI.transform.Enfants)
-            {
-                var txt = e.gameObject.GetComponent<Text>();
-                if (txt != null && txt.text.Length > 0) lignesUI.Add(txt);
-            }
         Check("les salaires y sont ecrits",
-              Contient(lignesUI, Reglages.SalaireCaissier + " / jour"));
+              ecranBureau.Statut(0) != null && Contient(TousLes<Text>(), Reglages.SalaireCaissier + " $/jour"));
         Check("et la masse salariale aussi",
-              Contient(lignesUI, "Masse salariale : " + Personnel.MasseSalariale + " / jour"));
+              ecranBureau.Valeur("MasseSalariale") == "Masse salariale : " + Personnel.MasseSalariale + " / jour");
 
         // Chaque ligne dit ce que dit le registre, et rien d'autre.
         bool statutsFideles = true;
@@ -1770,7 +1796,9 @@ static class Harness3D
             if (ecranBureau.Statut(i) != attendu) statutsFideles = false;
         }
         Check("chaque ligne affiche le statut du registre", statutsFideles);
-        Check("le caissier embauche est en poste", Contient(lignesUI, "En poste"));
+        Check("le caissier embauche est en poste", ecranBureau.Statut(1) == "En poste");
+        Check("et sa productivite est un vrai compte, pas un texte fige",
+              ecranBureau.Productivite(1) != null && ecranBureau.Productivite(1).Contains("boites"));
         Check("et la paie le compte",
               Personnel.MasseSalariale == Reglages.SalairePatron + Reglages.SalaireCaissier);
 
@@ -1787,15 +1815,45 @@ static class Harness3D
         Personnel.Retirer("Essai");
         Check("la fiche d'essai est bien retiree", Personnel.MasseSalariale == paieAvant);
 
-        // Les colonnes d'une meme ligne ne se marchent pas dessus : a
-        // l'ecran, deux cadres qui se recouvrent, c'est du texte par-dessus
-        // du texte.
+        // --- le bouton Licencier / Embaucher agit reellement sur le jeu ---
+        var employeur = employe.GetComponent<Caissier>();
+        var boutonEmploi = Trouver("BoutonEmploi")?.GetComponent<Button>();
+        Check("un bouton d'embauche/licenciement", boutonEmploi != null);
+        Check("il propose de licencier, le caissier etant en poste",
+              ecranBureau.TexteEmploi == "Licencier le caissier");
+        int soldeAvantLicenciement = Banque.Solde;
+        bool licencie = boutonEmploi != null && boutonEmploi.Cliquer();
+        Frames(1);
+        Check("le clic licencie pour de bon", licencie && !employeur.Embauche);
+        Check("il quitte reellement le comptoir", !employe.activeSelf);
+        Check("aucun remboursement au renvoi", Banque.Solde == soldeAvantLicenciement);
+        Check("son poste redevient vacant au registre",
+              !Personnel.Fiches[1].EstEmbauche);
+
+        // Et on le reembauche depuis le meme bouton : l'argent part pour de bon.
+        int soldeAvantEmbauche = Banque.Solde;
+        Check("le bouton propose maintenant d'embaucher",
+              ecranBureau.TexteEmploi != null && ecranBureau.TexteEmploi.Contains("Embaucher"));
+        bool reembauche = boutonEmploi.Cliquer();
+        Frames(1);
+        Check("le clic embauche pour de bon", reembauche && employeur.Embauche);
+        Check("il reapparait au comptoir", employe.activeSelf);
+        Check("le prix est reellement retire de la caisse",
+              Banque.Solde == soldeAvantEmbauche - Reglages.PrixCaissier);
+
+        // Les colonnes d'une meme ligne ne se marchent pas dessus.
+        var lignesPersonnel = new List<Text>();
+        var pagePersonnelGo = Trouver("PagePersonnel");
+        if (pagePersonnelGo != null)
+            foreach (var t in TousLes<Text>())
+                if (EstDescendant(t.transform, pagePersonnelGo.transform) && t.text.Length > 0)
+                    lignesPersonnel.Add(t);
         bool colonnesQuiSeCroisent = false;
-        for (int a1 = 0; a1 < lignesUI.Count; a1++)
-        for (int b1 = a1 + 1; b1 < lignesUI.Count; b1++)
+        for (int a1 = 0; a1 < lignesPersonnel.Count; a1++)
+        for (int b1 = a1 + 1; b1 < lignesPersonnel.Count; b1++)
         {
-            var ra = lignesUI[a1].GetComponent<RectTransform>();
-            var rb = lignesUI[b1].GetComponent<RectTransform>();
+            var ra = lignesPersonnel[a1].GetComponent<RectTransform>();
+            var rb = lignesPersonnel[b1].GetComponent<RectTransform>();
             if (Mathf.Abs(ra.anchoredPosition.y - rb.anchoredPosition.y) > 1f) continue;
             float ax0 = ra.anchoredPosition.x, ax1 = ax0 + ra.sizeDelta.x;
             float bx0 = rb.anchoredPosition.x, bx1 = bx0 + rb.sizeDelta.x;
@@ -1803,12 +1861,84 @@ static class Harness3D
         }
         Check("ses colonnes ne se chevauchent pas", !colonnesQuiSeCroisent);
 
-        // et il se referme des qu'il se leve
+        // --- Menu : le prix affiche vaut vraiment ce que paient les clients ---
+        var boutonMenu = Trouver("OngletMenu")?.GetComponent<Button>();
+        Check("un bouton Menu dans la barre laterale", boutonMenu != null && boutonMenu.Cliquer());
+        Frames(1);
+        int prixAvant = Comptabilite.PrixPizza;
+        Check("le prix affiche est le vrai prix", ecranBureau.Valeur("PrixPizza") == prixAvant + " $");
+        var boutonPrixPlus = Trouver("BoutonPrixPlus")?.GetComponent<Button>();
+        Check("le bouton + augmente vraiment le prix",
+              boutonPrixPlus != null && boutonPrixPlus.Cliquer() && Comptabilite.PrixPizza == prixAvant + 1);
+        Frames(1);
+        Check("l'affichage suit", ecranBureau.Valeur("PrixPizza") == (prixAvant + 1) + " $");
+        var boutonPrixMoins = Trouver("BoutonPrixMoins")?.GetComponent<Button>();
+        Check("le bouton - le ramene",
+              boutonPrixMoins != null && boutonPrixMoins.Cliquer() && Comptabilite.PrixPizza == prixAvant);
+
+        // --- Restaurant : ameliorer le four accelere vraiment la cuisson ---
+        var boutonRestaurant = Trouver("OngletRestaurant")?.GetComponent<Button>();
+        Check("un bouton Restaurant dans la barre laterale", boutonRestaurant != null && boutonRestaurant.Cliquer());
+        float cuissonAvant = Comptabilite.DureeCuissonActuelle;
+        int soldeAvantFour = Banque.Solde;
+        int prixFour = Comptabilite.PrixAmeliorationFour;
+        Banque.Encaisser(prixFour);      // pour etre certain de pouvoir payer l'essai
+        var boutonFour = Trouver("BoutonAmeliorerFour")?.GetComponent<Button>();
+        bool ameliore = boutonFour != null && boutonFour.Cliquer();
+        Check("le clic ameliore vraiment le four", ameliore && Comptabilite.DureeCuissonActuelle < cuissonAvant);
+        Check("le prix est reellement retire", Banque.Solde == soldeAvantFour);
+        Check("le four cuit desormais plus vite pour de bon",
+              four.Sortie != null && Comptabilite.DureeCuissonActuelle < Reglages.DureeCuisson);
+
+        // --- Finances : les totaux suivent les vraies ventes ---
+        var boutonFinances = Trouver("OngletFinances")?.GetComponent<Button>();
+        Check("un bouton Finances dans la barre laterale", boutonFinances != null && boutonFinances.Cliquer());
+        Frames(1);
+        Check("les revenus totaux sont ecrits",
+              ecranBureau.Valeur("RevenuTotal") == "Revenus : " + Comptabilite.RevenuTotal + " $");
+        Check("les depenses aussi",
+              ecranBureau.Valeur("DepenseTotal") == "Depenses : " + Comptabilite.DepenseTotal + " $");
+
+        // --- Statistiques : les pizzas vendues sont un vrai compte ---
+        var boutonStats = Trouver("OngletStatistiques")?.GetComponent<Button>();
+        Check("un bouton Statistiques dans la barre laterale", boutonStats != null && boutonStats.Cliquer());
+        Frames(1);
+        Check("les pizzas vendues sont affichees",
+              ecranBureau.Valeur("PizzasVendues") == "Pizzas vendues : " + Comptabilite.PizzasVendues);
+
+        // --- un vrai bouton Fermer, en haut a droite ---
+        boutonPersonnel.Cliquer();       // revient sur un onglet ordinaire avant de fermer
+        var boutonFermer = Trouver("BoutonFermer")?.GetComponent<Button>();
+        Check("un vrai bouton Fermer existe", boutonFermer != null);
+        bool ferme = boutonFermer != null && boutonFermer.Cliquer();
+        Check("il ferme l'ecran sur le champ", ferme && !ecranBureau.Ouvert);
+        Check("et il leve le patron", !joueur.Assis);
+        Frames(2);
+        Check("l'ecran reste ferme le temps que le capot se rabatte", !ecranBureau.Ouvert);
+        Secondes(2f);
+        Check("le capot finit par se refermer aussi", portable.Ferme);
+
+        // et il se referme aussi quand on se leve et s'eloigne, sans bouton
+        Placer(joueur, bureau.Place);
+        Secondes(2f);
+        Check("il se rouvre si on se rassoit", joueur.Assis && ecranBureau.Ouvert);
         PousserVers(joueur, bureau.Place + new Vector3(-1.5f, 0f, -1.2f), 0.6f);
         Frames(2);
         Check("il se referme quand il se leve", !joueur.Assis && !ecranBureau.Ouvert);
         Secondes(1.5f);
         Check("et le capot se rabat derriere lui", portable.Ferme);
+
+        // --- la paie du personnel, prelevee pour de bon a minuit ---
+        int soldeAvantMinuit = Banque.Solde;
+        int paieAttendue = Personnel.MasseSalariale;
+        int joursClosAvant = Comptabilite.Historique.Count;
+        PoserLHeure(horloge, 23);
+        horloge.Avancer(61f);           // franchit minuit
+        Check("le solde baisse du montant exact des salaires",
+              Banque.Solde == Mathf.Max(0, soldeAvantMinuit - paieAttendue));
+        Check("un jour de plus rejoint l'historique",
+              Comptabilite.Historique.Count == joursClosAvant + 1);
+        PoserLHeure(horloge, Reglages.HeureOuverture);
 
         // --- le globe du bureau ---
         var globe = Trouver("Globe");

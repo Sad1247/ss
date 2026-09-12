@@ -221,8 +221,10 @@ namespace Pizzeria3D
             if (_table != null)
             {
                 // il laisse l'addition sur la table, avec ses restes
-                Billet.Lacher(_table.transform.position, Pizzas * Reglages.PrixPizza,
+                int montant = Pizzas * Comptabilite.PrixPizza;
+                Billet.Lacher(_table.transform.position, montant,
                               _comptoir != null ? _comptoir.Joueur : null, 0.25f, 1.05f);
+                Comptabilite.EnregistrerVente(Pizzas, montant);
                 _table.LaisserOrdures();
                 _table.Liberer(this);
                 _table = null;
@@ -270,6 +272,11 @@ namespace Pizzeria3D
         public void Partir()
         {
             if (_bulle != null) _bulle.Afficher(0);   // la commande n'a plus lieu d'etre
+
+            // La satisfaction se lit ici, une seule fois : servi ou non, et
+            // avec quelle patience il lui restait — c'est le temps qu'il aura
+            // vraiment attendu.
+            Comptabilite.EnregistrerDepart(EstServi, Reglages.PatienceClient - _patience);
 
             // Servi avec sa place retenue : il va s'attabler.
             if (EstServi && _table != null)

@@ -38,10 +38,13 @@ namespace Pizzeria3D
         bool _passeParRelais;
         float _compteurTransfert;
         int _pleines;
+        int _livrees;             // boites deposees au comptoir, depuis l'embauche
         GameObject _ordures;      // les restes qu'il porte a la poubelle
         bool _plateauEnCours;     // un plateau est en preparation dans la fournee              // boites garnies qui attendent au rond vert
 
         public int Portees => _portee != null ? _portee.Nombre : 0;
+        /// <summary>Boites livrees au comptoir : sa productivite, affichee au bureau.</summary>
+        public int Livrees => _livrees;
         /// <summary>Vrai quand tout ce qu'il porte est en boite.</summary>
         public bool PorteeEmballee => _portee != null && !_portee.EstVide && _portee.ToutEmballe;
         /// <summary>Vrai quand il rapporte une pizza nue du four.</summary>
@@ -88,6 +91,23 @@ namespace Pizzeria3D
             _etat = Etat.Poste;
             _passeParRelais = false;
             RangerLeSac();
+        }
+
+        /// <summary>
+        /// Renvoye depuis le bureau : il pose tout ce qu'il porte et s'eteint
+        /// pour de bon. Sans repasser par <see cref="Embauche"/> a faux, le
+        /// comptoir le rappellerait le lendemain matin comme s'il rentrait
+        /// simplement se coucher.
+        /// </summary>
+        public void Licencier()
+        {
+            RangerLeSac();
+            if (_portee != null) _portee.Vider();
+            if (Comptoir != null) Comptoir.CaissierPresent = false;
+            Embauche = false;
+            _etat = Etat.Poste;
+            _passeParRelais = false;
+            gameObject.SetActive(false);
         }
 
         void PrendreLeSac()
@@ -308,6 +328,7 @@ namespace Pizzeria3D
                 if (Comptoir.Stock.EstPleine) return;
                 _portee.Retirer();
                 Comptoir.Stock.Ajouter(forme);
+                _livrees++;
             }
             _compteurTransfert = Reglages.DelaiTransfert;
         }

@@ -168,8 +168,11 @@ namespace Pizzeria3D
                 // prendre. Celui qui mange sur place, lui, laisse son argent
                 // sur la table en partant.
                 if (!premier.SurPlace)
-                    Billet.Lacher(transform.position + Vector3.up * 1.2f,
-                                  premier.Pizzas * Reglages.PrixPizza, Joueur);
+                {
+                    int montant = premier.Pizzas * Comptabilite.PrixPizza;
+                    Billet.Lacher(transform.position + Vector3.up * 1.2f, montant, Joueur);
+                    Comptabilite.EnregistrerVente(premier.Pizzas, montant);
+                }
                 premier.Partir();
                 _file.RemoveAt(0);
                 if (Caisse != null) Caisse.Fermer();   // commande terminee

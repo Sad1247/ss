@@ -20,6 +20,7 @@ namespace Pizzeria3D
             Debug.Log("Pizzeria : construction de la scene...");
 
             Banque.Reinitialiser();
+            Comptabilite.Reinitialiser();
 
             Qualite();
             Obstacles.Reinitialiser();
@@ -48,8 +49,8 @@ namespace Pizzeria3D
             var caissier = Caissier(racine.transform, comptoir, four.GetComponent<Four>(),
                                     table, new Vector3(3.6f, 0f, 2.05f));
             comptoir.Employe = caissier.GetComponent<Caissier>();
-            Zone(racine.transform, joueur, caissier, new Vector3(2.5f, 0f, 3.0f),
-                 Reglages.PrixCaissier, "Embaucher un caissier");
+            var dalleEmbauche = Zone(racine.transform, joueur, caissier, new Vector3(2.5f, 0f, 3.0f),
+                                     Reglages.PrixCaissier, "Embaucher un caissier");
             Zone(racine.transform, joueur, _piece, _pieceEtSaDalle,
                  Reglages.PrixPetitePiece, "Ouvrir la petite piece");
 
@@ -78,7 +79,10 @@ namespace Pizzeria3D
                                () => employeur != null && employeur.Embauche);
 
             // L'horloge avant le Hud : celui-ci lit l'heure des sa premiere image.
-            racine.AddComponent<Horloge>();
+            var horloge = racine.AddComponent<Horloge>();
+            // A minuit : le personnel est paye pour de bon, ce n'est plus
+            // une ligne d'affichage qui se contente de se lire.
+            horloge.JourClos += Comptabilite.ClorreLaJournee;
             racine.AddComponent<Acceleration>();
             racine.AddComponent<Hud>();
             var ecran = racine.AddComponent<EcranBureau>();
@@ -86,6 +90,8 @@ namespace Pizzeria3D
             // Il n'apparait qu'une fois le capot leve : l'ordinateur est
             // ferme tant que personne n'est assis.
             ecran.Portable = _portable;
+            ecran.Caissier = employeur;
+            ecran.DalleEmbauche = dalleEmbauche;
             racine.AddComponent<Manette>();
             Debug.Log("Pizzeria : scene prete. Maintiens le clic et glisse pour te deplacer.");
         }
@@ -1122,8 +1128,8 @@ namespace Pizzeria3D
         /// Une dalle a peine posee sur le sol : un carre trop epais ou trop
         /// large ressemble a un objet pose la, pas a un emplacement a acheter.
         /// </summary>
-        static void Zone(Transform parent, Joueur joueur, GameObject achat, Vector3 position,
-                         int prix, string libelle)
+        static ZoneAchat Zone(Transform parent, Joueur joueur, GameObject achat, Vector3 position,
+                              int prix, string libelle)
         {
             var go = new GameObject("ZoneAchat");
             go.transform.SetParent(parent, false);
@@ -1139,6 +1145,7 @@ namespace Pizzeria3D
             z.Achat = achat;
             z.Prix = prix;
             z.Libelle = libelle;
+            return z;
         }
     }
 
