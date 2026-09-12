@@ -953,7 +953,7 @@ static class Harness3D
                                  Reglages.RayonJoueur).z > 4.7f);
         Check("plus de palette au sol", Trouver("Palette") == null);
         Check("ni d'obstacle a sa place",
-              !Obstacles.Bloque(new Vector3(-7f, 0f, 5.6f), Reglages.RayonJoueur));
+              !Obstacles.Bloque(new Vector3(-7f, 0f, 2f), Reglages.RayonJoueur));
 
         // --- les vitres laissent passer le regard ---
         // Un alpha ne suffit pas en URP : sans les reglages de surface, la
@@ -1199,17 +1199,17 @@ static class Harness3D
 
         // le point capital : un four solide ne doit pas rendre le chargement
         // impossible, sinon la boucle du jeu casse.
-        Placer(joueur, new Vector3(-4.2f, 0f, -1.5f));
+        Placer(joueur, new Vector3(four.transform.position.x, 0f, -1.5f));
         PousserVers(joueur, four.Sortie.transform.position, 2.5f);
         Check("le joueur atteint quand meme la pierre du four",
               joueur.EstPres(four.Sortie.transform.position, Reglages.RayonRamassage));
 
         // Et il glisse le long d'un mur au lieu de s'y coller. On part dans le
-        // couloir entre le mur de gauche et le four, seul endroit du fond qui
-        // ne soit ni dans le four ni dans le plan de mise en boite.
-        Placer(joueur, new Vector3(-7.2f, 0f, 6f));
+        // couloir entre le four (colle au mur de gauche) et le plan de mise
+        // en boite, seul endroit du fond qui ne soit ni dans l'un ni dans l'autre.
+        Placer(joueur, new Vector3(-3f, 0f, 6f));
         var avantGlisse = joueur.transform.position;
-        PousserVers(joueur, new Vector3(-5.8f, 0f, 9f), 1.5f);   // en biais vers le mur du fond
+        PousserVers(joueur, new Vector3(-1.6f, 0f, 9f), 1.5f);   // en biais vers le mur du fond
         // glisser, c'est avancer lateralement TOUT EN etant plaque au mur :
         // verifier le seul deplacement en x laisserait passer un joueur qui
         // n'a jamais touche le mur.
@@ -1245,8 +1245,11 @@ static class Harness3D
         Secondes(62f);
         Check("il en sort au moins dix en une minute", four.Sortie.Nombre >= 10);
 
-        // on remet le four dans l'etat attendu par la suite des essais
+        // on remet le four et les mains du joueur dans l'etat attendu par la
+        // suite des essais : une approche plus tot a pu remplir ses mains en
+        // s'attardant pres du four le temps de la poussee.
         four.Sortie.Vider();
+        joueur.Portee.Vider();
         Secondes(Reglages.DureeCuisson * 3.5f + 1f);
 
         // --- ramassage ---

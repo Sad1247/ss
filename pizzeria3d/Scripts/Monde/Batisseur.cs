@@ -37,7 +37,7 @@ namespace Pizzeria3D
 
             var comptoir = Comptoir(racine.transform, joueur);
             // adosse au mur du fond : la salle se degage devant lui
-            var four = Four(racine.transform, joueur, new Vector3(-4.2f, 0f, 5.88f), "Four1", true);
+            var four = Four(racine.transform, joueur, new Vector3(-6.51f, 0f, 5.88f), "Four1", true);
 
             // Le plan de mise en boite, adosse aux fenetres du fond, derriere
             // la caisse : le caissier y passe entre le four et le comptoir.
