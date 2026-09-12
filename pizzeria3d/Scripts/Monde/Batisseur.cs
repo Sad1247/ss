@@ -875,7 +875,7 @@ namespace Pizzeria3D
             // L'arceau : une suite de petits segments poses en cercle. Il
             // n'existe pas de tore parmi les primitives, et c'est lui qui fait
             // le globe d'ecole plutot qu'une bille sur un pied.
-            const float rayonArceau = 0.160f, hauteurCentre = 0.240f;
+            const float rayonArceau = 0.216f, hauteurCentre = 0.260f;
             for (int i = 0; i <= 12; i++)
             {
                 float angle = -150f + i * 25f;          // ouvert par le bas, comme sur le modele
@@ -884,25 +884,25 @@ namespace Pizzeria3D
                                          new Vector3(Mathf.Sin(rad) * rayonArceau,
                                                      hauteurCentre + Mathf.Cos(rad) * rayonArceau,
                                                      0f),
-                                         new Vector3(0.016f, 0.070f, 0.016f), fonte);
+                                         new Vector3(0.018f, 0.078f, 0.018f), fonte);
                 segment.transform.localRotation = Quaternion.Euler(0f, 0f, 90f - angle);
                 segment.SansCollision();
             }
 
-            Bloc.Bille("Terre", t, new Vector3(0f, hauteurCentre, 0f), 0.275f, ocean).SansCollision();
+            Bloc.Bille("Terre", t, new Vector3(0f, hauteurCentre, 0f), 0.37f, ocean).SansCollision();
 
             // Les continents : des taches posees sur la sphere, du cote ou la
             // camera regarde. Peintes tout autour, on n'en verrait la moitie.
             var terres = new[] { 0xF2D98C, 0xE9A7C0, 0xE8A45C, 0x8FCB6E, 0xF2D98C };
             var placements = new[]
             {
-                new Vector3( 0.050f,  0.019f, -0.100f),
-                new Vector3(-0.025f,  0.075f, -0.098f),
-                new Vector3( 0.088f,  0.056f, -0.056f),
-                new Vector3( 0.078f, -0.053f, -0.069f),
-                new Vector3( 0.019f, -0.075f, -0.094f),
+                new Vector3( 0.068f,  0.026f, -0.135f),
+                new Vector3(-0.034f,  0.101f, -0.132f),
+                new Vector3( 0.119f,  0.076f, -0.076f),
+                new Vector3( 0.105f, -0.072f, -0.093f),
+                new Vector3( 0.026f, -0.101f, -0.127f),
             };
-            var tailles = new[] { 0.106f, 0.075f, 0.063f, 0.056f, 0.050f };
+            var tailles = new[] { 0.143f, 0.101f, 0.085f, 0.076f, 0.068f };
             for (int i = 0; i < placements.Length; i++)
                 Bloc.Galet("Continent", t,
                            new Vector3(placements[i].x, hauteurCentre + placements[i].y,
