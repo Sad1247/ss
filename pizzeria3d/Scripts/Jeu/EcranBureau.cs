@@ -312,7 +312,17 @@ namespace Pizzeria3D
             scaler.referenceResolution = new Vector2(1080, 1920);
             scaler.matchWidthOrHeight = 0.5f;
 
-            const float largeurEcran = 980f, hauteurEcran = 760f;
+            // La taille visee, 980x760, suppose un canevas d'au moins cette
+            // taille une fois la resolution de reference appliquee. Sur un
+            // ecran d'une autre forme (une fenetre d'editeur etroite, une
+            // tablette large), le canevas resolu peut etre plus petit dans un
+            // sens : sans ce calcul, l'ordinateur depassait du cadre au lieu
+            // de rester centre et entier a l'ecran.
+            float largeurDispo, hauteurDispo;
+            TailleDuCanevas(scaler, out largeurDispo, out hauteurDispo);
+            const float marge = 24f;
+            float largeurEcran = Mathf.Clamp(largeurDispo - marge * 2f, 600f, 980f);
+            float hauteurEcran = Mathf.Clamp(hauteurDispo - marge * 2f, 480f, 760f);
             const float hauteurBarre = 44f;
             const float largeurBarreLaterale = 170f;
             float largeurFenetre = largeurEcran - largeurBarreLaterale;
@@ -687,6 +697,24 @@ namespace Pizzeria3D
             rt.anchoredPosition = new Vector2(x, y);
             rt.sizeDelta = new Vector2(largeur, 44f);
             return t;
+        }
+
+        /// <summary>
+        /// La taille du canevas, une fois la resolution de reference
+        /// appliquee — le meme calcul que CanvasScaler fait lui-meme en mode
+        /// Scale With Screen Size, pour connaitre la place vraiment
+        /// disponible avant de poser l'ordinateur dessus.
+        /// </summary>
+        static void TailleDuCanevas(CanvasScaler scaler, out float largeur, out float hauteur)
+        {
+            float sw = Mathf.Max(1f, Screen.width), sh = Mathf.Max(1f, Screen.height);
+            float rw = Mathf.Max(1f, scaler.referenceResolution.x);
+            float rh = Mathf.Max(1f, scaler.referenceResolution.y);
+            float logL = Mathf.Log(sw / rw, 2f);
+            float logH = Mathf.Log(sh / rh, 2f);
+            float facteur = Mathf.Pow(2f, Mathf.Lerp(logL, logH, scaler.matchWidthOrHeight));
+            largeur = sw / facteur;
+            hauteur = sh / facteur;
         }
 
         static GameObject Cadre(string nom, Transform parent, Color couleur, Vector2 ancre,

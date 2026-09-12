@@ -626,6 +626,8 @@ namespace UnityEngine
         public static float MoveTowards(float de, float vers, float pas)
             => Abs(vers - de) <= pas ? vers : de + Sign(vers - de) * pas;
         public static float Sign(float f) => f < 0f ? -1f : 1f;
+        public static float Pow(float f, float p) => (float)Math.Pow(f, p);
+        public static float Log(float f, float p) => (float)(Math.Log(f) / Math.Log(p));
         public static int Min(int a, int b) => Math.Min(a, b);
     }
 

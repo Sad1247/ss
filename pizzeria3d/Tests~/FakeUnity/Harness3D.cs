@@ -552,6 +552,28 @@ static class Harness3D
         var camScene = new GameObject("Main Camera").AddComponent<UnityEngine.Camera>();
         new GameObject("Directional Light").AddComponent<Light>();
 
+        // --- l'ordinateur ne depasse pas d'un ecran etroit ---
+        // Construit et detruit a part, avant la vraie scene : sinon deux
+        // « EcranOrdi » trainent et les recherches par nom du reste de la
+        // suite risquent d'attraper le mauvais.
+        {
+            int largeurAvant = Screen.width, hauteurAvant = Screen.height;
+            // Un ecran bien plus etroit que haut que le design ne l'attend :
+            // avec la resolution de reference portrait, c'est la largeur qui
+            // cede la premiere.
+            Screen.width = 300; Screen.height = 1000;
+            var testGo = new GameObject("TestEcranEtroit");
+            testGo.AddComponent<EcranBureau>();
+            // Rien d'autre n'existe encore a ce stade : Trouver ne peut pas
+            // se tromper d'« EcranOrdi ».
+            var ordiEtroit = Trouver("EcranOrdi")?.GetComponent<RectTransform>();
+            Check("l'ordinateur existe meme sur un tout petit ecran", ordiEtroit != null);
+            Check("il retrecit au lieu de deborder",
+                  ordiEtroit != null && ordiEtroit.sizeDelta.x < 980f);
+            UnityEngine.Object.Destroy(testGo);
+            Screen.width = largeurAvant; Screen.height = hauteurAvant;
+        }
+
         Batisseur.Monter();
         Frames(2);
 
