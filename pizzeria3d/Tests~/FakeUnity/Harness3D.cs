@@ -2068,27 +2068,26 @@ static class Harness3D
         Check("une fois dans la salle de repos, ils s'effacent",
               AucunVisible(discretsRepos));
 
-        // --- le bureau RH, derriere la salle de repos ---
-        // On y entre par une porte percee dans le mur du fond de la salle de
-        // repos, pas depuis la salle a manger : il n'y a pas de facade a cet
-        // endroit.
+        // --- le bureau RH, colle au flanc gauche de la salle de repos ---
+        // On y entre par la porte du mur mitoyen, pas depuis la salle a
+        // manger : il n'y a pas de facade a cet endroit.
         var bureauRHFerme = Trouver("BureauRH");
         Check("le bureau RH existe dans le decor", bureauRHFerme != null);
         Check("mais il reste invisible tant qu'on ne l'a pas paye",
               bureauRHFerme != null && !bureauRHFerme.activeSelf);
 
         var porteRH = Trouver("PorteBureauRH");
-        Check("sa porte est montee dans le mur du fond de la salle de repos", porteRH != null);
+        Check("sa porte est montee dans le mur mitoyen de la salle de repos", porteRH != null);
         Check("son pas est barre tant que le bureau RH n'est pas paye",
               porteRH != null &&
               Obstacles.Bloque(porteRH.transform.position, Reglages.RayonJoueur));
 
         var dalleRH = ZoneDePrix(Reglages.PrixBureauRH);
         Check("une dalle d'achat attend a l'interieur de la salle de repos", dalleRH != null);
-        Check("a l'interieur de la salle de repos, pas ailleurs",
+        Check("du cote salle de repos de la porte, pas dans le bureau RH",
               dalleRH != null && porteRH != null &&
-              dalleRH.transform.position.z < porteRH.transform.position.z &&
-              dalleRH.transform.position.z > porteRH.transform.position.z - 5f &&
+              dalleRH.transform.position.x > porteRH.transform.position.x &&
+              dalleRH.transform.position.x < porteRH.transform.position.x + 3f &&
               !Obstacles.Bloque(dalleRH.transform.position, Reglages.RayonJoueur));
 
         int soldeAvantDalleRH = Banque.Solde;
@@ -2102,37 +2101,49 @@ static class Harness3D
         Check("le pas de sa porte se libere",
               !Obstacles.Bloque(porteRH.transform.position, Reglages.RayonJoueur));
 
-        var dedansRH = porteRH.transform.position + new Vector3(0f, 0f, 1.0f);
+        var dedansRH = porteRH.transform.position + new Vector3(-1.2f, 0f, 0f);
         Check("et le patron peut vraiment y entrer",
               !Obstacles.Bloque(dedansRH, Reglages.RayonJoueur) &&
-              Obstacles.DemiTerrainZ > dedansRH.z);
-        // Le fond de la salle de repos avait deja repousse le terrain plus
-        // loin que le bureau RH n'en a besoin : l'achat du bureau RH ne doit
-        // pas le faire reculer.
-        Check("l'achat du bureau RH ne retrecit pas le terrain deja agrandi",
-              Obstacles.DemiTerrainZ >= dedansRepos.z);
+              Obstacles.DemiTerrainX > -dedansRH.x && Obstacles.DemiTerrainZ > dedansRH.z);
 
         var discretsRH = bureauRHFerme.GetComponent<MursDiscrets>();
         Check("le bureau RH sait escamoter son mur cote camera", discretsRH != null);
-        Check("il prolonge le mur du fond de la salle de repos, sans jeu entre les deux",
+        // Colle a la salle de repos, mur contre mur, et de la meme profondeur
+        // qu'elle : le fond du batiment reste d'un seul tenant.
+        Check("il est colle au flanc gauche de la salle de repos",
               discretsRH != null &&
-              Mathf.Abs((discretsRH.Centre.z - discretsRH.DemiZ) - (porteRH.transform.position.z + 0.2f))
-                  < 0.05f);
+              Mathf.Abs((discretsRH.Centre.x + discretsRH.DemiX)
+                        - (discretsRepos.Centre.x - discretsRepos.DemiX)) <= 0.45f);
+        Check("et il a la meme profondeur qu'elle",
+              discretsRH != null &&
+              Mathf.Abs(discretsRH.Centre.z - discretsRepos.Centre.z) < 0.01f &&
+              Mathf.Abs(discretsRH.DemiZ - discretsRepos.DemiZ) < 0.01f);
         Placer(joueur, new Vector3(0f, 0f, 0f));
         Frames(2);
         Check("depuis la salle a manger, son mur est bien la", TousVisibles(discretsRH));
-        Placer(joueur, dedansRH + new Vector3(0f, 0f, 1.0f));
+        Placer(joueur, dedansRH + new Vector3(-0.5f, 0f, 0f));
         Frames(2);
         Check("une fois dans le bureau RH, il s'efface", AucunVisible(discretsRH));
 
-        // La porte s'ouvre bien du cote du bureau RH, pas a l'envers dans la
-        // salle de repos.
-        Placer(joueur, porteRH.transform.position);
-        Frames(30);
+        // Le vantail s'ecarte vers le bureau RH, et non vers la salle de
+        // repos ou il balaierait le cercle de fauteuils. Le cadre de la porte
+        // est pivote d'un quart de tour — son axe Z local pointe vers la
+        // salle de repos — donc s'ouvrir vers le bureau RH, c'est aller vers
+        // les Z locaux negatifs.
         var gondRH2 = Piece(porteRH.transform, "Gond");
-        Check("le vantail pivote bien vers le bureau RH",
-              gondRH2 != null &&
-              (gondRH2.localRotation * new Vector3(-0.70f, 0f, 0f)).z > 0.1f);
+        var battantRH = gondRH2 != null ? Piece(gondRH2, "Battant") : null;
+        Check("le vantail du bureau RH pend a son gond", battantRH != null);
+
+        Placer(joueur, new Vector3(0f, 0f, 0f));
+        Frames(30);
+        float zBattantFerme = gondRH2.localPosition.z
+                            + (gondRH2.localRotation * battantRH.localPosition).z;
+        Placer(joueur, porteRH.transform.position + new Vector3(0.9f, 0f, 0f));
+        Frames(30);
+        float zBattantOuvert = gondRH2.localPosition.z
+                             + (gondRH2.localRotation * battantRH.localPosition).z;
+        Check("il s'ecarte vers le bureau RH, pas vers les fauteuils",
+              zBattantOuvert < zBattantFerme - 0.4f);
 
         Placer(joueur, bureau.Place);
         Secondes(2f);

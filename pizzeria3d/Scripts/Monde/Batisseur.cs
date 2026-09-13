@@ -263,41 +263,51 @@ namespace Pizzeria3D
             _pieceEtSaDalle = new Vector3(xPorte, 0f, 5.6f);
             _piece = piece;
 
-            // Le mur mitoyen entre le bureau du patron et la salle de repos,
-            // perce d'une porte : bati a part des deux, il reste en place que
-            // l'une ou l'autre soit deja payee ou non.
-            var mursEntrePieces = MurEntrePieces(parent, 2.2f, 9.7f, 2.5f,
+            // Les deux murs mitoyens de la salle de repos, perces chacun
+            // d'une porte : celui du bureau du patron a sa droite, celui du
+            // bureau RH a sa gauche. Batis a part des pieces, ils restent en
+            // place que celles-ci soient deja payees ou non.
+            var mursEntrePieces = MurEntrePieces(parent, 2.2f, 9.7f, 2.5f, "PorteEntrePieces",
                                                  out var gondEntrePieces, out var seuilEntrePieces,
                                                  out var seuilEntrePiecesPos);
+            var mursVersRH = MurEntrePieces(parent, -4.6f, 9.7f, 2.5f, "PorteBureauRH",
+                                            out var gondBureauRH, out var seuilBureauRH,
+                                            out var seuilBureauRHPos);
 
-            // La salle de repos, mitoyenne du bureau via ce mur perce. Les
-            // pans du fond qui la cachent a la camera sont ceux qui lui font
-            // face, jusqu'a la porte du bureau — plus a gauche, un pan efface
-            // ne devoilerait rien et ouvrirait un trou dans la salle a manger.
+            // La salle de repos, entre les deux. Les pans du fond qui la
+            // cachent a la camera sont ceux qui lui font face, jusqu'a la
+            // porte du bureau — plus a gauche, ils appartiennent au bureau
+            // RH, qui les escamote pour son propre compte.
             var cachentLaSalle = new List<GameObject>(mursEntrePieces);
             foreach (var pan in pansFond)
             {
                 float x = pan.transform.localPosition.x;
-                if (x > -5.0f && x < xPorte - 0.01f) cachentLaSalle.Add(pan);
+                if (x > -4.0f && x < xPorte - 0.01f) cachentLaSalle.Add(pan);
             }
-            cachentLaSalle.Add(Trouver(parent, "VitreFond1"));
             cachentLaSalle.Add(Trouver(parent, "VitreFond3"));
 
             _salleRepos = PieceRepos(parent, new Vector3(-1.3f, 0f, 9.7f), gondRepos, seuilRepos,
-                                     _joueur, cachentLaSalle,
-                                     out var gondBureauRH, out var seuilBureauRH, out var fondRepos);
+                                     _joueur, cachentLaSalle);
             _salleReposEtSaDalle = new Vector3(xPorteRepos, 0f, 5.6f);
 
-            // Le bureau RH, juste derriere la salle de repos : sa dalle se
-            // paie a l'interieur de la salle, devant la nouvelle porte, pas
-            // dans la salle a manger — c'est la seule facon d'y acceder.
-            const float demiXBureauRH = 2.2f, demiZBureauRH = 1.8f;
-            var centreBureauRH = new Vector3(fondRepos.x, 0f, fondRepos.z + 0.2f + demiZBureauRH);
+            // Le bureau RH, colle au flanc gauche de la salle de repos : le
+            // dernier cote libre du batiment. Sa dalle se paie a l'interieur
+            // de la salle de repos, devant la porte mitoyenne — c'est la
+            // seule facon d'y acceder.
+            const float demiXBureauRH = 1.7f, demiZBureauRH = 2.5f;
+            var centreBureauRH = new Vector3(-4.8f - demiXBureauRH, 0f, 9.7f);
+            var cachentLeBureauRH = new List<GameObject>(mursVersRH);
+            foreach (var pan in pansFond)
+                if (pan.transform.localPosition.x < -4.0f) cachentLeBureauRH.Add(pan);
+            cachentLeBureauRH.Add(Trouver(parent, "VitreFond0"));
+            cachentLeBureauRH.Add(Trouver(parent, "VitreFond1"));
+
             _bureauRH = PieceBureauRH(parent, centreBureauRH, demiXBureauRH, demiZBureauRH,
-                                      gondBureauRH, seuilBureauRH, _joueur);
-            // Pres de l'entree, a l'ecart du cercle de fauteuils : un passant
-            // qui s'y assoit ne doit pas la payer sans le vouloir.
-            _bureauRHEtSaDalle = new Vector3(-3.5f, 0f, 8.3f);
+                                      _joueur, cachentLeBureauRH);
+            // A l'ecart du cercle de fauteuils et du pas de la porte : un
+            // employe qui vient s'asseoir ne doit pas la payer sans le
+            // vouloir.
+            _bureauRHEtSaDalle = new Vector3(-3.8f, 0f, 8.2f);
 
             // La porte entre les deux bureaux ne s'ouvre que lorsque les deux
             // pieces qu'elle relie existent vraiment. Portee par le decor
@@ -311,6 +321,20 @@ namespace Pizzeria3D
                 ? gondEntrePieces.parent.position : seuilEntrePiecesPos;
             porteEntrePieces.Passage = seuilEntrePieces;
             porteEntrePieces.Joueur = _joueur;
+
+            // Celle du bureau RH obeit a la meme regle, de l'autre cote de la
+            // salle de repos. Son vantail s'ecarte vers le bureau RH — angle
+            // negatif — pour ne pas balayer le cercle de fauteuils.
+            var porteVersRH = parent.gameObject.AddComponent<PorteEntrePieces>();
+            porteVersRH.PieceA = _salleRepos.gameObject;
+            porteVersRH.PieceB = _bureauRH;
+            porteVersRH.Gond = gondBureauRH;
+            porteVersRH.Seuil = gondBureauRH.parent != null
+                ? gondBureauRH.parent.position : seuilBureauRHPos;
+            porteVersRH.Passage = seuilBureauRH;
+            porteVersRH.Joueur = _joueur;
+            porteVersRH.DirectionEntree = new Vector3(-1f, 0f, 0f);
+            porteVersRH.AngleOuvert = -96f;
 
             // Le mur va d'un bout a l'autre du dallage : il s'arretait 1,2 avant
             // le bord, et la pizzeria semblait ouverte sur le vide.
@@ -457,6 +481,7 @@ namespace Pizzeria3D
         /// Renvoie les pans a escamoter du cote de la salle de repos.
         /// </summary>
         static List<GameObject> MurEntrePieces(Transform parent, float x, float centreZ, float demiZ,
+                                               string nom,
                                                out Transform gond, out int seuil, out Vector3 seuilPos)
         {
             const float largeur = 1.70f, hauteur = 2.38f, hauteurMur = 3.2f;
@@ -481,7 +506,7 @@ namespace Pizzeria3D
 
             seuilPos = new Vector3(x, 0f, centreZ);
             seuil = Obstacles.Ajouter(seuilPos, 0.4f, largeur);
-            gond = Porte(parent, seuilPos, "PorteEntrePieces");
+            gond = Porte(parent, seuilPos, nom);
             // Porte() suppose un mur qui court selon X ; celui-ci court selon
             // Z. Pivoter tout l'assemblage l'oriente sans dupliquer son code.
             gond.parent.localRotation = Quaternion.Euler(0f, 90f, 0f);
@@ -489,14 +514,14 @@ namespace Pizzeria3D
         }
 
         /// <summary>
-        /// Le bureau RH, juste derriere la salle de repos : on y entre par la
-        /// porte percee dans son mur du fond, jamais depuis la salle a
-        /// manger — il n'y a pas de facade a cet endroit. Meme squelette que
-        /// les autres pieces (dallage, murs, PetitePiece, MursDiscrets), sans
-        /// mur cote entree puisque celui de la salle de repos en tient lieu.
+        /// Le bureau RH, colle au flanc gauche de la salle de repos : le seul
+        /// cote encore libre du batiment. On y entre par la porte percee dans
+        /// le mur mitoyen, jamais depuis la salle a manger — il n'y a pas de
+        /// facade a cet endroit, seulement les baies du mur du fond. Il n'a
+        /// pas de mur de droite : le mur mitoyen, bati a part, en tient lieu.
         /// </summary>
         static GameObject PieceBureauRH(Transform parent, Vector3 centre, float demiX, float demiZ,
-                                        Transform gond, int seuil, Joueur joueur)
+                                        Joueur joueur, List<GameObject> cachent)
         {
             var go = new GameObject("BureauRH");
             go.transform.SetParent(parent, false);
@@ -504,13 +529,11 @@ namespace Pizzeria3D
             go.SetActive(false);
             var t = go.transform;
 
-            Bloc.Boite("SolBureauRH", t, new Vector3(0f, -0.2f, 0.15f),
+            Bloc.Boite("SolBureauRH", t, new Vector3(0f, -0.2f, -0.15f),
                        new Vector3(demiX * 2f + 0.4f, 0.4f, demiZ * 2f + 0.3f),
                        Bloc.Sol).SansCollision();
 
             Mur(t, new Vector3(-demiX, 1.6f, 0f), new Vector3(0.4f, 3.2f, demiZ * 2f), centre);
-            var panDroit = Mur(t, new Vector3(demiX, 1.6f, 0f), new Vector3(0.4f, 3.2f, demiZ * 2f),
-                               centre);
             Mur(t, new Vector3(0f, 1.6f, demiZ - 0.2f), new Vector3(demiX * 2f + 0.4f, 3.2f, 0.4f),
                 centre);
 
@@ -532,16 +555,13 @@ namespace Pizzeria3D
             Bloc.Boite("Enseigne", meuble.transform, new Vector3(0f, 1.05f, 0.34f),
                        new Vector3(0.9f, 0.22f, 0.03f), Bloc.Couleur(0xE95420)).SansCollision();
 
-            var p = go.AddComponent<PetitePiece>();
-            p.Passage = seuil;
-            p.Gond = gond;
-            p.Joueur = joueur;
-            p.Seuil = gond.parent != null ? gond.parent.position : gond.position;
-            p.DemiTerrainZ = centre.z + demiZ - 0.85f;
-
+            // Pas de PetitePiece ici : sa porte est celle du mur mitoyen, que
+            // PorteEntrePieces ouvre quand les deux pieces existent, et sa
+            // profondeur est celle de la salle de repos — le terrain qu'elle
+            // a deja repousse suffit.
             var discrets = go.AddComponent<MursDiscrets>();
             discrets.Joueur = joueur;
-            discrets.Murs = new[] { panDroit };
+            discrets.Murs = cachent.ToArray();
             discrets.Centre = centre;
             discrets.DemiX = demiX;
             discrets.DemiZ = demiZ;
@@ -984,9 +1004,7 @@ namespace Pizzeria3D
         /// la moitie que le mur mitoyen ne cache pas a la camera.
         /// </summary>
         static SalleDeRepos PieceRepos(Transform parent, Vector3 centre, Transform gond, int seuil,
-                                       Joueur joueur, List<GameObject> cachent,
-                                       out Transform gondBureauRH, out int seuilBureauRH,
-                                       out Vector3 fondRepos)
+                                       Joueur joueur, List<GameObject> cachent)
         {
             var go = new GameObject("SalleRepos");
             go.transform.SetParent(parent, false);
@@ -998,39 +1016,19 @@ namespace Pizzeria3D
             var t = go.transform;
 
             // Meme profondeur que la piece du patron, pour que le fond du
-            // batiment soit d'un seul tenant. Pas de mur de droite : c'est
-            // celui, perce d'une porte, qui la relie au bureau du patron,
-            // bati a part pour rester en place meme si elle n'est pas encore
-            // payee.
+            // batiment soit d'un seul tenant. Ni mur de droite ni mur de
+            // gauche : ce sont les deux murs mitoyens, perces chacun d'une
+            // porte, qui la relient au bureau du patron d'un cote et au
+            // bureau RH de l'autre. Batis a part, ils restent en place meme
+            // quand elle n'est pas encore payee.
             const float demiX = 3.3f, demiZ = 2.5f;
 
             Bloc.Boite("SolRepos", t, new Vector3(0f, -0.2f, -0.15f),
                        new Vector3(demiX * 2f + 0.4f, 0.4f, demiZ * 2f + 0.3f),
                        Bloc.Sol).SansCollision();
 
-            Mur(t, new Vector3(-demiX, 1.6f, 0f), new Vector3(0.4f, 3.2f, demiZ * 2f), centre);
-
-            // Le mur du fond, perce d'une porte vers le bureau RH : sa
-            // voisine directe, plutot que celui du patron — ce sont les
-            // employes qui la frequentent.
-            const float largeurPorteRH = 1.70f, hauteurPorteRH = 2.38f, hauteurMur = 3.2f;
-            float demiSegment = (demiX * 2f + 0.4f - largeurPorteRH) * 0.5f;
-            float offsetSegment = largeurPorteRH * 0.5f + demiSegment * 0.5f;
-            Mur(t, new Vector3(-offsetSegment, 1.6f, demiZ - 0.2f),
-                new Vector3(demiSegment, hauteurMur, 0.4f), centre);
-            Mur(t, new Vector3(offsetSegment, 1.6f, demiZ - 0.2f),
-                new Vector3(demiSegment, hauteurMur, 0.4f), centre);
-            // Le linteau au-dessus de la porte, sans obstacle propre : Mur()
-            // en poserait un jusqu'au sol, qui barrerait le passage.
-            Bloc.Boite("MurReposLinteau", t,
-                       new Vector3(0f, hauteurPorteRH + (hauteurMur - hauteurPorteRH) * 0.5f,
-                                   demiZ - 0.2f),
-                       new Vector3(largeurPorteRH, hauteurMur - hauteurPorteRH, 0.4f),
-                       Bloc.MachineBis).SansCollision();
-
-            fondRepos = centre + new Vector3(0f, 0f, demiZ - 0.2f);
-            seuilBureauRH = Obstacles.Ajouter(fondRepos, largeurPorteRH, 0.4f);
-            gondBureauRH = Porte(parent, fondRepos, "PorteBureauRH");
+            Mur(t, new Vector3(0f, 1.6f, demiZ - 0.2f), new Vector3(demiX * 2f + 0.4f, 3.2f, 0.4f),
+                centre);
 
             var tissu = Bloc.Couleur(0x3D6B8E);
             var tissuSombre = Bloc.Couleur(0x274A63);
@@ -1039,7 +1037,10 @@ namespace Pizzeria3D
 
             var coin = new GameObject("CoinRepos");
             coin.transform.SetParent(t, false);
-            coin.transform.localPosition = new Vector3(-1.3f, 0f, 0.6f);
+            // Decale vers le bureau du patron : le mur de gauche porte
+            // desormais la porte du bureau RH, et le cercle de fauteuils ne
+            // doit pas en barrer le pas.
+            coin.transform.localPosition = new Vector3(-0.6f, 0f, 0.6f);
             var c = coin.transform;
 
             Bloc.Boite("Tapis", c, new Vector3(0f, 0.015f, 0f), new Vector3(3.2f, 0.03f, 3.2f),
