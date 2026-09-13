@@ -2009,6 +2009,16 @@ static class Harness3D
               porteRepos != null &&
               Obstacles.Bloque(porteRepos.transform.position, Reglages.RayonJoueur));
 
+        // La porte entre le bureau du patron et la salle de repos : le
+        // patron l'a deja payee, mais elle reste close tant que la salle de
+        // repos, de l'autre cote, n'existe pas encore — sinon on marcherait
+        // dans le vide.
+        var porteEntre = Trouver("PorteEntrePieces");
+        Check("la porte entre les deux bureaux est montee", porteEntre != null);
+        Check("mais elle reste close tant que la salle de repos n'est pas payee",
+              porteEntre != null &&
+              Obstacles.Bloque(porteEntre.transform.position, Reglages.RayonJoueur));
+
         var dalleRepos = ZoneDePrix(Reglages.PrixSalleRepos);
         Check("une dalle d'achat attend devant sa porte", dalleRepos != null);
         Check("elle est bien devant la porte, du cote de la salle a manger",
@@ -2029,6 +2039,12 @@ static class Harness3D
         Check("et le patron peut vraiment y entrer",
               !Obstacles.Bloque(dedansRepos, Reglages.RayonJoueur) &&
               Obstacles.DemiTerrainZ > dedansRepos.z);
+
+        // Les deux bureaux existant desormais l'un et l'autre, le passage
+        // entre eux s'ouvre a son tour.
+        Check("la porte entre les deux bureaux s'ouvre une fois les deux payees",
+              porteEntre != null &&
+              !Obstacles.Bloque(porteEntre.transform.position, Reglages.RayonJoueur));
 
         // Comme pour le bureau : entre dedans, le mur qui la cache doit
         // s'effacer, sinon on y joue a l'aveugle.
@@ -2052,23 +2068,24 @@ static class Harness3D
         Check("une fois dans la salle de repos, ils s'effacent",
               AucunVisible(discretsRepos));
 
-        // --- le bureau RH, derriere celui du patron ---
-        // On y entre par une porte percee dans le mur du fond du bureau, pas
-        // depuis la salle a manger : il n'y a pas de facade a cet endroit.
+        // --- le bureau RH, derriere la salle de repos ---
+        // On y entre par une porte percee dans le mur du fond de la salle de
+        // repos, pas depuis la salle a manger : il n'y a pas de facade a cet
+        // endroit.
         var bureauRHFerme = Trouver("BureauRH");
         Check("le bureau RH existe dans le decor", bureauRHFerme != null);
         Check("mais il reste invisible tant qu'on ne l'a pas paye",
               bureauRHFerme != null && !bureauRHFerme.activeSelf);
 
         var porteRH = Trouver("PorteBureauRH");
-        Check("sa porte est montee dans le mur du fond du bureau", porteRH != null);
+        Check("sa porte est montee dans le mur du fond de la salle de repos", porteRH != null);
         Check("son pas est barre tant que le bureau RH n'est pas paye",
               porteRH != null &&
               Obstacles.Bloque(porteRH.transform.position, Reglages.RayonJoueur));
 
         var dalleRH = ZoneDePrix(Reglages.PrixBureauRH);
-        Check("une dalle d'achat attend a l'interieur du bureau du patron", dalleRH != null);
-        Check("a l'interieur du bureau du patron, pas ailleurs",
+        Check("une dalle d'achat attend a l'interieur de la salle de repos", dalleRH != null);
+        Check("a l'interieur de la salle de repos, pas ailleurs",
               dalleRH != null && porteRH != null &&
               dalleRH.transform.position.z < porteRH.transform.position.z &&
               dalleRH.transform.position.z > porteRH.transform.position.z - 5f &&
@@ -2097,7 +2114,7 @@ static class Harness3D
 
         var discretsRH = bureauRHFerme.GetComponent<MursDiscrets>();
         Check("le bureau RH sait escamoter son mur cote camera", discretsRH != null);
-        Check("il prolonge le mur du fond du bureau, sans jeu entre les deux",
+        Check("il prolonge le mur du fond de la salle de repos, sans jeu entre les deux",
               discretsRH != null &&
               Mathf.Abs((discretsRH.Centre.z - discretsRH.DemiZ) - (porteRH.transform.position.z + 0.2f))
                   < 0.05f);
@@ -2108,8 +2125,8 @@ static class Harness3D
         Frames(2);
         Check("une fois dans le bureau RH, il s'efface", AucunVisible(discretsRH));
 
-        // La porte s'ouvre bien du cote du bureau RH, pas a l'envers dans le
-        // bureau du patron.
+        // La porte s'ouvre bien du cote du bureau RH, pas a l'envers dans la
+        // salle de repos.
         Placer(joueur, porteRH.transform.position);
         Frames(30);
         var gondRH2 = Piece(porteRH.transform, "Gond");
