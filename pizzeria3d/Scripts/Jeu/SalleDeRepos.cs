@@ -47,8 +47,14 @@ namespace Pizzeria3D
         /// <summary>Places physiquement presentes dans le decor.</summary>
         public int NombreDeSieges => Sieges.Length;
 
-        /// <summary>Combien de places sont ouvertes au niveau actuel de la salle.</summary>
-        public int PlacesOuvertes => Mathf.Min(Sieges.Length, Comptabilite.CapaciteSalleRepos);
+        /// <summary>
+        /// Combien de places sont ouvertes au niveau actuel de la salle. Aucune
+        /// tant que la piece n'est pas payee : personne ne vient se reposer
+        /// dans un local qui n'existe pas encore.
+        /// </summary>
+        public int PlacesOuvertes => gameObject.activeInHierarchy
+            ? Mathf.Min(Sieges.Length, Comptabilite.CapaciteSalleRepos)
+            : 0;
 
         public int PlacesOccupees
         {

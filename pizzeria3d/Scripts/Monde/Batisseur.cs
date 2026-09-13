@@ -53,6 +53,8 @@ namespace Pizzeria3D
                                      Reglages.PrixCaissier, "Embaucher un caissier");
             Zone(racine.transform, joueur, _piece, _pieceEtSaDalle,
                  Reglages.PrixPetitePiece, "Ouvrir la petite piece");
+            Zone(racine.transform, joueur, _salleRepos.gameObject, _salleReposEtSaDalle,
+                 Reglages.PrixSalleRepos, "Ouvrir la salle de repos");
 
             // La table de la salle : les clients servis viennent y manger.
             var tableSalle = Salle(racine.transform, new Vector3(-2.6f, 0f, -3.2f));
@@ -93,15 +95,10 @@ namespace Pizzeria3D
             ecran.Caissier = employeur;
             ecran.DalleEmbauche = dalleEmbauche;
 
-            // La salle de repos, ou la fatigue redescend : derriere le mur du
-            // fond, a cote de la piece du patron, et non plus au milieu de la
-            // salle a manger. Sa place tient a deux murs : assez loin du mur
-            // du fond pour passer au-dessus, et assez a gauche de celui de la
-            // piece du patron pour ne pas se cacher derriere — la camera les
-            // regarde tous les deux de face.
-            var salleRepos = SalleRepos(racine.transform, new Vector3(-2.4f, 0f, 11.8f));
-            employeur.SalleRepos = salleRepos;
-            ecran.SalleRepos = salleRepos;
+            // La salle de repos, batie avec le decor : le caissier y va
+            // recuperer, et l'ordinateur y lit ses places.
+            employeur.SalleRepos = _salleRepos;
+            ecran.SalleRepos = _salleRepos;
 
             racine.AddComponent<Manette>();
             Debug.Log("Pizzeria : scene prete. Maintiens le clic et glisse pour te deplacer.");
@@ -114,6 +111,8 @@ namespace Pizzeria3D
         static GameObject _piece;
         static OrdinateurPortable _portable;
         static Vector3 _pieceEtSaDalle;
+        static SalleDeRepos _salleRepos;
+        static Vector3 _salleReposEtSaDalle;
         static Joueur _joueur;
 
         /// <summary>Une ouverture dans un mur : porte ou baie vitree.</summary>
@@ -202,9 +201,9 @@ namespace Pizzeria3D
             float finGauche = xPorte - largeurPorte * 0.5f;
             float debutDroite = xPorte + largeurPorte * 0.5f;
 
-            // La baie 2 n'est pas vitree : c'est le passage vers la salle de
-            // repos, derriere le mur. Elle descend jusqu'au sol comme la porte.
-            const float xPassageRepos = -1.52f, largeurPassageRepos = 1.8f;
+            // La baie 2 n'est pas vitree : c'est la porte de la salle de
+            // repos, la meme que celle du bureau, a l'autre bout du mur.
+            const float xPorteRepos = -1.9f;
 
             var baiesFond = new List<Baie>();
             for (int i = 0; i < 6; i++)
@@ -216,7 +215,7 @@ namespace Pizzeria3D
                            new Vector3(largeurBaie, hautBaie - basBaie, 0.15f),
                            Bloc.Couleur(0xBFE8F2)).SansCollision();
             }
-            baiesFond.Add(new Baie(xPassageRepos, largeurPassageRepos, 0f, hauteurPorte));
+            baiesFond.Add(new Baie(xPorteRepos, largeurPorte, 0f, hauteurPorte));
             baiesFond.Add(new Baie(xPorte, largeurPorte, 0f, hauteurPorte));
             baiesFond.Sort((a, b) => a.Centre.CompareTo(b.Centre));
 
@@ -233,12 +232,16 @@ namespace Pizzeria3D
             // Les deux pans du mur, de part et d'autre de la porte, barrent le
             // passage ; le pas de la porte, lui, a son obstacle a part : c'est
             // celui-la que l'achat de la piece leve.
-            float finRepos = xPassageRepos - largeurPassageRepos * 0.5f;
-            float debutApresRepos = xPassageRepos + largeurPassageRepos * 0.5f;
+            float finRepos = xPorteRepos - largeurPorte * 0.5f;
+            float debutApresRepos = xPorteRepos + largeurPorte * 0.5f;
             Obstacles.Ajouter(new Vector3((-8.5f + finRepos) * 0.5f, 0f, 7.2f),
                               finRepos + 8.5f, 0.6f);
             Obstacles.Ajouter(new Vector3((debutApresRepos + finGauche) * 0.5f, 0f, 7.2f),
                               finGauche - debutApresRepos, 0.6f);
+            // Son pas de porte a son propre obstacle, que l'achat de la salle
+            // leve — exactement comme celui du bureau.
+            int seuilRepos = Obstacles.Ajouter(new Vector3(xPorteRepos, 0f, 7.2f),
+                                               largeurPorte, 0.6f);
             Obstacles.Ajouter(new Vector3((debutDroite + 8.5f) * 0.5f, 0f, 7.2f),
                               8.5f - debutDroite, 0.6f);
             int seuil = Obstacles.Ajouter(new Vector3(xPorte, 0f, 7.2f), largeurPorte, 0.6f);
@@ -246,10 +249,7 @@ namespace Pizzeria3D
             // juste a cote du plan de mise en boite, qui s'arrete a x 3,5
             var gond = Porte(parent, new Vector3(xPorte, 0f, 7.2f));
 
-            // Le passage vers la salle de repos : son encadrement, sans
-            // vantail — les employes le franchissent les mains prises.
-            PassageRepos(parent, new Vector3(xPassageRepos, 0f, 7.2f), largeurPassageRepos,
-                         hauteurPorte);
+            var gondRepos = Porte(parent, new Vector3(xPorteRepos, 0f, 7.2f), "PorteRepos");
 
             // La piece derriere, et la dalle qui l'ouvre, devant la porte.
             // Elle occupe tout le coin du batiment : son pan droit rejoint le
@@ -258,6 +258,25 @@ namespace Pizzeria3D
                               cachentLaPiece);
             _pieceEtSaDalle = new Vector3(xPorte, 0f, 5.6f);
             _piece = piece;
+
+            // La salle de repos, sa voisine : meme profondeur, mur contre mur,
+            // et la meme porte. Les pans du fond qui la cachent a la camera
+            // sont ceux qui lui font face, jusqu'a la porte du bureau.
+            // Seulement ceux qui lui font vraiment face : plus a gauche, un pan
+            // efface ne devoilerait rien et ouvrirait un trou dans la salle a
+            // manger.
+            var cachentLaSalle = new List<GameObject>();
+            foreach (var pan in pansFond)
+            {
+                float x = pan.transform.localPosition.x;
+                if (x > -5.0f && x < xPorte - 0.01f) cachentLaSalle.Add(pan);
+            }
+            cachentLaSalle.Add(Trouver(parent, "VitreFond1"));
+            cachentLaSalle.Add(Trouver(parent, "VitreFond3"));
+
+            _salleRepos = PieceRepos(parent, new Vector3(-1.3f, 0f, 9.7f), gondRepos, seuilRepos,
+                                     _joueur, cachentLaSalle);
+            _salleReposEtSaDalle = new Vector3(xPorteRepos, 0f, 5.6f);
 
             // Le mur va d'un bout a l'autre du dallage : il s'arretait 1,2 avant
             // le bord, et la pizzeria semblait ouverte sur le vide.
@@ -294,9 +313,9 @@ namespace Pizzeria3D
         /// place du passage. Le vantail pend a un gond et s'ouvre du cote de
         /// la piece. Renvoie ce gond.
         /// </summary>
-        static Transform Porte(Transform parent, Vector3 position)
+        static Transform Porte(Transform parent, Vector3 position, string nom = "Porte")
         {
-            var go = new GameObject("Porte");
+            var go = new GameObject(nom);
             go.transform.SetParent(parent, false);
             go.transform.position = position;
             var t = go.transform;
@@ -322,26 +341,6 @@ namespace Pizzeria3D
                        new Vector3(0.16f, 0.14f, 0.08f), Bloc.Metal).SansCollision();
 
             return gond.transform;
-        }
-
-        /// <summary>
-        /// L'encadrement du passage vers la salle de repos : deux jambages et
-        /// une imposte, sans vantail. Un trou nu dans le mur ressemblait a un
-        /// pan manquant plutot qu'a une ouverture.
-        /// </summary>
-        static void PassageRepos(Transform parent, Vector3 position, float largeur, float hauteur)
-        {
-            var go = new GameObject("PassageRepos");
-            go.transform.SetParent(parent, false);
-            go.transform.position = position;
-            var t = go.transform;
-
-            var blanc = Bloc.Couleur(0xF4F1EA);
-            foreach (float cote in new[] { -1f, 1f })
-                Bloc.Boite("Jambage", t, new Vector3(cote * (largeur * 0.5f - 0.08f), hauteur * 0.5f, 0f),
-                           new Vector3(0.16f, hauteur, 0.7f), blanc).SansCollision();
-            Bloc.Boite("Imposte", t, new Vector3(0f, hauteur - 0.08f, 0f),
-                       new Vector3(largeur, 0.16f, 0.7f), blanc).SansCollision();
         }
 
         /// <summary>
@@ -838,51 +837,64 @@ namespace Pizzeria3D
         }
 
         /// <summary>
-        /// La salle de repos : table basse, machine a cafe, et six
-        /// emplacements de fauteuil en arc de cercle — seuls les premiers
-        /// sont actifs tant que la salle n'est pas amelioree, c'est
-        /// SalleDeRepos qui le decide image par image.
+        /// La salle de repos du personnel : une piece a part entiere, batie
+        /// comme celle du patron et collee contre elle — meme profondeur, mur
+        /// contre mur, meme porte. Elle reste cachee jusqu'a ce que la dalle
+        /// devant sa porte soit payee.
+        ///
+        /// Le coin repos lui-meme — tapis, table basse, machine a cafe et six
+        /// emplacements de fauteuil — se tient a gauche dans la piece : c'est
+        /// la moitie que le mur mitoyen ne cache pas a la camera.
         /// </summary>
-        static SalleDeRepos SalleRepos(Transform parent, Vector3 position)
+        static SalleDeRepos PieceRepos(Transform parent, Vector3 centre, Transform gond, int seuil,
+                                       Joueur joueur, List<GameObject> cachent)
         {
             var go = new GameObject("SalleRepos");
             go.transform.SetParent(parent, false);
-            go.transform.position = position;
+            go.transform.position = centre;
+            // Eteinte avant d'etre payee, comme la piece du patron : allumee,
+            // elle libererait son seuil et repousserait le terrain des la
+            // construction.
+            go.SetActive(false);
             var t = go.transform;
+
+            // Meme profondeur que la piece du patron, pour que le fond du
+            // batiment soit d'un seul tenant. Sa largeur mene son pan droit
+            // jusqu'au pan gauche du bureau : les deux pieces se touchent.
+            const float demiX = 3.3f, demiZ = 2.5f;
+
+            Bloc.Boite("SolRepos", t, new Vector3(0f, -0.2f, -0.15f),
+                       new Vector3(demiX * 2f + 0.4f, 0.4f, demiZ * 2f + 0.3f),
+                       Bloc.Sol).SansCollision();
+
+            Mur(t, new Vector3(-demiX, 1.6f, 0f), new Vector3(0.4f, 3.2f, demiZ * 2f), centre);
+            var panDroit = Mur(t, new Vector3(demiX, 1.6f, 0f), new Vector3(0.4f, 3.2f, demiZ * 2f),
+                               centre);
+            Mur(t, new Vector3(0f, 1.6f, demiZ - 0.2f), new Vector3(demiX * 2f + 0.4f, 3.2f, 0.4f),
+                centre);
 
             var tissu = Bloc.Couleur(0x3D6B8E);
             var tissuSombre = Bloc.Couleur(0x274A63);
             var bois = Bloc.Couleur(0x8A5A2B);
             var metal = Bloc.Couleur(0xB0B4BA);
 
-            // Son dallage, et l'allee qui rejoint la porte du mur du fond :
-            // sans eux, fauteuils et machine a cafe poussaient dans l'herbe.
-            Bloc.Boite("SolRepos", t, new Vector3(0.3f, -0.2f, 0f), new Vector3(5.4f, 0.4f, 4.8f),
-                       Bloc.Sol).SansCollision();
-            Bloc.Boite("AlleeRepos", t, new Vector3(0.9f, -0.2f, -3.5f),
-                       new Vector3(1.9f, 0.4f, 2.6f), Bloc.Sol).SansCollision();
+            var coin = new GameObject("CoinRepos");
+            coin.transform.SetParent(t, false);
+            coin.transform.localPosition = new Vector3(-1.3f, 0f, 0.6f);
+            var c = coin.transform;
 
-            // Deux pans pour lui donner du volume : celui du fond et celui de
-            // gauche. Pas de pan a droite — il se dresserait entre la camera
-            // et la piece, qu'on ne verrait plus (c'est le cote ou se trouve
-            // deja le mur de la piece du patron).
-            Bloc.Boite("MurRepos", t, new Vector3(-2.4f, 1.6f, 0f), new Vector3(0.4f, 3.2f, 4.8f),
-                       Bloc.MachineBis).SansCollision();
-            Bloc.Boite("MurRepos", t, new Vector3(0.2f, 1.6f, 2.4f), new Vector3(5.6f, 3.2f, 0.4f),
-                       Bloc.MachineBis).SansCollision();
-
-            Bloc.Boite("Tapis", t, new Vector3(0f, 0.015f, 0f), new Vector3(3.6f, 0.03f, 3.6f),
+            Bloc.Boite("Tapis", c, new Vector3(0f, 0.015f, 0f), new Vector3(3.2f, 0.03f, 3.2f),
                        Bloc.Couleur(0xC7A97A)).SansCollision();
 
             // La table basse, au centre : les employes s'y retrouvent, meme
             // un fauteuil vide de temps en temps.
-            Bloc.Forme(PrimitiveType.Cylinder, "TableBasse", t, new Vector3(0f, 0.24f, 0f),
+            Bloc.Forme(PrimitiveType.Cylinder, "TableBasse", c, new Vector3(0f, 0.24f, 0f),
                        new Vector3(0.55f, 0.24f, 0.55f), bois).SansCollision();
 
-            // La machine a cafe, dans un coin.
+            // La machine a cafe, contre le mur du fond.
             var machine = new GameObject("MachineACafe");
-            machine.transform.SetParent(t, false);
-            machine.transform.localPosition = new Vector3(1.55f, 0f, -1.1f);
+            machine.transform.SetParent(c, false);
+            machine.transform.localPosition = new Vector3(1.55f, 0f, 0.9f);
             Bloc.Boite("Corps", machine.transform, new Vector3(0f, 0.35f, 0f),
                        new Vector3(0.4f, 0.7f, 0.32f), Bloc.Couleur(0x2B2E33)).SansCollision();
             Bloc.Boite("Plateau", machine.transform, new Vector3(0f, 0.62f, 0.02f),
@@ -898,21 +910,39 @@ namespace Pizzeria3D
                 float angle = i * 60f;
                 float rad = angle * Mathf.Deg2Rad;
                 var pos = new Vector3(Mathf.Sin(rad) * 1.3f, 0f, Mathf.Cos(rad) * 1.3f);
-                sieges[i] = Fauteuil(t, "Siege" + i, pos, angle + 180f, tissu, tissuSombre, bois);
+                sieges[i] = Fauteuil(c, "Siege" + i, pos, angle + 180f, tissu, tissuSombre, bois);
             }
 
-            Obstacles.Ajouter(position, 3.6f, 3.6f);
+            // L'emprise des fauteuils, pas celle du tapis : il reste ainsi un
+            // passage libre entre la porte et le cercle de sieges.
+            Obstacles.Ajouter(coin.transform.position, 3.0f, 3.0f);
+
+            var p = go.AddComponent<PetitePiece>();
+            p.Passage = seuil;
+            p.Gond = gond;
+            p.Joueur = joueur;
+            p.Seuil = gond.parent != null ? gond.parent.position : gond.position;
+            p.DemiTerrainZ = centre.z + demiZ - 0.85f;
+
+            var discrets = go.AddComponent<MursDiscrets>();
+            discrets.Joueur = joueur;
+            var aEffacer = new List<GameObject> { panDroit };
+            aEffacer.AddRange(cachent);
+            discrets.Murs = aEffacer.ToArray();
+            discrets.Centre = centre;
+            discrets.DemiX = demiX;
+            discrets.DemiZ = demiZ;
 
             var salle = go.AddComponent<SalleDeRepos>();
             salle.Sieges = sieges;
             // Le chemin depuis la salle a manger : le plan d'emballage barre
             // la ligne droite, il faut le contourner par la gauche avant de
-            // franchir la porte du fond. L'employe le remonte a l'aller et le
+            // franchir la porte. L'employe le remonte a l'aller et le
             // redescend au retour — jamais un mur traverse.
             salle.Chemin = new[]
             {
-                new Vector3(-2.2f, 0f, 5.0f),
-                new Vector3(-1.6f, 0f, 8.6f),
+                new Vector3(-1.9f, 0f, 4.8f),
+                new Vector3(-1.9f, 0f, 8.6f),
             };
             return salle;
         }

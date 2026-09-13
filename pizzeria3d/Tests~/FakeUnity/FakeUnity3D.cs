@@ -96,6 +96,9 @@ namespace UnityEngine
 
         public bool activeSelf => Actif;
 
+        /// <summary>Le nom Unity de la meme chose, pour le code du jeu.</summary>
+        public bool activeInHierarchy => ActifDansHierarchie;
+
         /// <summary>Actif seulement si tous ses parents le sont aussi.</summary>
         public bool ActifDansHierarchie
         {

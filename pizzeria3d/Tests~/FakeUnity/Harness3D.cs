@@ -822,7 +822,7 @@ static class Harness3D
             Check("il court d'un bord a l'autre du dallage",
                   fMin <= solGauche + 0.01f && fMax >= solDroite - 0.01f);
             Check("il est ouvert sur toute sa longueur",
-                  Fenetres("VitreFond", fMin, fMax, true, "Porte", "PassageRepos"));
+                  Fenetres("VitreFond", fMin, fMax, true, "Porte", "PorteRepos"));
             // Quatre baies vitrees, plus la porte du bureau et le passage de
             // la salle de repos : ces deux-la descendent au sol, donc pas
             // d'allege sous elles, mais bien un linteau au-dessus.
@@ -1986,6 +1986,65 @@ static class Harness3D
         // normalement au lieu de rentrer chez lui pour la nuit.
         int heureAvantLocaux = horloge.Heures;
         PoserLHeure(horloge, 3);
+
+        // La salle de repos se paie comme la piece du patron : une dalle
+        // verte devant sa porte, et rien avant de l'avoir foulee.
+        var salleFermee = Trouver("SalleRepos");
+        Check("la salle de repos existe dans le decor", salleFermee != null);
+        Check("mais elle reste invisible tant qu'on ne l'a pas payee",
+              salleFermee != null && !salleFermee.activeSelf);
+        Check("et elle n'offre aucune place tant qu'elle est fermee",
+              salleRepos != null && salleRepos.PlacesOuvertes == 0);
+
+        var porteRepos = Trouver("PorteRepos");
+        Check("sa porte est montee dans le mur du fond", porteRepos != null);
+        Check("son pas est barre tant que la salle n'est pas payee",
+              porteRepos != null &&
+              Obstacles.Bloque(porteRepos.transform.position, Reglages.RayonJoueur));
+
+        var dalleRepos = ZoneDePrix(Reglages.PrixSalleRepos);
+        Check("une dalle d'achat attend devant sa porte", dalleRepos != null);
+        Check("elle est bien devant la porte, du cote de la salle a manger",
+              dalleRepos != null && porteRepos != null &&
+              Mathf.Abs(dalleRepos.transform.position.x - porteRepos.transform.position.x) < 0.5f &&
+              dalleRepos.transform.position.z < porteRepos.transform.position.z);
+
+        Banque.Encaisser(Reglages.PrixSalleRepos);
+        Placer(joueur, dalleRepos.transform.position);
+        Secondes(Reglages.PrixSalleRepos / Reglages.DebitAchat + 2f);
+        Check("payee, la salle de repos apparait", salleFermee.activeSelf);
+        Check("sa dalle disparait une fois payee", dalleRepos.gameObject.Detruit);
+        Check("le pas de sa porte se libere",
+              !Obstacles.Bloque(porteRepos.transform.position, Reglages.RayonJoueur));
+        // Un pas au-dela du seuil : ni obstacle, ni bord de terrain — sans
+        // quoi on verrait une piece ou l'on ne peut pas entrer.
+        var dedansRepos = porteRepos.transform.position + new Vector3(0f, 0f, 1.0f);
+        Check("et le patron peut vraiment y entrer",
+              !Obstacles.Bloque(dedansRepos, Reglages.RayonJoueur) &&
+              Obstacles.DemiTerrainZ > dedansRepos.z);
+
+        // Comme pour le bureau : entre dedans, le mur qui la cache doit
+        // s'effacer, sinon on y joue a l'aveugle.
+        var discretsRepos = salleFermee.GetComponent<MursDiscrets>();
+        Check("la salle de repos sait escamoter ses murs", discretsRepos != null);
+
+        // Les deux pieces sont mitoyennes : leurs volumes ne laissent entre
+        // eux que l'epaisseur de leurs deux demi-murs, et elles ont la meme
+        // profondeur — le fond du batiment est d'un seul tenant.
+        Check("elle est collee a la piece du patron, mur contre mur",
+              Mathf.Abs((discretsRepos.Centre.x + discretsRepos.DemiX)
+                        - (discrets.Centre.x - discrets.DemiX)) <= 0.45f);
+        Check("et elles sont alignees sur la meme profondeur",
+              Mathf.Abs(discretsRepos.Centre.z - discrets.Centre.z) < 0.01f &&
+              Mathf.Abs(discretsRepos.DemiZ - discrets.DemiZ) < 0.01f);
+        Placer(joueur, new Vector3(0f, 0f, 0f));
+        Frames(2);
+        Check("depuis la salle a manger, ils sont bien la", TousVisibles(discretsRepos));
+        Placer(joueur, dedansRepos + new Vector3(0f, 0f, 1.0f));
+        Frames(2);
+        Check("une fois dans la salle de repos, ils s'effacent",
+              AucunVisible(discretsRepos));
+
         Placer(joueur, bureau.Place);
         Secondes(2f);
         Check("la salle de repos existe dans le restaurant", salleRepos != null);
