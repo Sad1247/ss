@@ -20,13 +20,15 @@ namespace Pizzeria3D
     public sealed class Caissier : MonoBehaviour
     {
         enum Etat { Poste, VersTable, Travaille, VersFour, Ramasse, VersComptoir,
-                    VersSalle, VersPoubelle, SEnVa }
+                    VersSalle, VersPoubelle, VersRepos, SeRepose, SEnVa }
 
         public Comptoir Comptoir;
         public Four Four;
         public Emballage Table;
         /// <summary>La table de la salle, qu'il vient debarrasser.</summary>
         public TableRepas Salle;
+        /// <summary>Ou il va recuperer une fois trop fatigue.</summary>
+        public SalleDeRepos SalleRepos;
         public Vector3 Poste;
         public Vector3 Relais;
         /// <summary>Ou il jette les restes.</summary>
@@ -41,10 +43,25 @@ namespace Pizzeria3D
         int _livrees;             // boites deposees au comptoir, depuis l'embauche
         GameObject _ordures;      // les restes qu'il porte a la poubelle
         bool _plateauEnCours;     // un plateau est en preparation dans la fournee              // boites garnies qui attendent au rond vert
+        float _fatigue;
+        int _siegeRepos = -1;     // le siege reserve, le temps de la pause
 
         public int Portees => _portee != null ? _portee.Nombre : 0;
         /// <summary>Boites livrees au comptoir : sa productivite, affichee au bureau.</summary>
         public int Livrees => _livrees;
+        /// <summary>Fatigue actuelle, de 0 a Reglages.FatigueMax.</summary>
+        public float FatigueActuelle => _fatigue;
+        /// <summary>Son rendement du moment, tel qu'il ralentit ses gestes.</summary>
+        public float Productivite => Fatigue.Productivite(_fatigue);
+        /// <summary>Vrai pendant qu'il marche vers la salle de repos ou s'y repose.</summary>
+        public bool SeRepose => _etat == Etat.VersRepos || _etat == Etat.SeRepose;
+        /// <summary>
+        /// Gele la fatigue, comme Horloge.Figee gele l'heure : sert au banc
+        /// d'essai, qui doit pouvoir eprouver le reste du service sans que
+        /// des heures de travail simulees envoient le caissier en pause au
+        /// milieu d'une verification qui n'a rien a voir.
+        /// </summary>
+        public bool FatigueGelee;
         /// <summary>Vrai quand tout ce qu'il porte est en boite.</summary>
         public bool PorteeEmballee => _portee != null && !_portee.EstVide && _portee.ToutEmballe;
         /// <summary>Vrai quand il rapporte une pizza nue du four.</summary>
@@ -90,6 +107,7 @@ namespace Pizzeria3D
             transform.position = Poste;
             _etat = Etat.Poste;
             _passeParRelais = false;
+            _fatigue = 0f;
             RangerLeSac();
         }
 
@@ -104,6 +122,11 @@ namespace Pizzeria3D
             RangerLeSac();
             if (_portee != null) _portee.Vider();
             if (Comptoir != null) Comptoir.CaissierPresent = false;
+            // Le siege reserve ne doit pas rester bloque pour quelqu'un que
+            // plus personne ne viendra liberer.
+            if (SalleRepos != null && _siegeRepos >= 0) SalleRepos.Liberer(_siegeRepos);
+            _siegeRepos = -1;
+            _fatigue = 0f;
             Embauche = false;
             _etat = Etat.Poste;
             _passeParRelais = false;
@@ -143,8 +166,12 @@ namespace Pizzeria3D
 
         void Update()
         {
-            if (_compteurTransfert > 0f) _compteurTransfert -= Time.deltaTime;
+            // Fatigue, il enchaine les gestes plus lentement : le compte a
+            // rebours avance moins vite, pas la duree du geste elle-meme.
+            if (_compteurTransfert > 0f) _compteurTransfert -= Time.deltaTime * Productivite;
             if (_demarche != null) _demarche.BrasPortent = !_portee.EstVide || _ordures != null;
+
+            MettreAJourFatigue();
 
             switch (_etat)
             {
@@ -156,7 +183,28 @@ namespace Pizzeria3D
                 case Etat.VersComptoir: Aller(Poste, Etat.Poste); break;
                 case Etat.VersSalle:    Aller(DevantLaSalle(), Etat.VersPoubelle, Debarrasser); break;
                 case Etat.VersPoubelle: Aller(Poubelle, Etat.Poste, Jeter); break;
+                case Etat.VersRepos:    Aller(PositionDuRepos(), Etat.SeRepose); break;
+                case Etat.SeRepose:     SeReposer(); break;
                 case Etat.SEnVa:        Rentrer(); break;
+            }
+        }
+
+        /// <summary>
+        /// La fatigue monte tant qu'il travaille pour de bon, et redescend
+        /// pendant la pause, plus vite avec une salle de repos amelioree.
+        /// Ni en sortant le soir, ni assis a rien faire au poste.
+        /// </summary>
+        void MettreAJourFatigue()
+        {
+            if (FatigueGelee) return;
+            if (_etat == Etat.SeRepose)
+            {
+                float recuperation = Reglages.RecuperationParSeconde * Comptabilite.BonusRecuperation;
+                _fatigue = Mathf.Max(0f, _fatigue - recuperation * Time.deltaTime);
+            }
+            else if (_etat != Etat.SEnVa)
+            {
+                _fatigue = Mathf.Min(Reglages.FatigueMax, _fatigue + Reglages.FatigueParSeconde * Time.deltaTime);
             }
         }
 
@@ -190,8 +238,30 @@ namespace Pizzeria3D
             // tard, demain. Le service passe avant, pas apres.
             if (FinDeService) { Decharger(); _etat = Etat.SEnVa; return; }
 
+            // Il pose d'abord ce qu'il porte : la fatigue attend la fin du
+            // geste en cours, elle ne l'interrompt jamais en chemin.
             Decharger();
-            if (!_portee.EstVide || Four == null || Comptoir == null || Table == null) return;
+            if (!_portee.EstVide) return;
+
+            // Trop fatigue, les mains enfin libres : il part se reposer avant
+            // de repartir chercher du stock — sinon un comptoir qui manque
+            // sans arret de pizzas le renvoyait au four a chaque image, et il
+            // n'etait jamais assez « au repos » pour meme y songer. Sauf si
+            // la salle de repos est complete, auquel cas il continue de
+            // travailler en attendant une place.
+            if (_fatigue >= Reglages.SeuilDepartRepos && SalleRepos != null)
+            {
+                int siege = SalleRepos.Reserver();
+                if (siege >= 0)
+                {
+                    _siegeRepos = siege;
+                    _etat = Etat.VersRepos;
+                    _passeParRelais = false;
+                    return;
+                }
+            }
+
+            if (Four == null || Comptoir == null || Table == null) return;
 
             // Une table sale bloque la salle : plus personne ne peut manger
             // sur place tant qu'elle n'est pas debarrassee. Cela passe donc
@@ -360,6 +430,22 @@ namespace Pizzeria3D
             return new Vector3(p.x, 0f, p.z - 1.4f);   // devant la table, pas dessus
         }
 
+        Vector3 PositionDuRepos()
+            => SalleRepos != null ? SalleRepos.PositionDuSiege(_siegeRepos) : Poste;
+
+        /// <summary>
+        /// Assis, il recupere jusqu'a redescendre sous le seuil, puis rend
+        /// son siege et reprend le chemin du comptoir — a pied, comme
+        /// n'importe quel autre retour de mission.
+        /// </summary>
+        void SeReposer()
+        {
+            if (_fatigue > Reglages.SeuilFinRepos) return;
+            if (SalleRepos != null) SalleRepos.Liberer(_siegeRepos);
+            _siegeRepos = -1;
+            _etat = Etat.VersComptoir;
+        }
+
         /// <summary>Marche vers un point, en passant d'abord par le relais.</summary>
         void Aller(Vector3 cible, Etat arrivee, System.Action arrive = null)
         {
@@ -377,7 +463,7 @@ namespace Pizzeria3D
             delta.y = 0f;
             if (delta.sqrMagnitude < 0.05f) return true;
 
-            var pas = delta.normalized * Reglages.VitesseCaissier * Time.deltaTime;
+            var pas = delta.normalized * Reglages.VitesseCaissier * Productivite * Time.deltaTime;
             transform.position += pas;
             transform.rotation = Quaternion.Slerp(transform.rotation,
                                                   Quaternion.LookRotation(delta.normalized, Vector3.up),

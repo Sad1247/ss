@@ -27,6 +27,19 @@ namespace Pizzeria3D
         /// <summary>En dessous, il part chercher des pizzas au four.</summary>
         public const int SeuilRechargeComptoir = 4;
 
+        // --- fatigue et locaux du personnel ---
+        public const float FatigueMax = 100f;
+        /// <summary>Points de fatigue par seconde de travail effectif.</summary>
+        public const float FatigueParSeconde = 2f;
+        /// <summary>Recuperation de base par seconde de repos, avant bonus de salle.</summary>
+        public const float RecuperationParSeconde = 8f;
+        /// <summary>Fatigue a partir de laquelle l'employe part se reposer.</summary>
+        public const float SeuilDepartRepos = 85f;
+        /// <summary>Fatigue en dessous de laquelle il reprend son poste.</summary>
+        public const float SeuilFinRepos = 15f;
+        /// <summary>A quelle distance du siege on considere l'employe assis.</summary>
+        public const float RayonSiege = 0.6f;
+
         // --- clients ---
 // Une pizza toutes les 7 secondes, c'est lent : sans espacer les arrivees
         // dans la meme proportion, la file deborde et tous les clients partent.

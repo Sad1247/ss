@@ -43,8 +43,13 @@ namespace Pizzeria3D
         /// facons de payer doit effacer l'autre, sinon la seconde repaierait.
         /// </summary>
         public ZoneAchat DalleEmbauche;
+        /// <summary>Le bureau RH : y entrer ouvre directement cet ecran sur le personnel.</summary>
+        public BureauRH BureauRH;
+        /// <summary>La salle de repos : l'onglet Locaux y lit places et occupation.</summary>
+        public SalleDeRepos SalleRepos;
 
         GameObject _ecran;
+        bool _ouvertViaRH;
         Text[] _statuts;
         Text[] _productivites;
         Text _masse, _pendule, _titre;
@@ -67,6 +72,8 @@ namespace Pizzeria3D
         Text[] _txHistorique;
         Text _txClientsServis, _txPizzasVendues, _txArgentGagne, _txAttente, _txSatisfStats;
         Button _boutonAmeliorerFour;
+        Text _txNiveauRH, _txBoutonRH, _txNiveauRepos, _txPlacesRepos, _txBoutonRepos, _txBureauxEmployes;
+        Button _boutonAmeliorerRH, _boutonAmeliorerRepos;
 
         /// <summary>Vrai quand l'ecran est affiche par-dessus le jeu.</summary>
         public bool Ouvert => _ecran != null && _ecran.activeSelf;
@@ -121,6 +128,12 @@ namespace Pizzeria3D
                 case "Attente": return _txAttente?.text;
                 case "SatisfactionStats": return _txSatisfStats?.text;
                 case "MasseSalariale": return _masse?.text;
+                case "NiveauRH": return _txNiveauRH?.text;
+                case "BoutonRH": return _txBoutonRH?.text;
+                case "NiveauRepos": return _txNiveauRepos?.text;
+                case "PlacesRepos": return _txPlacesRepos?.text;
+                case "BoutonRepos": return _txBoutonRepos?.text;
+                case "BureauxEmployes": return _txBureauxEmployes?.text;
                 default: return null;
             }
         }
@@ -137,6 +150,15 @@ namespace Pizzeria3D
         void Update()
         {
             if (Joueur == null) Joueur = Object.FindObjectOfType<Joueur>();
+
+            // Ouvert depuis le bureau RH : rien d'autre ne decide tant qu'on
+            // n'en est pas reparti (BureauRH le referme lui-meme).
+            if (_ouvertViaRH)
+            {
+                if (!Ouvert) _ecran.SetActive(true);
+                Rafraichir();
+                return;
+            }
 
             // Le bouton Fermer coupe l'ecran sur le champ ; le rouvrir avant
             // que le capot ait fini de se rabattre le rallumerait aussitot.
@@ -161,6 +183,7 @@ namespace Pizzeria3D
         /// </summary>
         void Fermer()
         {
+            _ouvertViaRH = false;
             _fermeDeForce = true;
             if (Ouvert) _ecran.SetActive(false);
             if (Joueur == null) return;
@@ -170,6 +193,28 @@ namespace Pizzeria3D
             var loin = -bureau.VersLeBureau(bureau.Place);
             if (loin.sqrMagnitude < 0.0001f) loin = Vector3.back;
             Joueur.transform.position = bureau.Place + loin * (bureau.Rayon + 1.0f);
+        }
+
+        /// <summary>
+        /// Ouvre l'ordinateur directement sur le personnel, depuis le bureau
+        /// RH — sans fauteuil ni portable a lever. Reutilise le meme ecran,
+        /// pas un second systeme.
+        /// </summary>
+        public void OuvrirDepuisRH()
+        {
+            if (_ouvertViaRH) return;
+            _ouvertViaRH = true;
+            _fermeDeForce = false;
+            if (!Ouvert) _ecran.SetActive(true);
+            AfficherOnglet("Personnel");
+        }
+
+        /// <summary>Referme ce que le bureau RH a ouvert, quand le joueur s'en eloigne.</summary>
+        public void FermerDepuisRH()
+        {
+            if (!_ouvertViaRH) return;
+            _ouvertViaRH = false;
+            if (Ouvert) _ecran.SetActive(false);
         }
 
         void AfficherOnglet(string nom)
@@ -191,6 +236,7 @@ namespace Pizzeria3D
                 case "Restaurant": return "Restaurant";
                 case "Finances": return "Finances";
                 case "Statistiques": return "Statistiques";
+                case "Locaux": return "Locaux";
                 default: return onglet;
             }
         }
@@ -216,11 +262,14 @@ namespace Pizzeria3D
             }
             _masse.text = "Masse salariale : " + Personnel.MasseSalariale + " / jour";
             bool embauche = Caissier != null && Caissier.Embauche;
+            bool rhComplet = !embauche && Personnel.NombreEnPoste >= Comptabilite.CapaciteRH;
             _texteEmploi.text = embauche
                 ? "Licencier le caissier"
+                : rhComplet ? "Bureau RH complet"
                 : $"Embaucher un caissier ({Reglages.PrixCaissier} $)";
             if (_boutonEmploi != null)
-                _boutonEmploi.interactable = embauche || Banque.Solde >= Reglages.PrixCaissier;
+                _boutonEmploi.interactable = embauche
+                                            || (!rhComplet && Banque.Solde >= Reglages.PrixCaissier);
 
             // --- Vue d'ensemble ---
             _txArgent.text = Banque.Solde + " $";
@@ -259,6 +308,32 @@ namespace Pizzeria3D
             _txArgentGagne.text = "Argent gagne : " + Comptabilite.RevenuTotal + " $";
             _txAttente.text = "Temps d'attente moyen : " + Comptabilite.TempsAttenteMoyen.ToString("0.0") + " s";
             _txSatisfStats.text = "Satisfaction : " + Comptabilite.SatisfactionPourcent + " %";
+
+            // --- Locaux ---
+            bool rhAuMax = Comptabilite.NiveauBureauRH >= Comptabilite.NiveauLocalMax;
+            _txNiveauRH.text = $"Niveau {Comptabilite.NiveauBureauRH}/{Comptabilite.NiveauLocalMax} — "
+                              + $"capacite {Personnel.NombreEnPoste}/{Comptabilite.CapaciteRH} employes";
+            _txBoutonRH.text = rhAuMax ? "Bureau RH au maximum"
+                                       : $"Ameliorer le bureau RH ({Comptabilite.PrixAmeliorationRH} $)";
+            if (_boutonAmeliorerRH != null)
+                _boutonAmeliorerRH.interactable = !rhAuMax && Banque.Solde >= Comptabilite.PrixAmeliorationRH;
+
+            bool reposAuMax = Comptabilite.NiveauSalleRepos >= Comptabilite.NiveauLocalMax;
+            int placesOccupees = SalleRepos != null ? SalleRepos.PlacesOccupees : 0;
+            int placesOuvertes = SalleRepos != null ? SalleRepos.PlacesOuvertes : Comptabilite.CapaciteSalleRepos;
+            _txNiveauRepos.text = $"Niveau {Comptabilite.NiveauSalleRepos}/{Comptabilite.NiveauLocalMax} — "
+                                 + $"recuperation x{Comptabilite.BonusRecuperation:0.0}";
+            _txPlacesRepos.text = $"Places : {placesOccupees}/{placesOuvertes} occupees en ce moment";
+            _txBoutonRepos.text = reposAuMax ? "Salle de repos au maximum"
+                                             : $"Ameliorer la salle de repos ({Comptabilite.PrixAmeliorationSalleRepos} $)";
+            if (_boutonAmeliorerRepos != null)
+                _boutonAmeliorerRepos.interactable =
+                    !reposAuMax && Banque.Solde >= Comptabilite.PrixAmeliorationSalleRepos;
+
+            // Aucun bureau individuel construit pour l'instant : le jeu n'a
+            // encore ni manager ni comptable a y affecter. Le dire plutot
+            // que d'afficher un chiffre invente.
+            _txBureauxEmployes.text = "0 construit — arrive avec le manager et le comptable";
         }
 
         static string Productivite(string nom, bool enPoste)
@@ -267,7 +342,9 @@ namespace Pizzeria3D
             if (nom == "Caissier")
             {
                 var c = Object.FindObjectOfType<Caissier>();
-                return c != null ? c.Livrees + " boites" : "—";
+                if (c == null) return "—";
+                int pourcent = (int)(c.Productivite * 100f);
+                return $"{c.Livrees} boites — {pourcent}%";
             }
             return "—";
         }
@@ -347,18 +424,27 @@ namespace Pizzeria3D
 
             // Pas d'icone : la police d'interface par defaut n'a pas de glyphe
             // emoji, et rien d'autre dans le jeu n'a de sprite a offrir.
-            string[] onglets = { "Apercu", "Personnel", "Menu", "Restaurant", "Finances", "Statistiques" };
-            float yBouton = hauteurCorps * 0.5f - 50f;
+            string[] onglets = { "Apercu", "Personnel", "Menu", "Restaurant",
+                                 "Finances", "Statistiques", "Locaux" };
+            const float hauteurBouton = 78f;
+            // L'espacement se resserre tout seul s'il faut caser plus
+            // d'onglets que la hauteur n'en offre a l'aise : 90 par defaut,
+            // moins si necessaire, jamais assez peu pour qu'un bouton sorte
+            // du bas de la barre laterale.
+            float espacement = onglets.Length > 1
+                ? Mathf.Min(90f, (hauteurCorps - hauteurBouton - 20f) / (onglets.Length - 1))
+                : 0f;
+            float yBouton = hauteurBouton * 0.5f + 10f;
             for (int i = 0; i < onglets.Length; i++)
             {
                 string cible = onglets[i];
                 var boutonOnglet = Bouton("Onglet" + cible, lateral.transform, BoutonRepos,
                                           new Vector2(0.5f, 1f), new Vector2(0f, -yBouton),
-                                          new Vector2(largeurBarreLaterale - 16f, 78f), police,
+                                          new Vector2(largeurBarreLaterale - 16f, hauteurBouton), police,
                                           Libelle(cible).Split(' ')[0], 22, Color.white,
                                           () => AfficherOnglet(cible));
                 _fondsOnglets[cible] = boutonOnglet.GetComponent<Image>();
-                yBouton += 90f;
+                yBouton += espacement;
             }
 
             // la fenetre elle-meme, a droite de la barre laterale
@@ -377,13 +463,14 @@ namespace Pizzeria3D
                   new Vector2(1f, 0.5f), new Vector2(-38f, 0f), new Vector2(46f, 46f),
                   police, "X", 28, Color.white, Fermer);
 
-            // --- les six pages, empilees au meme endroit ---
+            // --- les sept pages, empilees au meme endroit ---
             _pages["Apercu"] = PageApercu(fenetre.transform, police, largeurFenetre);
             _pages["Personnel"] = PagePersonnel(fenetre.transform, police, largeurFenetre);
             _pages["Menu"] = PageMenu(fenetre.transform, police, largeurFenetre);
             _pages["Restaurant"] = PageRestaurant(fenetre.transform, police, largeurFenetre);
             _pages["Finances"] = PageFinances(fenetre.transform, police, largeurFenetre);
             _pages["Statistiques"] = PageStatistiques(fenetre.transform, police, largeurFenetre);
+            _pages["Locaux"] = PageLocaux(fenetre.transform, police, largeurFenetre);
 
             AfficherOnglet("Apercu");
         }
@@ -460,6 +547,11 @@ namespace Pizzeria3D
             {
                 Caissier.Licencier();
                 Hud.Annonce("Caissier licencie.");
+                return;
+            }
+            if (Personnel.NombreEnPoste >= Comptabilite.CapaciteRH)
+            {
+                Hud.Annonce("Bureau RH complet : ameliore-le pour embaucher plus.");
                 return;
             }
             if (Banque.Solde < Reglages.PrixCaissier)
@@ -633,6 +725,76 @@ namespace Pizzeria3D
             _txArgentGagne = LigneSimple(page.transform, police, ref y, largeur, Vert);
             _txAttente = LigneSimple(page.transform, police, ref y, largeur, Encre);
             _txSatisfStats = LigneSimple(page.transform, police, ref y, largeur, Encre);
+            return page;
+        }
+
+        // --- Locaux -----------------------------------------------------------
+
+        GameObject PageLocaux(Transform parent, Font police, float largeur)
+        {
+            var page = PageVide("PageLocaux", parent);
+            float y = -110f;
+
+            Hud.Texte(page.transform, police, "Bureau RH", 26, TextAnchor.MiddleLeft, Orange).With(t =>
+            {
+                var rt = t.GetComponent<RectTransform>();
+                rt.anchorMin = new Vector2(0.5f, 1f); rt.anchorMax = new Vector2(0.5f, 1f);
+                rt.pivot = new Vector2(0.5f, 0.5f);
+                rt.anchoredPosition = new Vector2(0f, y);
+                rt.sizeDelta = new Vector2(largeur - 60f, 34f);
+            });
+            y -= 44f;
+            _txNiveauRH = LigneSimple(page.transform, police, ref y, largeur, Encre);
+            y += 8f;
+            _boutonAmeliorerRH = Bouton("BoutonAmeliorerRH", page.transform, Orange,
+                                        new Vector2(0.5f, 1f), new Vector2(0f, y),
+                                        new Vector2(400f, 52f), police, "", 22, Color.white,
+                                        () =>
+                                        {
+                                            if (Comptabilite.AmeliorerBureauRH())
+                                                Hud.Annonce("Bureau RH ameliore !");
+                                            else
+                                                Hud.Annonce("Pas assez d'argent, ou bureau au maximum.");
+                                        });
+            _txBoutonRH = Piece(_boutonAmeliorerRH.transform, "Texte")?.GetComponent<Text>();
+            y -= 78f;
+
+            Hud.Texte(page.transform, police, "Salle de repos", 26, TextAnchor.MiddleLeft, Orange).With(t =>
+            {
+                var rt = t.GetComponent<RectTransform>();
+                rt.anchorMin = new Vector2(0.5f, 1f); rt.anchorMax = new Vector2(0.5f, 1f);
+                rt.pivot = new Vector2(0.5f, 0.5f);
+                rt.anchoredPosition = new Vector2(0f, y);
+                rt.sizeDelta = new Vector2(largeur - 60f, 34f);
+            });
+            y -= 44f;
+            _txNiveauRepos = LigneSimple(page.transform, police, ref y, largeur, Encre);
+            _txPlacesRepos = LigneSimple(page.transform, police, ref y, largeur, Encre);
+            y += 8f;
+            _boutonAmeliorerRepos = Bouton("BoutonAmeliorerRepos", page.transform, Orange,
+                                           new Vector2(0.5f, 1f), new Vector2(0f, y),
+                                           new Vector2(400f, 52f), police, "", 22, Color.white,
+                                           () =>
+                                           {
+                                               if (Comptabilite.AmeliorerSalleRepos())
+                                                   Hud.Annonce("Salle de repos amelioree !");
+                                               else
+                                                   Hud.Annonce("Pas assez d'argent, ou salle au maximum.");
+                                           });
+            _txBoutonRepos = Piece(_boutonAmeliorerRepos.transform, "Texte")?.GetComponent<Text>();
+            y -= 78f;
+
+            Hud.Texte(page.transform, police, "Bureaux employes", 26, TextAnchor.MiddleLeft, Orange).With(t =>
+            {
+                var rt = t.GetComponent<RectTransform>();
+                rt.anchorMin = new Vector2(0.5f, 1f); rt.anchorMax = new Vector2(0.5f, 1f);
+                rt.pivot = new Vector2(0.5f, 0.5f);
+                rt.anchoredPosition = new Vector2(0f, y);
+                rt.sizeDelta = new Vector2(largeur - 60f, 34f);
+            });
+            y -= 44f;
+            _txBureauxEmployes = LigneSimple(page.transform, police, ref y, largeur, Gris);
+
             return page;
         }
 

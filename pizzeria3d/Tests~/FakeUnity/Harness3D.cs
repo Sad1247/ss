@@ -746,10 +746,19 @@ static class Harness3D
         var joueur = UnityEngine.Object.FindObjectOfType<Joueur>();
         var four = UnityEngine.Object.FindObjectOfType<Four>();
         var comptoir = UnityEngine.Object.FindObjectOfType<Comptoir>();
+        var salleRepos = UnityEngine.Object.FindObjectOfType<SalleDeRepos>();
+        var bureauRH = UnityEngine.Object.FindObjectOfType<BureauRH>();
         var zoneCaissier = UnityEngine.Object.FindObjectOfType<ZoneAchat>();
         var caisse = UnityEngine.Object.FindObjectOfType<Caisse>();
         var table = UnityEngine.Object.FindObjectOfType<Emballage>();
         var camera = UnityEngine.Object.FindObjectOfType<UnityEngine.Camera>();
+
+        // La fatigue est gelee pour l'essentiel de la suite : sinon des
+        // heures de travail simulees enverraient le caissier en pause au
+        // milieu de verifications qui n'ont rien a voir. Elle a sa propre
+        // section, plus bas, ou le gel se leve le temps de l'epreuve.
+        var caissierFatigue = UnityEngine.Object.FindObjectOfType<Caissier>();
+        if (caissierFatigue != null) caissierFatigue.FatigueGelee = true;
 
         Check("la scene se monte sans editeur", joueur != null && four != null && comptoir != null);
         Check("camera isometrique orthographique", camera != null && camera.orthographic);
@@ -1961,6 +1970,157 @@ static class Harness3D
         Check("il se referme quand il se leve", !joueur.Assis && !ecranBureau.Ouvert);
         Secondes(1.5f);
         Check("et le capot se rabat derriere lui", portable.Ferme);
+
+        // --- les locaux du personnel, dans l'ordinateur ---
+        // L'ecran s'est referme a la fin du bloc precedent : il faut se
+        // rasseoir pour que ses textes se rafraichissent de nouveau.
+        // Ce bloc simule plusieurs dizaines de secondes pour la pause du
+        // caissier ; on ferme artificiellement le restaurant le temps du
+        // test pour que ca n'appelle pas de nouveaux clients (et donc pas
+        // de Random.Range() imprevus qui decaleraient les tests plus loin
+        // dans le fichier, qui dependent d'une sequence aleatoire precise).
+        // Une heure fermee mais avant le depart du caissier (22h) : la
+        // pizzeria n'accueille plus personne, et lui continue son travail
+        // normalement au lieu de rentrer chez lui pour la nuit.
+        int heureAvantLocaux = horloge.Heures;
+        PoserLHeure(horloge, 3);
+        Placer(joueur, bureau.Place);
+        Secondes(2f);
+        Check("le bureau RH existe dans le restaurant", bureauRH != null);
+        Check("la salle de repos existe dans le restaurant", salleRepos != null);
+        Check("elle a bien six emplacements de siege, meme si tous ne sont pas ouverts",
+              salleRepos != null && salleRepos.NombreDeSieges == 6);
+        Check("mais deux places seulement au niveau de depart",
+              salleRepos != null && salleRepos.PlacesOuvertes == 2);
+
+        var boutonLocaux = Trouver("OngletLocaux")?.GetComponent<Button>();
+        Check("un bouton Locaux dans la barre laterale", boutonLocaux != null && boutonLocaux.Cliquer());
+        Frames(1);
+        Check("le bureau RH affiche son niveau et sa capacite",
+              ecranBureau.Valeur("NiveauRH") != null
+              && ecranBureau.Valeur("NiveauRH").Contains("Niveau 1/3"));
+        Check("la salle de repos affiche aussi son niveau",
+              ecranBureau.Valeur("NiveauRepos") != null
+              && ecranBureau.Valeur("NiveauRepos").Contains("Niveau 1/3"));
+
+        // --- ameliorer le bureau RH augmente vraiment la capacite geree ---
+        int capaciteAvant = Comptabilite.CapaciteRH;
+        int soldeAvantRH = Banque.Solde;
+        int prixRH = Comptabilite.PrixAmeliorationRH;
+        Banque.Encaisser(prixRH);        // pour etre certain de pouvoir payer l'essai
+        var boutonRH = Trouver("BoutonAmeliorerRH")?.GetComponent<Button>();
+        bool ameliorRH = boutonRH != null && boutonRH.Cliquer();
+        Check("le clic ameliore vraiment le bureau RH",
+              ameliorRH && Comptabilite.CapaciteRH > capaciteAvant);
+        Check("le prix du bureau RH est reellement retire", Banque.Solde == soldeAvantRH);
+
+        // --- ameliorer la salle de repos augmente vraiment la recuperation et les places ---
+        float recupAvant = Comptabilite.BonusRecuperation;
+        int soldeAvantRepos = Banque.Solde;
+        int prixRepos = Comptabilite.PrixAmeliorationSalleRepos;
+        Banque.Encaisser(prixRepos);
+        var boutonRepos = Trouver("BoutonAmeliorerRepos")?.GetComponent<Button>();
+        bool ameliorRepos = boutonRepos != null && boutonRepos.Cliquer();
+        Check("le clic ameliore vraiment la salle de repos",
+              ameliorRepos && Comptabilite.BonusRecuperation > recupAvant);
+        Check("le prix de la salle de repos est reellement retire", Banque.Solde == soldeAvantRepos);
+        Frames(1);
+        Check("les places ouvertes suivent le nouveau niveau, en vrai dans le decor",
+              salleRepos != null && salleRepos.PlacesOuvertes == Comptabilite.CapaciteSalleRepos
+                                  && salleRepos.PlacesOuvertes == 4);
+
+        // --- le bureau RH limite vraiment le nombre d'employes geres ---
+        var boutonPersonnelLocaux = Trouver("OngletPersonnel")?.GetComponent<Button>();
+        boutonPersonnelLocaux.Cliquer();
+        Frames(1);
+        boutonEmploi.Cliquer();          // licencie le caissier : son poste se libere
+        Frames(1);
+        int aRemplir = Comptabilite.CapaciteRH - Personnel.NombreEnPoste;
+        for (int i = 0; i < aRemplir; i++) Personnel.Inscrire("FictifRH" + i, "Test", 0, () => true);
+        Frames(1);
+        Check("le bureau RH complet se lit sur le bouton",
+              ecranBureau.TexteEmploi == "Bureau RH complet" && !boutonEmploi.interactable);
+        // Le clic lui-meme n'embauche pas, meme si on force l'affichage a
+        // repondre : la garde est dans le geste, pas seulement l'etiquette.
+        int soldeAvantTentative = Banque.Solde;
+        boutonEmploi.interactable = true;
+        boutonEmploi.Cliquer();
+        Check("le clic n'embauche pour de bon personne de plus",
+              !employeur.Embauche && Banque.Solde == soldeAvantTentative);
+        for (int i = 0; i < aRemplir; i++) Personnel.Retirer("FictifRH" + i);
+        Frames(1);
+        bool reembaucheApresPlace = boutonEmploi.Cliquer();
+        Check("de la place liberee, l'embauche redevient possible",
+              reembaucheApresPlace && employeur.Embauche);
+
+        // --- le bureau RH ouvre l'ordinateur sans passer par le fauteuil ---
+        Placer(joueur, new Vector3(-9f, 0f, -9f));
+        Secondes(1.5f);
+        Check("l'ecran est ferme avant d'approcher le bureau RH", !ecranBureau.Ouvert);
+        Placer(joueur, bureauRH.transform.position);
+        Frames(2);
+        Check("s'approcher du bureau RH ouvre directement l'ecran", ecranBureau.Ouvert);
+        Check("il s'ouvre sur le personnel", ecranBureau.Onglet == "Personnel");
+        Placer(joueur, new Vector3(-9f, 0f, -9f));
+        Frames(2);
+        Check("s'en eloigner referme l'ecran", !ecranBureau.Ouvert);
+
+        // --- la salle de repos ne reserve jamais plus que sa capacite ouverte ---
+        {
+            var salleTestGo = new GameObject("SalleTest");
+            var salleTest = salleTestGo.AddComponent<SalleDeRepos>();
+            var sieges = new Transform[6];
+            for (int i = 0; i < 6; i++) sieges[i] = new GameObject("SiegeTest" + i).transform;
+            salleTest.Sieges = sieges;
+            int reservees = 0;
+            for (int i = 0; i < 10; i++) if (salleTest.Reserver() >= 0) reservees++;
+            Check("elle ne reserve jamais plus de places que sa capacite ouverte",
+                  reservees == Comptabilite.CapaciteSalleRepos);
+            UnityEngine.Object.Destroy(salleTestGo);
+        }
+
+        // --- la fatigue monte au travail, et redescend au repos, pour de vrai ---
+        Check("le gel de fatigue peut se lever pour l'epreuve", caissierFatigue != null);
+        caissierFatigue.FatigueGelee = false;
+        Placer(joueur, new Vector3(-9f, 0f, -9f));   // ne le derange pas
+        float fatigueAvant = caissierFatigue.FatigueActuelle;
+        Secondes(44f);                                // 2/s : de quoi depasser le seuil de 85
+        Check("la fatigue est vraiment montee en travaillant",
+              caissierFatigue.FatigueActuelle > fatigueAvant);
+        Check("sa productivite en souffre reellement", caissierFatigue.Productivite < 1f);
+
+        Vector3 avantDepart = caissierFatigue.transform.position;
+        int gardeDepart = 0;
+        while (!caissierFatigue.SeRepose && gardeDepart++ < 60 * 20) Frames(1);
+        Check("il finit par partir se reposer, une fois les mains libres",
+              caissierFatigue.SeRepose);
+
+        // Un pas par image, jamais un bond : la aussi, un saut d'une image a
+        // l'autre plus grand que ce qu'une marche normale peut couvrir
+        // trahirait une teleportation vers le siege.
+        bool aBouge = false;
+        float sautMax = 0f;
+        Vector3 derniere = caissierFatigue.transform.position;
+        int gardeRetour = 0;
+        while (caissierFatigue.SeRepose && gardeRetour++ < 60 * 60)
+        {
+            Frames(1);
+            float saut = (caissierFatigue.transform.position - derniere).magnitude;
+            if (saut > 0.001f) aBouge = true;
+            sautMax = Mathf.Max(sautMax, saut);
+            derniere = caissierFatigue.transform.position;
+        }
+        float pasMaxParImage = Reglages.VitesseCaissier * (1f / 60f) * 1.2f;   // marge
+        Check("il marche vraiment jusqu'a la salle, sans teleportation",
+              aBouge && sautMax <= pasMaxParImage);
+        Check("il finit par revenir travailler", !caissierFatigue.SeRepose);
+        Check("sa fatigue est redescendue sous le seuil de reprise",
+              caissierFatigue.FatigueActuelle < Reglages.SeuilDepartRepos);
+        Check("son siege est bien rendu a la fin de la pause",
+              salleRepos != null && salleRepos.PlacesOccupees == 0);
+
+        caissierFatigue.FatigueGelee = true;   // regele pour le reste de la partie
+        PoserLHeure(horloge, heureAvantLocaux);   // rouvre comme avant ce bloc
 
         // --- la paie du personnel, prelevee pour de bon a minuit ---
         int soldeAvantMinuit = Banque.Solde;

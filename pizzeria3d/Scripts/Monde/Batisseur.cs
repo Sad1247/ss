@@ -92,6 +92,17 @@ namespace Pizzeria3D
             ecran.Portable = _portable;
             ecran.Caissier = employeur;
             ecran.DalleEmbauche = dalleEmbauche;
+
+            // Les locaux du personnel : la salle de repos, ou la fatigue
+            // redescend, et le bureau RH, qui ouvre l'ordinateur sans passer
+            // par le fauteuil. Le coin degage a l'oppose du four et de la
+            // caisse, dans un angle que rien d'autre n'occupe.
+            var salleRepos = SalleRepos(racine.transform, new Vector3(6.0f, 0f, -3.2f));
+            employeur.SalleRepos = salleRepos;
+            var bureauRH = BureauRHBatir(racine.transform, new Vector3(6.0f, 0f, -5.9f), joueur, ecran);
+            ecran.BureauRH = bureauRH;
+            ecran.SalleRepos = salleRepos;
+
             racine.AddComponent<Manette>();
             Debug.Log("Pizzeria : scene prete. Maintiens le clic et glisse pour te deplacer.");
         }
@@ -791,7 +802,117 @@ namespace Pizzeria3D
             Obstacles.Ajouter(position, 1.0f, 1.0f);
         }
 
-        /// <summary>Une chaise : quatre montants, une assise, un dossier.</summary>
+        /// <summary>
+        /// La salle de repos : table basse, machine a cafe, et six
+        /// emplacements de fauteuil en arc de cercle — seuls les premiers
+        /// sont actifs tant que la salle n'est pas amelioree, c'est
+        /// SalleDeRepos qui le decide image par image.
+        /// </summary>
+        static SalleDeRepos SalleRepos(Transform parent, Vector3 position)
+        {
+            var go = new GameObject("SalleRepos");
+            go.transform.SetParent(parent, false);
+            go.transform.position = position;
+            var t = go.transform;
+
+            var tissu = Bloc.Couleur(0x3D6B8E);
+            var tissuSombre = Bloc.Couleur(0x274A63);
+            var bois = Bloc.Couleur(0x8A5A2B);
+            var metal = Bloc.Couleur(0xB0B4BA);
+
+            Bloc.Boite("Tapis", t, new Vector3(0f, 0.015f, 0f), new Vector3(3.6f, 0.03f, 3.6f),
+                       Bloc.Couleur(0xC7A97A)).SansCollision();
+
+            // La table basse, au centre : les employes s'y retrouvent, meme
+            // un fauteuil vide de temps en temps.
+            Bloc.Forme(PrimitiveType.Cylinder, "TableBasse", t, new Vector3(0f, 0.24f, 0f),
+                       new Vector3(0.55f, 0.24f, 0.55f), bois).SansCollision();
+
+            // La machine a cafe, dans un coin.
+            var machine = new GameObject("MachineACafe");
+            machine.transform.SetParent(t, false);
+            machine.transform.localPosition = new Vector3(1.55f, 0f, -1.1f);
+            Bloc.Boite("Corps", machine.transform, new Vector3(0f, 0.35f, 0f),
+                       new Vector3(0.4f, 0.7f, 0.32f), Bloc.Couleur(0x2B2E33)).SansCollision();
+            Bloc.Boite("Plateau", machine.transform, new Vector3(0f, 0.62f, 0.02f),
+                       new Vector3(0.3f, 0.04f, 0.2f), metal).SansCollision();
+            Bloc.Bille("Voyant", machine.transform, new Vector3(0f, 0.5f, 0.17f), 0.03f,
+                       Bloc.Couleur(0xE94F37)).SansCollision();
+
+            // Six sieges en cercle complet, regulierement espaces, tournes
+            // vers la table : un arc trop serre les faisait se chevaucher.
+            var sieges = new Transform[6];
+            for (int i = 0; i < sieges.Length; i++)
+            {
+                float angle = i * 60f;
+                float rad = angle * Mathf.Deg2Rad;
+                var pos = new Vector3(Mathf.Sin(rad) * 1.3f, 0f, Mathf.Cos(rad) * 1.3f);
+                sieges[i] = Fauteuil(t, "Siege" + i, pos, angle + 180f, tissu, tissuSombre, bois);
+            }
+
+            Obstacles.Ajouter(position, 3.6f, 3.6f);
+
+            var salle = go.AddComponent<SalleDeRepos>();
+            salle.Sieges = sieges;
+            return salle;
+        }
+
+        /// <summary>Un fauteuil de repos : assise, dossier, deux accoudoirs, un pied.</summary>
+        static Transform Fauteuil(Transform parent, string nom, Vector3 local, float angle,
+                                  Color tissu, Color tissuSombre, Color bois)
+        {
+            var go = new GameObject(nom);
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = local;
+            go.transform.localRotation = Quaternion.Euler(0f, angle, 0f);
+
+            Bloc.Boite("Assise", go.transform, new Vector3(0f, 0.24f, 0f),
+                       new Vector3(0.46f, 0.10f, 0.44f), tissu).SansCollision();
+            Bloc.Boite("Dossier", go.transform, new Vector3(0f, 0.48f, -0.19f),
+                       new Vector3(0.46f, 0.40f, 0.08f), tissuSombre).SansCollision();
+            foreach (float x in new[] { -0.22f, 0.22f })
+                Bloc.Boite("Accoudoir", go.transform, new Vector3(x, 0.32f, 0.02f),
+                           new Vector3(0.06f, 0.18f, 0.40f), tissuSombre).SansCollision();
+            Bloc.Boite("Pied", go.transform, new Vector3(0f, 0.09f, 0f),
+                       new Vector3(0.40f, 0.06f, 0.38f), bois).SansCollision();
+            return go.transform;
+        }
+
+        /// <summary>
+        /// Le bureau des ressources humaines : un plan, un caisson, un ecran
+        /// pose et une enseigne — le joueur s'en approche, l'ordinateur
+        /// s'ouvre directement sur le personnel, sans fauteuil ni portable.
+        /// </summary>
+        static BureauRH BureauRHBatir(Transform parent, Vector3 position, Joueur joueur, EcranBureau ecran)
+        {
+            var go = new GameObject("BureauRH");
+            go.transform.SetParent(parent, false);
+            go.transform.position = position;
+            var t = go.transform;
+
+            var bois = Bloc.Couleur(0x6B4423);
+            var boisSombre = Bloc.Couleur(0x4A2E17);
+
+            Bloc.Boite("Plateau", t, new Vector3(0f, 0.76f, 0f), new Vector3(1.5f, 0.08f, 0.7f),
+                       bois).SansCollision();
+            Bloc.Boite("Caisson", t, new Vector3(0.45f, 0.35f, 0.05f), new Vector3(0.5f, 0.70f, 0.6f),
+                       boisSombre).SansCollision();
+            Bloc.Boite("Ecran", t, new Vector3(-0.35f, 0.94f, -0.15f), new Vector3(0.5f, 0.32f, 0.04f),
+                       Bloc.Couleur(0x1B1E22)).SansCollision();
+            Bloc.Boite("Pied", t, new Vector3(-0.35f, 0.80f, -0.15f), new Vector3(0.08f, 0.16f, 0.08f),
+                       Bloc.Couleur(0x3A3D42)).SansCollision();
+            // la plaque « RH », pour reconnaitre le bureau sans avoir a s'approcher
+            Bloc.Boite("Enseigne", t, new Vector3(0f, 1.05f, 0.34f), new Vector3(0.9f, 0.22f, 0.03f),
+                       Bloc.Couleur(0xE95420)).SansCollision();
+
+            Obstacles.Ajouter(position, 1.6f, 0.9f);
+
+            var rh = go.AddComponent<BureauRH>();
+            rh.Joueur = joueur;
+            rh.Ecran = ecran;
+            return rh;
+        }
+
         /// <summary>
         /// Le bureau du patron : un plan de bois sombre sur deux caissons a
         /// tiroirs, sa lampe, ses papiers — et le fauteuil de direction ou le

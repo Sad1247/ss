@@ -62,6 +62,8 @@ namespace Pizzeria3D
             PrixPizza = Reglages.PrixPizza;
             DureeCuissonActuelle = Reglages.DureeCuisson;
             NiveauFour = 0;
+            NiveauBureauRH = 1;
+            NiveauSalleRepos = 1;
             RevenuJour = DepenseJour = RevenuTotal = DepenseTotal = 0;
             PizzasVendues = ClientsSatisfaits = ClientsInsatisfaits = 0;
             _attenteTotale = 0f;
@@ -130,5 +132,59 @@ namespace Pizzeria3D
         /// <summary>Change ce que paie le client, entre 1 et 20 EUR la pizza.</summary>
         public static void DefinirPrixPizza(int prix)
             => PrixPizza = prix < 1 ? 1 : prix > 20 ? 20 : prix;
+
+        // --- locaux du personnel : bureau RH et salle de repos ---
+
+        public const int NiveauLocalMax = 3;
+        /// <summary>Combien d'employes chaque niveau du bureau RH autorise.</summary>
+        static readonly int[] _capaciteParNiveau = { 2, 4, 6 };
+        /// <summary>Le bonus de recuperation qu'apporte chaque niveau de la salle de repos.</summary>
+        static readonly float[] _recuperationParNiveau = { 1f, 1.3f, 1.6f };
+
+        /// <summary>Niveau du bureau RH, de 1 a <see cref="NiveauLocalMax"/>.</summary>
+        public static int NiveauBureauRH { get; private set; }
+        /// <summary>Niveau de la salle de repos, de 1 a <see cref="NiveauLocalMax"/>.</summary>
+        public static int NiveauSalleRepos { get; private set; }
+
+        /// <summary>Combien d'employes le bureau RH peut gerer au niveau actuel.</summary>
+        public static int CapaciteRH => _capaciteParNiveau[NiveauBureauRH - 1];
+        /// <summary>Combien de sieges la salle de repos ouvre au niveau actuel.</summary>
+        public static int CapaciteSalleRepos => _capaciteParNiveau[NiveauSalleRepos - 1];
+        /// <summary>Multiplicateur applique a la recuperation de fatigue.</summary>
+        public static float BonusRecuperation => _recuperationParNiveau[NiveauSalleRepos - 1];
+
+        public static int PrixAmeliorationRH => 400 + (NiveauBureauRH - 1) * 350;
+        public static int PrixAmeliorationSalleRepos => 300 + (NiveauSalleRepos - 1) * 300;
+
+        /// <summary>
+        /// Plus de personnel gerable, pour de bon : Personnel.NombreEnPoste
+        /// est compare a cette capacite avant chaque embauche.
+        /// </summary>
+        public static bool AmeliorerBureauRH()
+        {
+            if (NiveauBureauRH >= NiveauLocalMax) return false;
+            int prix = PrixAmeliorationRH;
+            if (Banque.Solde < prix) return false;
+            Banque.Retirer(prix);
+            EnregistrerDepense(prix);
+            NiveauBureauRH++;
+            return true;
+        }
+
+        /// <summary>
+        /// Plus de sieges, et une recuperation plus rapide pour de bon : la
+        /// salle de repos lit CapaciteSalleRepos et BonusRecuperation en
+        /// direct, rien n'est fige au moment de l'achat.
+        /// </summary>
+        public static bool AmeliorerSalleRepos()
+        {
+            if (NiveauSalleRepos >= NiveauLocalMax) return false;
+            int prix = PrixAmeliorationSalleRepos;
+            if (Banque.Solde < prix) return false;
+            Banque.Retirer(prix);
+            EnregistrerDepense(prix);
+            NiveauSalleRepos++;
+            return true;
+        }
     }
 }

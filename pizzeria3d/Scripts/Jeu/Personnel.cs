@@ -37,6 +37,21 @@ namespace Pizzeria3D
             }
         }
 
+        /// <summary>
+        /// Combien de postes embauches (le patron ne compte pas, lui n'est
+        /// pas un poste a pourvoir) sont actuellement tenus — ce que compare
+        /// la capacite du bureau RH avant chaque nouvelle embauche.
+        /// </summary>
+        public static int NombreEnPoste
+        {
+            get
+            {
+                int n = 0;
+                foreach (var f in _fiches) if (f.Embauche != null && f.EstEmbauche) n++;
+                return n;
+            }
+        }
+
         public static void Inscrire(string nom, string poste, int salaire, Func<bool> embauche = null)
             => _fiches.Add(new Fiche { Nom = nom, Poste = poste, Salaire = salaire, Embauche = embauche });
 
