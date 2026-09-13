@@ -93,14 +93,14 @@ namespace Pizzeria3D
             ecran.Caissier = employeur;
             ecran.DalleEmbauche = dalleEmbauche;
 
-            // Les locaux du personnel : la salle de repos, ou la fatigue
-            // redescend, et le bureau RH, qui ouvre l'ordinateur sans passer
-            // par le fauteuil. Le coin degage a l'oppose du four et de la
-            // caisse, dans un angle que rien d'autre n'occupe.
-            var salleRepos = SalleRepos(racine.transform, new Vector3(6.0f, 0f, -3.2f));
+            // La salle de repos, ou la fatigue redescend : derriere le mur du
+            // fond, a cote de la piece du patron, et non plus au milieu de la
+            // salle a manger. Sa place tient a deux murs : assez loin du mur
+            // du fond pour passer au-dessus, et assez a gauche de celui de la
+            // piece du patron pour ne pas se cacher derriere — la camera les
+            // regarde tous les deux de face.
+            var salleRepos = SalleRepos(racine.transform, new Vector3(-2.4f, 0f, 11.8f));
             employeur.SalleRepos = salleRepos;
-            var bureauRH = BureauRHBatir(racine.transform, new Vector3(6.0f, 0f, -5.9f), joueur, ecran);
-            ecran.BureauRH = bureauRH;
             ecran.SalleRepos = salleRepos;
 
             racine.AddComponent<Manette>();
@@ -202,15 +202,21 @@ namespace Pizzeria3D
             float finGauche = xPorte - largeurPorte * 0.5f;
             float debutDroite = xPorte + largeurPorte * 0.5f;
 
+            // La baie 2 n'est pas vitree : c'est le passage vers la salle de
+            // repos, derriere le mur. Elle descend jusqu'au sol comme la porte.
+            const float xPassageRepos = -1.52f, largeurPassageRepos = 1.8f;
+
             var baiesFond = new List<Baie>();
             for (int i = 0; i < 6; i++)
             {
                 if (i == 4) continue;              // sa place revient a la porte
+                if (i == 2) continue;              // et celle-ci au passage du repos
                 baiesFond.Add(new Baie(-7.6f + i * 3.04f, largeurBaie, basBaie, hautBaie));
                 Bloc.Verre("VitreFond" + i, parent, new Vector3(-7.6f + i * 3.04f, 1.9f, 6.85f),
                            new Vector3(largeurBaie, hautBaie - basBaie, 0.15f),
                            Bloc.Couleur(0xBFE8F2)).SansCollision();
             }
+            baiesFond.Add(new Baie(xPassageRepos, largeurPassageRepos, 0f, hauteurPorte));
             baiesFond.Add(new Baie(xPorte, largeurPorte, 0f, hauteurPorte));
             baiesFond.Sort((a, b) => a.Centre.CompareTo(b.Centre));
 
@@ -227,14 +233,23 @@ namespace Pizzeria3D
             // Les deux pans du mur, de part et d'autre de la porte, barrent le
             // passage ; le pas de la porte, lui, a son obstacle a part : c'est
             // celui-la que l'achat de la piece leve.
-            Obstacles.Ajouter(new Vector3((-8.5f + finGauche) * 0.5f, 0f, 7.2f),
-                              finGauche + 8.5f, 0.6f);
+            float finRepos = xPassageRepos - largeurPassageRepos * 0.5f;
+            float debutApresRepos = xPassageRepos + largeurPassageRepos * 0.5f;
+            Obstacles.Ajouter(new Vector3((-8.5f + finRepos) * 0.5f, 0f, 7.2f),
+                              finRepos + 8.5f, 0.6f);
+            Obstacles.Ajouter(new Vector3((debutApresRepos + finGauche) * 0.5f, 0f, 7.2f),
+                              finGauche - debutApresRepos, 0.6f);
             Obstacles.Ajouter(new Vector3((debutDroite + 8.5f) * 0.5f, 0f, 7.2f),
                               8.5f - debutDroite, 0.6f);
             int seuil = Obstacles.Ajouter(new Vector3(xPorte, 0f, 7.2f), largeurPorte, 0.6f);
 
             // juste a cote du plan de mise en boite, qui s'arrete a x 3,5
             var gond = Porte(parent, new Vector3(xPorte, 0f, 7.2f));
+
+            // Le passage vers la salle de repos : son encadrement, sans
+            // vantail — les employes le franchissent les mains prises.
+            PassageRepos(parent, new Vector3(xPassageRepos, 0f, 7.2f), largeurPassageRepos,
+                         hauteurPorte);
 
             // La piece derriere, et la dalle qui l'ouvre, devant la porte.
             // Elle occupe tout le coin du batiment : son pan droit rejoint le
@@ -307,6 +322,26 @@ namespace Pizzeria3D
                        new Vector3(0.16f, 0.14f, 0.08f), Bloc.Metal).SansCollision();
 
             return gond.transform;
+        }
+
+        /// <summary>
+        /// L'encadrement du passage vers la salle de repos : deux jambages et
+        /// une imposte, sans vantail. Un trou nu dans le mur ressemblait a un
+        /// pan manquant plutot qu'a une ouverture.
+        /// </summary>
+        static void PassageRepos(Transform parent, Vector3 position, float largeur, float hauteur)
+        {
+            var go = new GameObject("PassageRepos");
+            go.transform.SetParent(parent, false);
+            go.transform.position = position;
+            var t = go.transform;
+
+            var blanc = Bloc.Couleur(0xF4F1EA);
+            foreach (float cote in new[] { -1f, 1f })
+                Bloc.Boite("Jambage", t, new Vector3(cote * (largeur * 0.5f - 0.08f), hauteur * 0.5f, 0f),
+                           new Vector3(0.16f, hauteur, 0.7f), blanc).SansCollision();
+            Bloc.Boite("Imposte", t, new Vector3(0f, hauteur - 0.08f, 0f),
+                       new Vector3(largeur, 0.16f, 0.7f), blanc).SansCollision();
         }
 
         /// <summary>
@@ -820,6 +855,22 @@ namespace Pizzeria3D
             var bois = Bloc.Couleur(0x8A5A2B);
             var metal = Bloc.Couleur(0xB0B4BA);
 
+            // Son dallage, et l'allee qui rejoint la porte du mur du fond :
+            // sans eux, fauteuils et machine a cafe poussaient dans l'herbe.
+            Bloc.Boite("SolRepos", t, new Vector3(0.3f, -0.2f, 0f), new Vector3(5.4f, 0.4f, 4.8f),
+                       Bloc.Sol).SansCollision();
+            Bloc.Boite("AlleeRepos", t, new Vector3(0.9f, -0.2f, -3.5f),
+                       new Vector3(1.9f, 0.4f, 2.6f), Bloc.Sol).SansCollision();
+
+            // Deux pans pour lui donner du volume : celui du fond et celui de
+            // gauche. Pas de pan a droite — il se dresserait entre la camera
+            // et la piece, qu'on ne verrait plus (c'est le cote ou se trouve
+            // deja le mur de la piece du patron).
+            Bloc.Boite("MurRepos", t, new Vector3(-2.4f, 1.6f, 0f), new Vector3(0.4f, 3.2f, 4.8f),
+                       Bloc.MachineBis).SansCollision();
+            Bloc.Boite("MurRepos", t, new Vector3(0.2f, 1.6f, 2.4f), new Vector3(5.6f, 3.2f, 0.4f),
+                       Bloc.MachineBis).SansCollision();
+
             Bloc.Boite("Tapis", t, new Vector3(0f, 0.015f, 0f), new Vector3(3.6f, 0.03f, 3.6f),
                        Bloc.Couleur(0xC7A97A)).SansCollision();
 
@@ -854,6 +905,15 @@ namespace Pizzeria3D
 
             var salle = go.AddComponent<SalleDeRepos>();
             salle.Sieges = sieges;
+            // Le chemin depuis la salle a manger : le plan d'emballage barre
+            // la ligne droite, il faut le contourner par la gauche avant de
+            // franchir la porte du fond. L'employe le remonte a l'aller et le
+            // redescend au retour — jamais un mur traverse.
+            salle.Chemin = new[]
+            {
+                new Vector3(-2.2f, 0f, 5.0f),
+                new Vector3(-1.6f, 0f, 8.6f),
+            };
             return salle;
         }
 
@@ -876,41 +936,6 @@ namespace Pizzeria3D
             Bloc.Boite("Pied", go.transform, new Vector3(0f, 0.09f, 0f),
                        new Vector3(0.40f, 0.06f, 0.38f), bois).SansCollision();
             return go.transform;
-        }
-
-        /// <summary>
-        /// Le bureau des ressources humaines : un plan, un caisson, un ecran
-        /// pose et une enseigne — le joueur s'en approche, l'ordinateur
-        /// s'ouvre directement sur le personnel, sans fauteuil ni portable.
-        /// </summary>
-        static BureauRH BureauRHBatir(Transform parent, Vector3 position, Joueur joueur, EcranBureau ecran)
-        {
-            var go = new GameObject("BureauRH");
-            go.transform.SetParent(parent, false);
-            go.transform.position = position;
-            var t = go.transform;
-
-            var bois = Bloc.Couleur(0x6B4423);
-            var boisSombre = Bloc.Couleur(0x4A2E17);
-
-            Bloc.Boite("Plateau", t, new Vector3(0f, 0.76f, 0f), new Vector3(1.5f, 0.08f, 0.7f),
-                       bois).SansCollision();
-            Bloc.Boite("Caisson", t, new Vector3(0.45f, 0.35f, 0.05f), new Vector3(0.5f, 0.70f, 0.6f),
-                       boisSombre).SansCollision();
-            Bloc.Boite("Ecran", t, new Vector3(-0.35f, 0.94f, -0.15f), new Vector3(0.5f, 0.32f, 0.04f),
-                       Bloc.Couleur(0x1B1E22)).SansCollision();
-            Bloc.Boite("Pied", t, new Vector3(-0.35f, 0.80f, -0.15f), new Vector3(0.08f, 0.16f, 0.08f),
-                       Bloc.Couleur(0x3A3D42)).SansCollision();
-            // la plaque « RH », pour reconnaitre le bureau sans avoir a s'approcher
-            Bloc.Boite("Enseigne", t, new Vector3(0f, 1.05f, 0.34f), new Vector3(0.9f, 0.22f, 0.03f),
-                       Bloc.Couleur(0xE95420)).SansCollision();
-
-            Obstacles.Ajouter(position, 1.6f, 0.9f);
-
-            var rh = go.AddComponent<BureauRH>();
-            rh.Joueur = joueur;
-            rh.Ecran = ecran;
-            return rh;
         }
 
         /// <summary>

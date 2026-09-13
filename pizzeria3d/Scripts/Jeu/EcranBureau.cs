@@ -43,13 +43,10 @@ namespace Pizzeria3D
         /// facons de payer doit effacer l'autre, sinon la seconde repaierait.
         /// </summary>
         public ZoneAchat DalleEmbauche;
-        /// <summary>Le bureau RH : y entrer ouvre directement cet ecran sur le personnel.</summary>
-        public BureauRH BureauRH;
         /// <summary>La salle de repos : l'onglet Locaux y lit places et occupation.</summary>
         public SalleDeRepos SalleRepos;
 
         GameObject _ecran;
-        bool _ouvertViaRH;
         Text[] _statuts;
         Text[] _productivites;
         Text _masse, _pendule, _titre;
@@ -151,15 +148,6 @@ namespace Pizzeria3D
         {
             if (Joueur == null) Joueur = Object.FindObjectOfType<Joueur>();
 
-            // Ouvert depuis le bureau RH : rien d'autre ne decide tant qu'on
-            // n'en est pas reparti (BureauRH le referme lui-meme).
-            if (_ouvertViaRH)
-            {
-                if (!Ouvert) _ecran.SetActive(true);
-                Rafraichir();
-                return;
-            }
-
             // Le bouton Fermer coupe l'ecran sur le champ ; le rouvrir avant
             // que le capot ait fini de se rabattre le rallumerait aussitot.
             if (_fermeDeForce)
@@ -183,7 +171,6 @@ namespace Pizzeria3D
         /// </summary>
         void Fermer()
         {
-            _ouvertViaRH = false;
             _fermeDeForce = true;
             if (Ouvert) _ecran.SetActive(false);
             if (Joueur == null) return;
@@ -193,28 +180,6 @@ namespace Pizzeria3D
             var loin = -bureau.VersLeBureau(bureau.Place);
             if (loin.sqrMagnitude < 0.0001f) loin = Vector3.back;
             Joueur.transform.position = bureau.Place + loin * (bureau.Rayon + 1.0f);
-        }
-
-        /// <summary>
-        /// Ouvre l'ordinateur directement sur le personnel, depuis le bureau
-        /// RH — sans fauteuil ni portable a lever. Reutilise le meme ecran,
-        /// pas un second systeme.
-        /// </summary>
-        public void OuvrirDepuisRH()
-        {
-            if (_ouvertViaRH) return;
-            _ouvertViaRH = true;
-            _fermeDeForce = false;
-            if (!Ouvert) _ecran.SetActive(true);
-            AfficherOnglet("Personnel");
-        }
-
-        /// <summary>Referme ce que le bureau RH a ouvert, quand le joueur s'en eloigne.</summary>
-        public void FermerDepuisRH()
-        {
-            if (!_ouvertViaRH) return;
-            _ouvertViaRH = false;
-            if (Ouvert) _ecran.SetActive(false);
         }
 
         void AfficherOnglet(string nom)

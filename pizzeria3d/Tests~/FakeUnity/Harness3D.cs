@@ -49,12 +49,12 @@ static class Harness3D
     /// l'autre ? On verifie qu'aucun troncon nu de plus de 4 ne subsiste.
     /// </summary>
     static bool Fenetres(string prefixe, float debut, float fin, bool surX = false,
-                         string aussi = null)
+                         params string[] aussi)
     {
         var pos = new List<float>();
         foreach (var o in UnityEngine.Object.Tous)
             if (o is GameObject go && !go.Detruit &&
-                (go.name.StartsWith(prefixe) || (aussi != null && go.name == aussi)))
+                (go.name.StartsWith(prefixe) || System.Array.IndexOf(aussi, go.name) >= 0))
                 pos.Add(surX ? go.transform.position.x : go.transform.position.z);
         if (pos.Count == 0) return false;
 
@@ -747,7 +747,6 @@ static class Harness3D
         var four = UnityEngine.Object.FindObjectOfType<Four>();
         var comptoir = UnityEngine.Object.FindObjectOfType<Comptoir>();
         var salleRepos = UnityEngine.Object.FindObjectOfType<SalleDeRepos>();
-        var bureauRH = UnityEngine.Object.FindObjectOfType<BureauRH>();
         var zoneCaissier = UnityEngine.Object.FindObjectOfType<ZoneAchat>();
         var caisse = UnityEngine.Object.FindObjectOfType<Caisse>();
         var table = UnityEngine.Object.FindObjectOfType<Emballage>();
@@ -823,9 +822,12 @@ static class Harness3D
             Check("il court d'un bord a l'autre du dallage",
                   fMin <= solGauche + 0.01f && fMax >= solDroite - 0.01f);
             Check("il est ouvert sur toute sa longueur",
-                  Fenetres("VitreFond", fMin, fMax, true, "Porte"));
+                  Fenetres("VitreFond", fMin, fMax, true, "Porte", "PassageRepos"));
+            // Quatre baies vitrees, plus la porte du bureau et le passage de
+            // la salle de repos : ces deux-la descendent au sol, donc pas
+            // d'allege sous elles, mais bien un linteau au-dessus.
             Check("il est perce de baies",
-                  Objets("MurFondAllege") >= 5 && Objets("MurFondLinteau") >= 5);
+                  Objets("MurFondAllege") >= 4 && Objets("MurFondLinteau") >= 6);
         }
         else
         {
@@ -1059,7 +1061,7 @@ static class Harness3D
         Check("il est derriere la caisse",
               table != null && table.transform.position.z > comptoir.transform.position.z + 2f);
         // les vitres du fond sont a z 6,85 : le plan doit leur etre adosse
-        var vitre = Trouver("VitreFond2");
+        var vitre = Trouver("VitreFond3");
         Check("il est adosse aux fenetres du fond",
               table != null && vitre != null &&
               Mathf.Abs(table.transform.position.z - vitre.transform.position.z) < 1.5f);
@@ -1986,7 +1988,6 @@ static class Harness3D
         PoserLHeure(horloge, 3);
         Placer(joueur, bureau.Place);
         Secondes(2f);
-        Check("le bureau RH existe dans le restaurant", bureauRH != null);
         Check("la salle de repos existe dans le restaurant", salleRepos != null);
         Check("elle a bien six emplacements de siege, meme si tous ne sont pas ouverts",
               salleRepos != null && salleRepos.NombreDeSieges == 6);
@@ -2053,18 +2054,6 @@ static class Harness3D
         Check("de la place liberee, l'embauche redevient possible",
               reembaucheApresPlace && employeur.Embauche);
 
-        // --- le bureau RH ouvre l'ordinateur sans passer par le fauteuil ---
-        Placer(joueur, new Vector3(-9f, 0f, -9f));
-        Secondes(1.5f);
-        Check("l'ecran est ferme avant d'approcher le bureau RH", !ecranBureau.Ouvert);
-        Placer(joueur, bureauRH.transform.position);
-        Frames(2);
-        Check("s'approcher du bureau RH ouvre directement l'ecran", ecranBureau.Ouvert);
-        Check("il s'ouvre sur le personnel", ecranBureau.Onglet == "Personnel");
-        Placer(joueur, new Vector3(-9f, 0f, -9f));
-        Frames(2);
-        Check("s'en eloigner referme l'ecran", !ecranBureau.Ouvert);
-
         // --- la salle de repos ne reserve jamais plus que sa capacite ouverte ---
         {
             var salleTestGo = new GameObject("SalleTest");
@@ -2102,17 +2091,42 @@ static class Harness3D
         float sautMax = 0f;
         Vector3 derniere = caissierFatigue.transform.position;
         int gardeRetour = 0;
+        // La salle de repos est de l'autre cote du mur du fond : on note
+        // chaque traversee de ce mur, et par ou elle se fait.
+        const float zMurFond = 7.2f, xPassage = -1.52f, demiPassage = 0.9f;
+        int traversees = 0;
+        bool toujoursParLePassage = true;
+        bool traverseLePlan = false;
         while (caissierFatigue.SeRepose && gardeRetour++ < 60 * 60)
         {
             Frames(1);
-            float saut = (caissierFatigue.transform.position - derniere).magnitude;
+            var ici = caissierFatigue.transform.position;
+            float saut = (ici - derniere).magnitude;
             if (saut > 0.001f) aBouge = true;
             sautMax = Mathf.Max(sautMax, saut);
-            derniere = caissierFatigue.transform.position;
+
+            if ((derniere.z - zMurFond) * (ici.z - zMurFond) < 0f)
+            {
+                traversees++;
+                float part = (zMurFond - derniere.z) / (ici.z - derniere.z);
+                float xMur = derniere.x + part * (ici.x - derniere.x);
+                // 0,25 de marge : il a de l'epaisseur, il ne doit pas raser
+                // le jambage.
+                if (Mathf.Abs(xMur - xPassage) > demiPassage - 0.25f) toujoursParLePassage = false;
+            }
+            // l'emprise du plan de mise en boite, qu'il doit contourner
+            if (ici.x > -0.9f && ici.x < 3.5f && ici.z > 5.3f && ici.z < 6.7f) traverseLePlan = true;
+
+            derniere = ici;
         }
         float pasMaxParImage = Reglages.VitesseCaissier * (1f / 60f) * 1.2f;   // marge
         Check("il marche vraiment jusqu'a la salle, sans teleportation",
               aBouge && sautMax <= pasMaxParImage);
+        Check("il franchit le mur du fond a l'aller et au retour", traversees == 2);
+        Check("et il le franchit par le passage, jamais au travers du mur",
+              toujoursParLePassage);
+        Check("il contourne le plan de mise en boite au lieu de le traverser",
+              !traverseLePlan);
         Check("il finit par revenir travailler", !caissierFatigue.SeRepose);
         Check("sa fatigue est redescendue sous le seuil de reprise",
               caissierFatigue.FatigueActuelle < Reglages.SeuilDepartRepos);

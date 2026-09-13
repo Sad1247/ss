@@ -20,7 +20,7 @@ namespace Pizzeria3D
     public sealed class Caissier : MonoBehaviour
     {
         enum Etat { Poste, VersTable, Travaille, VersFour, Ramasse, VersComptoir,
-                    VersSalle, VersPoubelle, VersRepos, SeRepose, SEnVa }
+                    VersSalle, VersPoubelle, VersRepos, SeRepose, SortDuRepos, SEnVa }
 
         public Comptoir Comptoir;
         public Four Four;
@@ -45,6 +45,7 @@ namespace Pizzeria3D
         bool _plateauEnCours;     // un plateau est en preparation dans la fournee              // boites garnies qui attendent au rond vert
         float _fatigue;
         int _siegeRepos = -1;     // le siege reserve, le temps de la pause
+        int _etapeRepos;          // ou il en est du chemin vers la salle de repos
 
         public int Portees => _portee != null ? _portee.Nombre : 0;
         /// <summary>Boites livrees au comptoir : sa productivite, affichee au bureau.</summary>
@@ -54,7 +55,8 @@ namespace Pizzeria3D
         /// <summary>Son rendement du moment, tel qu'il ralentit ses gestes.</summary>
         public float Productivite => Fatigue.Productivite(_fatigue);
         /// <summary>Vrai pendant qu'il marche vers la salle de repos ou s'y repose.</summary>
-        public bool SeRepose => _etat == Etat.VersRepos || _etat == Etat.SeRepose;
+        public bool SeRepose => _etat == Etat.VersRepos || _etat == Etat.SeRepose
+                                                || _etat == Etat.SortDuRepos;
         /// <summary>
         /// Gele la fatigue, comme Horloge.Figee gele l'heure : sert au banc
         /// d'essai, qui doit pouvoir eprouver le reste du service sans que
@@ -107,6 +109,7 @@ namespace Pizzeria3D
             transform.position = Poste;
             _etat = Etat.Poste;
             _passeParRelais = false;
+            _etapeRepos = 0;
             _fatigue = 0f;
             RangerLeSac();
         }
@@ -126,6 +129,7 @@ namespace Pizzeria3D
             // plus personne ne viendra liberer.
             if (SalleRepos != null && _siegeRepos >= 0) SalleRepos.Liberer(_siegeRepos);
             _siegeRepos = -1;
+            _etapeRepos = 0;
             _fatigue = 0f;
             Embauche = false;
             _etat = Etat.Poste;
@@ -183,8 +187,9 @@ namespace Pizzeria3D
                 case Etat.VersComptoir: Aller(Poste, Etat.Poste); break;
                 case Etat.VersSalle:    Aller(DevantLaSalle(), Etat.VersPoubelle, Debarrasser); break;
                 case Etat.VersPoubelle: Aller(Poubelle, Etat.Poste, Jeter); break;
-                case Etat.VersRepos:    Aller(PositionDuRepos(), Etat.SeRepose); break;
+                case Etat.VersRepos:    AllerAuRepos(); break;
                 case Etat.SeRepose:     SeReposer(); break;
+                case Etat.SortDuRepos:  QuitterLeRepos(); break;
                 case Etat.SEnVa:        Rentrer(); break;
             }
         }
@@ -256,6 +261,7 @@ namespace Pizzeria3D
                 {
                     _siegeRepos = siege;
                     _etat = Etat.VersRepos;
+                    _etapeRepos = 0;
                     _passeParRelais = false;
                     return;
                 }
@@ -433,16 +439,47 @@ namespace Pizzeria3D
         Vector3 PositionDuRepos()
             => SalleRepos != null ? SalleRepos.PositionDuSiege(_siegeRepos) : Poste;
 
+        Vector3[] CheminDuRepos()
+            => SalleRepos != null ? SalleRepos.Chemin : null;
+
+        /// <summary>
+        /// Il remonte le chemin de la salle etape par etape — le plan
+        /// d'emballage et le mur du fond sont sur la ligne droite — puis
+        /// rejoint son siege.
+        /// </summary>
+        void AllerAuRepos()
+        {
+            var chemin = CheminDuRepos();
+            if (chemin != null && _etapeRepos < chemin.Length)
+            {
+                if (Avancer(chemin[_etapeRepos])) _etapeRepos++;
+                return;
+            }
+            if (Avancer(PositionDuRepos())) _etat = Etat.SeRepose;
+        }
+
         /// <summary>
         /// Assis, il recupere jusqu'a redescendre sous le seuil, puis rend
-        /// son siege et reprend le chemin du comptoir — a pied, comme
-        /// n'importe quel autre retour de mission.
+        /// son siege et ressort — a pied, comme n'importe quel autre retour
+        /// de mission.
         /// </summary>
         void SeReposer()
         {
             if (_fatigue > Reglages.SeuilFinRepos) return;
             if (SalleRepos != null) SalleRepos.Liberer(_siegeRepos);
             _siegeRepos = -1;
+            _etat = Etat.SortDuRepos;
+        }
+
+        /// <summary>Le meme chemin, redescendu a l'envers jusqu'a la salle.</summary>
+        void QuitterLeRepos()
+        {
+            var chemin = CheminDuRepos();
+            if (chemin != null && _etapeRepos > 0)
+            {
+                if (Avancer(chemin[_etapeRepos - 1])) _etapeRepos--;
+                return;
+            }
             _etat = Etat.VersComptoir;
         }
 

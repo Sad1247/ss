@@ -13,6 +13,14 @@ namespace Pizzeria3D
         /// <summary>Un siege par place, quel que soit le niveau atteint.</summary>
         public Transform[] Sieges = new Transform[0];
 
+        /// <summary>
+        /// Les etapes a suivre depuis la salle a manger pour entrer ici, dans
+        /// l'ordre. Elles evitent les meubles et passent par la porte : sans
+        /// elles, un employe irait tout droit et traverserait le mur du fond.
+        /// Le retour les reprend a l'envers.
+        /// </summary>
+        public Vector3[] Chemin = new Vector3[0];
+
         bool[] _occupes;
 
         /// <summary>
