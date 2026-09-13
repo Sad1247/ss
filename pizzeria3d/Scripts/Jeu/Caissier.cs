@@ -27,6 +27,8 @@ namespace Pizzeria3D
         public Emballage Table;
         /// <summary>La table de la salle, qu'il vient debarrasser.</summary>
         public TableRepas Salle;
+        /// <summary>Celle qu'il debarrasse en ce moment, parmi toutes celles de la salle.</summary>
+        TableRepas _aDebarrasser;
         /// <summary>Ou il va recuperer une fois trop fatigue.</summary>
         public SalleDeRepos SalleRepos;
         public Vector3 Poste;
@@ -272,8 +274,10 @@ namespace Pizzeria3D
             // Une table sale bloque la salle : plus personne ne peut manger
             // sur place tant qu'elle n'est pas debarrassee. Cela passe donc
             // avant le reappro du comptoir, qui, lui, n'a pas de fin.
-            if (Salle != null && Salle.ADesOrdures)
+            var aDebarrasser = Salles.ASale() ?? (Salle != null && Salle.ADesOrdures ? Salle : null);
+            if (aDebarrasser != null)
             {
+                _aDebarrasser = aDebarrasser;
                 _etat = Etat.VersSalle;
                 _passeParRelais = true;
                 return;
@@ -412,8 +416,9 @@ namespace Pizzeria3D
         /// <summary>Il prend les restes sur la table et les met dans ses mains.</summary>
         void Debarrasser()
         {
-            if (Salle == null) return;
-            var restes = Salle.EmporterOrdures();
+            var table = _aDebarrasser ?? Salle;
+            if (table == null) return;
+            var restes = table.EmporterOrdures();
             if (restes == null) return;
 
             _ordures = restes;
@@ -431,8 +436,9 @@ namespace Pizzeria3D
 
         Vector3 DevantLaSalle()
         {
-            if (Salle == null) return Poste;
-            var p = Salle.transform.position;
+            var table = _aDebarrasser ?? Salle;
+            if (table == null) return Poste;
+            var p = table.transform.position;
             return new Vector3(p.x, 0f, p.z - 1.4f);   // devant la table, pas dessus
         }
 

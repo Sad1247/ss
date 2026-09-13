@@ -2,18 +2,42 @@ using UnityEngine;
 
 namespace Pizzeria3D
 {
+    /// <summary>L'etat d'une table, tel que le registre le lit.</summary>
+    public enum EtatTable
+    {
+        /// <summary>Pas encore payee : elle n'existe pas pour les clients.</summary>
+        Verrouillee,
+        /// <summary>Debloquee et sans occupant : un groupe peut s'y installer.</summary>
+        Libre,
+        /// <summary>Un groupe y mange, ou ses restes attendent le caissier.</summary>
+        Occupee,
+    }
+
     /// <summary>
-    /// La table de la salle. Un client servi s'y installe pour manger, s'il y
-    /// a de la place ; sinon il emporte ses boites et s'en va. Une seule place
-    /// est offerte : c'est ce qui fait la file dehors quand ca marche bien.
+    /// Une table de la salle. Un client servi s'y installe pour manger, s'il y
+    /// a de la place ; sinon il emporte ses boites et s'en va. Une table
+    /// n'accueille qu'un groupe a la fois — c'est ce qui fait la file dehors
+    /// quand ca marche bien — mais elle compte plusieurs chaises, et sait
+    /// lesquelles sont encore libres.
+    ///
+    /// Verrouillee tant que son objet est eteint : c'est la dalle verte qui
+    /// l'allume, une fois payee. Rien d'autre n'a besoin d'etre prevenu.
     /// </summary>
     public sealed class TableRepas : MonoBehaviour
     {
+        /// <summary>La premiere chaise. Conservee pour qui ne pose qu'un siege.</summary>
         public Transform Siege;
+        /// <summary>Toutes les chaises, celle de <see cref="Siege"/> comprise.</summary>
+        public Transform[] Sieges = new Transform[0];
         /// <summary>Le dessus du plateau : c'est la que se pose l'assiette.</summary>
         public Transform Plateau;
 
+        /// <summary>Emprise au sol, posee quand la table s'allume.</summary>
+        public float EmpriseX = 2.9f, EmpriseZ = 1.5f;
+
         Client _occupant;
+        bool _emprisePosee;
+        int _siegePris = -1;
         GameObject _pizza;
         GameObject _ordures;
         int _mangees;             // quartiers deja avales
@@ -22,23 +46,94 @@ namespace Pizzeria3D
         public bool EstLibre => _occupant == null;
 
         /// <summary>
-        /// Reserve la place. Faux si quelqu'un mange deja — ou si la table
-        /// n'a pas ete debarrassee : personne ne s'assoit devant les restes
-        /// du precedent.
+        /// Une table verrouillee ne barre rien : sans cela, son emprise
+        /// empecherait le joueur de fouler la dalle qui l'ouvre, posee a
+        /// l'endroit meme ou elle apparaitra. Elle la pose donc en
+        /// s'allumant, une seule fois.
+        /// </summary>
+        void OnEnable()
+        {
+            if (_emprisePosee) return;
+            _emprisePosee = true;
+            Obstacles.Ajouter(transform.position, EmpriseX, EmpriseZ);
+        }
+
+        /// <summary>
+        /// Les chaises reellement posees : le tableau s'il est rempli, sinon
+        /// le siege unique. Assigne apres coup par le batisseur, il se relit
+        /// a chaque usage plutot qu'une fois dans Awake.
+        /// </summary>
+        Transform[] Chaises
+        {
+            get
+            {
+                if (Sieges != null && Sieges.Length > 0) return Sieges;
+                return Siege != null ? new[] { Siege } : new Transform[0];
+            }
+        }
+
+        public int NombreDeChaises => Chaises.Length;
+
+        /// <summary>
+        /// Combien de chaises restent libres. Une table prise par un groupe
+        /// ne se partage pas : les autres chaises sont a lui.
+        /// </summary>
+        public int ChaisesLibres => _occupant != null ? 0 : NombreDeChaises;
+
+        /// <summary>
+        /// Verrouillee tant que l'objet est eteint, occupee tant qu'un groupe
+        /// y mange ou que ses restes trainent, libre sinon.
+        /// </summary>
+        public EtatTable Etat
+        {
+            get
+            {
+                if (!gameObject.activeInHierarchy) return EtatTable.Verrouillee;
+                return _occupant != null || _ordures != null ? EtatTable.Occupee : EtatTable.Libre;
+            }
+        }
+
+        /// <summary>Vrai quand un client peut vraiment s'y attabler.</summary>
+        public bool PeutAccueillir => Etat == EtatTable.Libre && NombreDeChaises > 0;
+
+        /// <summary>
+        /// Reserve la place et retient la chaise prise. Faux si quelqu'un
+        /// mange deja, si la table est encore verrouillee — ou si elle n'a pas
+        /// ete debarrassee : personne ne s'assoit devant les restes du
+        /// precedent.
         /// </summary>
         public bool Accueillir(Client client)
         {
-            if (_occupant != null || Siege == null || _ordures != null) return false;
+            if (!PeutAccueillir) return false;
             _occupant = client;
+            _siegePris = 0;
             return true;
         }
 
         public void Liberer(Client client)
         {
-            if (_occupant == client) _occupant = null;
+            if (_occupant != client) return;
+            _occupant = null;
+            _siegePris = -1;
         }
 
-        public Vector3 Place => Siege != null ? Siege.position : transform.position;
+        /// <summary>La chaise retenue par ce client, ou la table a defaut.</summary>
+        public Vector3 PlaceDe(Client client)
+        {
+            var chaises = Chaises;
+            if (_occupant == client && _siegePris >= 0 && _siegePris < chaises.Length)
+                return chaises[_siegePris].position;
+            return Place;
+        }
+
+        public Vector3 Place
+        {
+            get
+            {
+                var chaises = Chaises;
+                return chaises.Length > 0 ? chaises[0].position : transform.position;
+            }
+        }
 
         /// <summary>Quartiers encore dans l'assiette.</summary>
         public int Quartiers => _pizza == null ? 0 : Reglages.QuartiersParPizza - _mangees;

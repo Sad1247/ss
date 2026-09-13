@@ -24,6 +24,7 @@ namespace Pizzeria3D
 
             Qualite();
             Obstacles.Reinitialiser();
+            Salles.Vider();
 
             var racine = new GameObject("Pizzeria");
 
@@ -58,9 +59,17 @@ namespace Pizzeria3D
             Zone(racine.transform, joueur, _bureauRH, _bureauRHEtSaDalle,
                  Reglages.PrixBureauRH, "Ouvrir le bureau RH", 0.5f);
 
-            // La table de la salle : les clients servis viennent y manger.
+            // Les tables de la salle : les clients servis viennent y manger.
+            // La premiere est offerte ; les deux autres attendent leur dalle
+            // verte. Toutes trois s'inscrivent au meme registre, et c'est lui
+            // que les clients interrogent — en ajouter une quatrieme plus
+            // tard tient en une ligne.
             var tableSalle = Salle(racine.transform, new Vector3(-2.6f, 0f, -3.2f));
             comptoir.Table = tableSalle;
+            TableAVendre(racine.transform, joueur, new Vector3(-6.2f, 0f, -6.2f),
+                         Reglages.PrixTables[0]);
+            TableAVendre(racine.transform, joueur, new Vector3(0.8f, 0f, -6.2f),
+                         Reglages.PrixTables[1]);
 
             // La poubelle, ou le caissier vide les restes des repas.
             // Loin de l'endroit ou passait la pile de cartons : le joueur doit
@@ -935,11 +944,16 @@ namespace Pizzeria3D
         /// un pied central, assises bleues, montants sombres. Un seul couvert
         /// est reellement servi — la seconde chaise est la pour l'allure.
         /// </summary>
-        static TableRepas Salle(Transform parent, Vector3 position)
+        static TableRepas Salle(Transform parent, Vector3 position, bool verrouillee = false)
         {
             var go = new GameObject("TableSalle");
             go.transform.SetParent(parent, false);
             go.transform.position = position;
+            // Eteinte avant d'etre meublee, comme les pieces : allumee, elle
+            // poserait son emprise des la construction, et cette emprise
+            // barrerait la dalle verte posee a l'endroit meme ou elle doit
+            // apparaitre.
+            if (verrouillee) go.SetActive(false);
             var t = go.transform;
 
             var rouge = Bloc.Couleur(0xE2503A);
@@ -954,9 +968,11 @@ namespace Pizzeria3D
                        sombre).SansCollision();
 
             var siege = Chaise(t, new Vector3(-1.20f, 0f, 0f), 90f, sombre, assise);
-            Chaise(t, new Vector3(1.20f, 0f, 0f), -90f, sombre, assise);
+            var siegeBis = Chaise(t, new Vector3(1.20f, 0f, 0f), -90f, sombre, assise);
 
-            Obstacles.Ajouter(position, 2.9f, 1.5f);
+            // L'emprise n'est pas posee ici : la table s'en charge en
+            // s'allumant. Une table encore verrouillee ne doit rien barrer,
+            // sinon le joueur ne pourrait pas fouler la dalle qui l'ouvre.
 
             // l'assiette se pose sur le plateau, pas au pied de la table
             var plateau = new GameObject("Assiette");
@@ -965,7 +981,38 @@ namespace Pizzeria3D
 
             var table = go.AddComponent<TableRepas>();
             table.Siege = siege;
+            table.Sieges = new[] { siege, siegeBis };
             table.Plateau = plateau.transform;
+            Salles.Inscrire(table);
+            return table;
+        }
+
+        /// <summary>
+        /// Une table encore verrouillee, et la dalle verte posee a l'endroit
+        /// exact ou elle apparaitra. Payer la dalle allume la table : ses
+        /// chaises viennent avec, son emprise aussi, et le registre la donne
+        /// aussitot au premier client qui cherche une place.
+        /// </summary>
+        static TableRepas TableAVendre(Transform parent, Joueur joueur, Vector3 position, int prix)
+        {
+            var table = Salle(parent, position, true);
+
+            // Rayon resserre : la dalle est posee en pleine salle, la ou le
+            // joueur passe pour tout autre chose. Il ne doit la payer qu'en
+            // s'y arretant vraiment.
+            var dalle = Zone(parent, joueur, table.gameObject, position, prix,
+                             "Debloquer table - " + prix + " $", 0.6f);
+
+            // Un jalon flottant au-dessus de la dalle : de loin, on voit qu'il
+            // y a quelque chose a ouvrir la, et pas seulement un carre au sol.
+            var jalon = new GameObject("JalonTable");
+            jalon.transform.SetParent(dalle.transform, false);
+            jalon.transform.localPosition = new Vector3(0f, 0.9f, 0f);
+            Bloc.Boite("Mat", jalon.transform, new Vector3(0f, -0.35f, 0f),
+                       new Vector3(0.05f, 0.7f, 0.05f), Bloc.Couleur(0xF4F1EA)).SansCollision();
+            Bloc.Boite("Fanion", jalon.transform, Vector3.zero,
+                       new Vector3(0.34f, 0.34f, 0.05f), Bloc.Zone).SansCollision();
+
             return table;
         }
 

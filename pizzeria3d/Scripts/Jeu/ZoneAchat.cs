@@ -29,8 +29,16 @@ namespace Pizzeria3D
         {
             if (Joueur == null) return;
             bool dessus = Joueur.EstPres(transform.position, Rayon);
-            if (dessus) Hud.MontrerIndice(this, $"{Libelle} — reste {Restant} EUR");
-            else { Hud.EffacerIndice(this); return; }
+            if (!dessus) { Hud.EffacerIndice(this); return; }
+
+            // Les poches vides, l'achat n'avance pas : le dire, plutot que de
+            // laisser le joueur pietiner la dalle sans comprendre.
+            if (Banque.Solde <= 0)
+            {
+                Hud.MontrerIndice(this, "Pas assez d'argent");
+                return;
+            }
+            Hud.MontrerIndice(this, $"{Libelle} — reste {Restant} EUR");
 
             // on retire par euros entiers, en gardant la fraction pour la suite
             _reste += Reglages.DebitAchat * Time.deltaTime;

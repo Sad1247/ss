@@ -292,6 +292,26 @@ static class Harness3D
         return null;
     }
 
+    /// <summary>Un objet de ce nom pose a cet endroit : trois tables le portent.</summary>
+    static GameObject TrouverPres(string nom, Vector3 p)
+    {
+        foreach (var o in UnityEngine.Object.Tous)
+            if (o is GameObject go && !go.Detruit && go.name == nom
+                && (go.transform.position - p).sqrMagnitude < 0.01f) return go;
+        return null;
+    }
+
+    /// <summary>
+    /// Une dalle par son libelle : deux dalles peuvent couter le meme prix,
+    /// leur intitule, lui, les distingue.
+    /// </summary>
+    static ZoneAchat ZoneDeLibelle(string debut)
+    {
+        foreach (var z in TousLes<ZoneAchat>())
+            if (z.Libelle != null && z.Libelle.StartsWith(debut)) return z;
+        return null;
+    }
+
     /// <summary>Un enfant direct par son nom, ou null.</summary>
     static Transform Piece(Transform parent, string nom)
     {
@@ -2249,6 +2269,108 @@ static class Harness3D
             UnityEngine.Object.Destroy(grandeGo);
             UnityEngine.Object.Destroy(petiteGo);
         }
+
+        // --- les tables de la salle : registre, deblocage, occupation ---
+        // Tout se joue pendant que la pizzeria est fermee : aucun client
+        // n'entre, et le solde est remis a l'identique a la fin pour ne rien
+        // decaler des verifications d'argent qui suivent.
+        int soldeAvantTables = Banque.Solde;
+
+        Check("les trois tables sont inscrites au registre", Salles.Nombre == 3);
+        Check("une seule est ouverte au depart", Salles.Deverrouillees == 1);
+        Check("celle du depart est bien la table offerte",
+              tableSalle.Etat == EtatTable.Libre && Salles.Libre() == tableSalle);
+
+        var dalleTable2 = ZoneDeLibelle("Debloquer table - 250");
+        var dalleTable3 = ZoneDeLibelle("Debloquer table - 500");
+        Check("une dalle verte par table verrouillee",
+              dalleTable2 != null && dalleTable3 != null);
+        Check("leur libelle annonce le prix",
+              dalleTable2.Libelle.Contains("250") && dalleTable3.Libelle.Contains("500"));
+        Check("elles coutent 250 et 500",
+              dalleTable2.Prix == 250 && dalleTable3.Prix == 500);
+
+        // Chaque dalle est posee exactement la ou sa table apparaitra, et les
+        // deux sont assez ecartees pour qu'on circule entre elles.
+        var table2 = TrouverPres("TableSalle", dalleTable2.transform.position);
+        var table3 = TrouverPres("TableSalle", dalleTable3.transform.position);
+        Check("chaque dalle est a l'emplacement exact de sa table",
+              table2 != null && table3 != null);
+        Check("les deux emplacements sont assez ecartes pour circuler",
+              (dalleTable2.transform.position - dalleTable3.transform.position).magnitude > 4f);
+        Check("une table verrouillee ne barre pas sa propre dalle",
+              !Obstacles.Bloque(dalleTable2.transform.position, Reglages.RayonJoueur) &&
+              !Obstacles.Bloque(dalleTable3.transform.position, Reglages.RayonJoueur));
+
+        var repas2 = table2.GetComponent<TableRepas>();
+        var repas3 = table3.GetComponent<TableRepas>();
+        Check("les deux nouvelles sont verrouillees",
+              repas2.Etat == EtatTable.Verrouillee && repas3.Etat == EtatTable.Verrouillee);
+        Check("une table verrouillee n'est jamais proposee a un client",
+              repas2.PeutAccueillir == false && repas3.PeutAccueillir == false);
+
+        // Les poches vides : la dalle le dit et ne debloque rien.
+        Banque.Retirer(Banque.Solde);
+        Placer(joueur, dalleTable2.transform.position);
+        Secondes(3f);
+        Check("sans argent, la dalle previent au lieu de debiter",
+              Hud.Indice == "Pas assez d'argent");
+        Check("et la table reste verrouillee",
+              repas2.Etat == EtatTable.Verrouillee && Salles.Deverrouillees == 1);
+
+        // Le compte juste : la table s'ouvre, et pas un euro de plus n'est pris.
+        Banque.Encaisser(250);
+        Secondes(250f / Reglages.DebitAchat + 2f);
+        Check("payee, la table 2 apparait", repas2.Etat == EtatTable.Libre);
+        Check("son prix est retire au centime pres", Banque.Solde == 0);
+        Check("sa dalle verte disparait", dalleTable2.gameObject.Detruit);
+        Check("ses chaises viennent avec elle", repas2.NombreDeChaises == 2);
+        Check("elle rejoint aussitot les tables utilisables", Salles.Deverrouillees == 2);
+        Check("et son emprise barre desormais le passage",
+              Obstacles.Bloque(table2.transform.position, Reglages.RayonJoueur));
+
+        Banque.Encaisser(500);
+        Placer(joueur, dalleTable3.transform.position);
+        Secondes(500f / Reglages.DebitAchat + 2f);
+        Check("payee, la table 3 apparait aussi", repas3.Etat == EtatTable.Libre);
+        Check("son prix a elle est retire de meme", Banque.Solde == 0);
+        Check("les trois tables sont maintenant utilisables", Salles.Deverrouillees == 3);
+
+        // Occupation : un groupe par table, et une chaise pour s'asseoir.
+        var clientA = new GameObject("ClientEssaiA").AddComponent<Client>();
+        var clientB = new GameObject("ClientEssaiB").AddComponent<Client>();
+        Check("une table libre accueille le premier venu", repas2.Accueillir(clientA));
+        Check("elle passe alors a l'etat occupee", repas2.Etat == EtatTable.Occupee);
+        Check("un second groupe ne s'y installe pas", !repas2.Accueillir(clientB));
+        Check("elle n'a plus de chaise a offrir", repas2.ChaisesLibres == 0);
+        Check("le registre l'ecarte et en propose une autre",
+              Salles.Libre() != null && Salles.Libre() != repas2);
+        Check("l'occupant s'assoit sur une chaise, pas au milieu de la table",
+              (repas2.PlaceDe(clientA) - table2.transform.position).magnitude > 0.9f);
+        // La table du depart prise a son tour, c'est une des nouvelles que le
+        // registre propose : c'est exactement ce que demande un client servi.
+        Check("la table offerte accueille le second", tableSalle.Accueillir(clientB));
+        var proposee = Salles.Libre();
+        Check("les deux premieres prises, un client est envoye sur la troisieme",
+              proposee != null && proposee != repas2 && proposee != tableSalle);
+        tableSalle.Liberer(clientB);
+
+        repas2.Liberer(clientA);
+        Check("une fois leve, la table redevient libre",
+              repas2.Etat == EtatTable.Libre && repas2.ChaisesLibres == 2);
+        UnityEngine.Object.Destroy(clientA.gameObject);
+        UnityEngine.Object.Destroy(clientB.gameObject);
+
+        // La salle revient a ce qu'elle etait au lancement d'une partie —
+        // une seule table ouverte — et le solde a ce qu'il etait : la suite
+        // du banc d'essai eprouve ce monde-la, et compte les euros.
+        table2.SetActive(false);
+        table3.SetActive(false);
+        Check("refermees, elles quittent la liste des tables utilisables",
+              Salles.Deverrouillees == 1 && Salles.Libre() == tableSalle);
+        Banque.Encaisser(soldeAvantTables);
+        Placer(joueur, bureau.Place);
+        Secondes(1f);
 
         // --- la fatigue monte au travail, et redescend au repos, pour de vrai ---
         Check("le gel de fatigue peut se lever pour l'epreuve", caissierFatigue != null);

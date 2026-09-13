@@ -187,7 +187,7 @@ namespace Pizzeria3D
             _attable = true;
             _resteRepas = Reglages.DureeRepas;
 
-            var place = _table.Place;
+            var place = _table.PlaceDe(this);
             transform.position = new Vector3(place.x, Reglages.HauteurAssise, place.z);
             transform.rotation = Quaternion.LookRotation(_table.VersLaTable(place), Vector3.up);
             if (_demarche != null) _demarche.Assis = true;
@@ -247,7 +247,11 @@ namespace Pizzeria3D
         void ChoisirSaPlace()
         {
             if (Pizzas != 1) return;
-            var table = _comptoir != null ? _comptoir.Table : null;
+            // La premiere table libre du registre, quelle qu'elle soit : une
+            // table debloquee en cours de partie y est deja inscrite, et une
+            // table encore verrouillee n'y repond jamais.
+            var table = Salles.Libre();
+            if (table == null) table = _comptoir != null ? _comptoir.Table : null;
             if (table != null && table.Accueillir(this)) _table = table;
         }
 
@@ -282,7 +286,7 @@ namespace Pizzeria3D
             if (EstServi && _table != null)
             {
                 _versLaTable = true;
-                _cible = _table.Place;
+                _cible = _table.PlaceDe(this);
                 EstArrive = false;
                 return;
             }
