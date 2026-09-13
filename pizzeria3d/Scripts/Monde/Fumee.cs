@@ -12,8 +12,17 @@ namespace Pizzeria3D
         public float Intervalle = 0.5f;
         float _compteur;
 
+        /// <summary>
+        /// Gele les bouffees, comme Horloge.Figee gele l'heure : sert au banc
+        /// d'essai, qui doit pouvoir avancer le temps sans que des bouffees
+        /// tirees au hasard ne consomment le flux aleatoire dont dependent
+        /// d'autres verifications, bien plus loin dans le fichier.
+        /// </summary>
+        public static bool Gelee;
+
         void Update()
         {
+            if (Gelee) return;
             _compteur -= Time.deltaTime;
             if (_compteur > 0f) return;
             _compteur = Intervalle;

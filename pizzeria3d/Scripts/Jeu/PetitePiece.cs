@@ -44,7 +44,10 @@ namespace Pizzeria3D
         void OnEnable()
         {
             Obstacles.Ouvrir(Passage);
-            Obstacles.DefinirTerrain(Obstacles.DemiTerrainX, DemiTerrainZ);
+            // Au plus grand des deux : une piece achetee apres coup ne doit
+            // jamais retrecir ce qu'une autre a deja repousse plus loin.
+            Obstacles.DefinirTerrain(Obstacles.DemiTerrainX,
+                                     Mathf.Max(Obstacles.DemiTerrainZ, DemiTerrainZ));
             // Elle s'ouvre toute seule a l'approche : au repos elle reste
             // fermee, comme n'importe quelle porte de bureau.
             Poser();

@@ -759,6 +759,13 @@ static class Harness3D
         var caissierFatigue = UnityEngine.Object.FindObjectOfType<Caissier>();
         if (caissierFatigue != null) caissierFatigue.FatigueGelee = true;
 
+        // La fumee du four tire au hasard a intervalles reguliers, sans
+        // rapport avec l'heure d'ouverture : gelee pour toute la suite, elle
+        // ne consomme plus le flux aleatoire dont dependent des verifications
+        // bien plus loin, quand le banc d'essai avance le temps de plusieurs
+        // secondes pour une raison qui n'a rien a voir avec elle.
+        Fumee.Gelee = true;
+
         Check("la scene se monte sans editeur", joueur != null && four != null && comptoir != null);
         Check("camera isometrique orthographique", camera != null && camera.orthographic);
         Check("la caisse demarre au montant de mise au point",
@@ -2045,6 +2052,71 @@ static class Harness3D
         Check("une fois dans la salle de repos, ils s'effacent",
               AucunVisible(discretsRepos));
 
+        // --- le bureau RH, derriere celui du patron ---
+        // On y entre par une porte percee dans le mur du fond du bureau, pas
+        // depuis la salle a manger : il n'y a pas de facade a cet endroit.
+        var bureauRHFerme = Trouver("BureauRH");
+        Check("le bureau RH existe dans le decor", bureauRHFerme != null);
+        Check("mais il reste invisible tant qu'on ne l'a pas paye",
+              bureauRHFerme != null && !bureauRHFerme.activeSelf);
+
+        var porteRH = Trouver("PorteBureauRH");
+        Check("sa porte est montee dans le mur du fond du bureau", porteRH != null);
+        Check("son pas est barre tant que le bureau RH n'est pas paye",
+              porteRH != null &&
+              Obstacles.Bloque(porteRH.transform.position, Reglages.RayonJoueur));
+
+        var dalleRH = ZoneDePrix(Reglages.PrixBureauRH);
+        Check("une dalle d'achat attend a l'interieur du bureau du patron", dalleRH != null);
+        Check("a l'interieur du bureau du patron, pas ailleurs",
+              dalleRH != null && porteRH != null &&
+              dalleRH.transform.position.z < porteRH.transform.position.z &&
+              dalleRH.transform.position.z > porteRH.transform.position.z - 5f &&
+              !Obstacles.Bloque(dalleRH.transform.position, Reglages.RayonJoueur));
+
+        int soldeAvantDalleRH = Banque.Solde;
+        Banque.Encaisser(Reglages.PrixBureauRH);
+        Placer(joueur, dalleRH.transform.position);
+        Secondes(Reglages.PrixBureauRH / Reglages.DebitAchat + 2f);
+        Check("payer la dalle deduit exactement son prix",
+              Banque.Solde == soldeAvantDalleRH);
+        Check("paye, le bureau RH apparait", bureauRHFerme.activeSelf);
+        Check("sa dalle disparait une fois payee", dalleRH.gameObject.Detruit);
+        Check("le pas de sa porte se libere",
+              !Obstacles.Bloque(porteRH.transform.position, Reglages.RayonJoueur));
+
+        var dedansRH = porteRH.transform.position + new Vector3(0f, 0f, 1.0f);
+        Check("et le patron peut vraiment y entrer",
+              !Obstacles.Bloque(dedansRH, Reglages.RayonJoueur) &&
+              Obstacles.DemiTerrainZ > dedansRH.z);
+        // Le fond de la salle de repos avait deja repousse le terrain plus
+        // loin que le bureau RH n'en a besoin : l'achat du bureau RH ne doit
+        // pas le faire reculer.
+        Check("l'achat du bureau RH ne retrecit pas le terrain deja agrandi",
+              Obstacles.DemiTerrainZ >= dedansRepos.z);
+
+        var discretsRH = bureauRHFerme.GetComponent<MursDiscrets>();
+        Check("le bureau RH sait escamoter son mur cote camera", discretsRH != null);
+        Check("il prolonge le mur du fond du bureau, sans jeu entre les deux",
+              discretsRH != null &&
+              Mathf.Abs((discretsRH.Centre.z - discretsRH.DemiZ) - (porteRH.transform.position.z + 0.2f))
+                  < 0.05f);
+        Placer(joueur, new Vector3(0f, 0f, 0f));
+        Frames(2);
+        Check("depuis la salle a manger, son mur est bien la", TousVisibles(discretsRH));
+        Placer(joueur, dedansRH + new Vector3(0f, 0f, 1.0f));
+        Frames(2);
+        Check("une fois dans le bureau RH, il s'efface", AucunVisible(discretsRH));
+
+        // La porte s'ouvre bien du cote du bureau RH, pas a l'envers dans le
+        // bureau du patron.
+        Placer(joueur, porteRH.transform.position);
+        Frames(30);
+        var gondRH2 = Piece(porteRH.transform, "Gond");
+        Check("le vantail pivote bien vers le bureau RH",
+              gondRH2 != null &&
+              (gondRH2.localRotation * new Vector3(-0.70f, 0f, 0f)).z > 0.1f);
+
         Placer(joueur, bureau.Place);
         Secondes(2f);
         Check("la salle de repos existe dans le restaurant", salleRepos != null);
@@ -2125,6 +2197,29 @@ static class Harness3D
             Check("elle ne reserve jamais plus de places que sa capacite ouverte",
                   reservees == Comptabilite.CapaciteSalleRepos);
             UnityEngine.Object.Destroy(salleTestGo);
+        }
+
+        // --- une piece achetee apres coup n'ecrase jamais un terrain deja agrandi ---
+        {
+            float terrainAvantOrdre = Obstacles.DemiTerrainZ;
+            var grandeGo = new GameObject("GrandePieceTest");
+            grandeGo.SetActive(false);
+            var grande = grandeGo.AddComponent<PetitePiece>();
+            grande.DemiTerrainZ = terrainAvantOrdre + 20f;
+            grandeGo.SetActive(true);
+            Check("la plus grande des deux repousse bien le terrain",
+                  Obstacles.DemiTerrainZ == terrainAvantOrdre + 20f);
+
+            var petiteGo = new GameObject("PetitePieceTest");
+            petiteGo.SetActive(false);
+            var petite = petiteGo.AddComponent<PetitePiece>();
+            petite.DemiTerrainZ = terrainAvantOrdre + 2f;
+            petiteGo.SetActive(true);
+            Check("achetee ensuite, une piece plus modeste ne le retrecit pas",
+                  Obstacles.DemiTerrainZ == terrainAvantOrdre + 20f);
+
+            UnityEngine.Object.Destroy(grandeGo);
+            UnityEngine.Object.Destroy(petiteGo);
         }
 
         // --- la fatigue monte au travail, et redescend au repos, pour de vrai ---

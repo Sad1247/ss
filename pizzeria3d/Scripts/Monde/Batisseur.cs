@@ -55,6 +55,8 @@ namespace Pizzeria3D
                  Reglages.PrixPetitePiece, "Ouvrir la petite piece");
             Zone(racine.transform, joueur, _salleRepos.gameObject, _salleReposEtSaDalle,
                  Reglages.PrixSalleRepos, "Ouvrir la salle de repos");
+            Zone(racine.transform, joueur, _bureauRH, _bureauRHEtSaDalle,
+                 Reglages.PrixBureauRH, "Ouvrir le bureau RH", 0.5f);
 
             // La table de la salle : les clients servis viennent y manger.
             var tableSalle = Salle(racine.transform, new Vector3(-2.6f, 0f, -3.2f));
@@ -113,6 +115,8 @@ namespace Pizzeria3D
         static Vector3 _pieceEtSaDalle;
         static SalleDeRepos _salleRepos;
         static Vector3 _salleReposEtSaDalle;
+        static GameObject _bureauRH;
+        static Vector3 _bureauRHEtSaDalle;
         static Joueur _joueur;
 
         /// <summary>Une ouverture dans un mur : porte ou baie vitree.</summary>
@@ -255,9 +259,22 @@ namespace Pizzeria3D
             // Elle occupe tout le coin du batiment : son pan droit rejoint le
             // bout du mur du fond, sinon ce dernier depassait dans le vide.
             var piece = Piece(parent, new Vector3(5.35f, 0f, 9.7f), gond, seuil, _joueur,
-                              cachentLaPiece);
+                              cachentLaPiece,
+                              out var gondBureauRH, out var seuilBureauRH, out var fondPiece);
             _pieceEtSaDalle = new Vector3(xPorte, 0f, 5.6f);
             _piece = piece;
+
+            // Le bureau RH, juste derriere : sa dalle se paie a l'interieur du
+            // bureau du patron, devant la nouvelle porte, pas dans la salle a
+            // manger — c'est la seule facon d'y acceder.
+            const float demiXBureauRH = 2.2f, demiZBureauRH = 1.8f;
+            var centreBureauRH = new Vector3(fondPiece.x, 0f, fondPiece.z + 0.2f + demiZBureauRH);
+            _bureauRH = PieceBureauRH(parent, centreBureauRH, demiXBureauRH, demiZBureauRH,
+                                      gondBureauRH, seuilBureauRH, _joueur);
+            // Pres de l'entree du bureau, a l'ecart du chemin vers le fauteuil
+            // et la fontaine : ni l'un ni l'autre n'est assez proche pour
+            // qu'un passant la paie sans le vouloir.
+            _bureauRHEtSaDalle = new Vector3(6.9f, 0f, 8.3f);
 
             // La salle de repos, sa voisine : meme profondeur, mur contre mur,
             // et la meme porte. Les pans du fond qui la cachent a la camera
@@ -348,7 +365,9 @@ namespace Pizzeria3D
         /// de quoi s'asseoir. Elle reste cachee jusqu'a l'achat.
         /// </summary>
         static GameObject Piece(Transform parent, Vector3 centre, Transform gond, int seuil,
-                                Joueur joueur, List<GameObject> cachent)
+                                Joueur joueur, List<GameObject> cachent,
+                                out Transform gondBureauRH, out int seuilBureauRH,
+                                out Vector3 fondPiece)
         {
             var go = new GameObject("PetitePiece");
             go.transform.SetParent(parent, false);
@@ -376,8 +395,28 @@ namespace Pizzeria3D
             Mur(t, new Vector3(-demiX, 1.6f, 0f), new Vector3(0.4f, 3.2f, demiZ * 2f), centre);
             var panDroit = Mur(t, new Vector3(demiX, 1.6f, 0f), new Vector3(0.4f, 3.2f, demiZ * 2f),
                                centre);
-            Mur(t, new Vector3(0f, 1.6f, demiZ - 0.2f), new Vector3(demiX * 2f + 0.4f, 3.2f, 0.4f),
-                centre);
+
+            // Le mur du fond, perce d'une porte vers le bureau RH plutot que
+            // pose d'un seul bloc : le patron y entre directement depuis son
+            // propre bureau, sans avoir a ressortir vers la salle a manger.
+            const float largeurPorteRH = 1.70f, hauteurPorteRH = 2.38f, hauteurMur = 3.2f;
+            float demiSegment = (demiX * 2f + 0.4f - largeurPorteRH) * 0.5f;
+            float offsetSegment = largeurPorteRH * 0.5f + demiSegment * 0.5f;
+            Mur(t, new Vector3(-offsetSegment, 1.6f, demiZ - 0.2f),
+                new Vector3(demiSegment, hauteurMur, 0.4f), centre);
+            Mur(t, new Vector3(offsetSegment, 1.6f, demiZ - 0.2f),
+                new Vector3(demiSegment, hauteurMur, 0.4f), centre);
+            // Le linteau au-dessus de la porte, sans obstacle propre : Mur()
+            // en poserait un jusqu'au sol, qui barrerait le passage.
+            Bloc.Boite("MurPieceLinteau", t,
+                       new Vector3(0f, hauteurPorteRH + (hauteurMur - hauteurPorteRH) * 0.5f,
+                                   demiZ - 0.2f),
+                       new Vector3(largeurPorteRH, hauteurMur - hauteurPorteRH, 0.4f),
+                       Bloc.MachineBis).SansCollision();
+
+            fondPiece = centre + new Vector3(0f, 0f, demiZ - 0.2f);
+            seuilBureauRH = Obstacles.Ajouter(fondPiece, largeurPorteRH, 0.4f);
+            gondBureauRH = Porte(parent, fondPiece, "PorteBureauRH");
 
             // Le bureau du patron, cale contre le mur de droite. Son fauteuil
             // est derriere, adosse au fond : assis, il regarde la porte — donc
@@ -405,6 +444,67 @@ namespace Pizzeria3D
             var aEffacer = new List<GameObject> { panDroit };
             aEffacer.AddRange(cachent);
             discrets.Murs = aEffacer.ToArray();
+            discrets.Centre = centre;
+            discrets.DemiX = demiX;
+            discrets.DemiZ = demiZ;
+
+            return go;
+        }
+
+        /// <summary>
+        /// Le bureau RH, juste derriere celui du patron : on y entre par la
+        /// porte percee dans le mur du fond du bureau, jamais depuis la salle
+        /// a manger — il n'y a pas de facade a cet endroit. Meme squelette que
+        /// les autres pieces (dallage, murs, PetitePiece, MursDiscrets), sans
+        /// mur cote entree puisque celui du bureau du patron en tient lieu.
+        /// </summary>
+        static GameObject PieceBureauRH(Transform parent, Vector3 centre, float demiX, float demiZ,
+                                        Transform gond, int seuil, Joueur joueur)
+        {
+            var go = new GameObject("BureauRH");
+            go.transform.SetParent(parent, false);
+            go.transform.position = centre;
+            go.SetActive(false);
+            var t = go.transform;
+
+            Bloc.Boite("SolBureauRH", t, new Vector3(0f, -0.2f, 0.15f),
+                       new Vector3(demiX * 2f + 0.4f, 0.4f, demiZ * 2f + 0.3f),
+                       Bloc.Sol).SansCollision();
+
+            Mur(t, new Vector3(-demiX, 1.6f, 0f), new Vector3(0.4f, 3.2f, demiZ * 2f), centre);
+            var panDroit = Mur(t, new Vector3(demiX, 1.6f, 0f), new Vector3(0.4f, 3.2f, demiZ * 2f),
+                               centre);
+            Mur(t, new Vector3(0f, 1.6f, demiZ - 0.2f), new Vector3(demiX * 2f + 0.4f, 3.2f, 0.4f),
+                centre);
+
+            // Le bureau RH : un plan, un caisson, un ecran pose et une
+            // enseigne — le meuble qui donne son nom a la piece.
+            var bois = Bloc.Couleur(0x6B4423);
+            var boisSombre = Bloc.Couleur(0x4A2E17);
+            var meuble = new GameObject("MeubleRH");
+            meuble.transform.SetParent(t, false);
+            meuble.transform.localPosition = new Vector3(0f, 0f, 1.2f);
+            Bloc.Boite("Plateau", meuble.transform, new Vector3(0f, 0.76f, 0f),
+                       new Vector3(1.5f, 0.08f, 0.7f), bois).SansCollision();
+            Bloc.Boite("Caisson", meuble.transform, new Vector3(0.45f, 0.35f, 0.05f),
+                       new Vector3(0.5f, 0.70f, 0.6f), boisSombre).SansCollision();
+            Bloc.Boite("Ecran", meuble.transform, new Vector3(-0.35f, 0.94f, -0.15f),
+                       new Vector3(0.5f, 0.32f, 0.04f), Bloc.Couleur(0x1B1E22)).SansCollision();
+            Bloc.Boite("Pied", meuble.transform, new Vector3(-0.35f, 0.80f, -0.15f),
+                       new Vector3(0.08f, 0.16f, 0.08f), Bloc.Couleur(0x3A3D42)).SansCollision();
+            Bloc.Boite("Enseigne", meuble.transform, new Vector3(0f, 1.05f, 0.34f),
+                       new Vector3(0.9f, 0.22f, 0.03f), Bloc.Couleur(0xE95420)).SansCollision();
+
+            var p = go.AddComponent<PetitePiece>();
+            p.Passage = seuil;
+            p.Gond = gond;
+            p.Joueur = joueur;
+            p.Seuil = gond.parent != null ? gond.parent.position : gond.position;
+            p.DemiTerrainZ = centre.z + demiZ - 0.85f;
+
+            var discrets = go.AddComponent<MursDiscrets>();
+            discrets.Joueur = joueur;
+            discrets.Murs = new[] { panDroit };
             discrets.Centre = centre;
             discrets.DemiX = demiX;
             discrets.DemiZ = demiZ;
@@ -1305,7 +1405,7 @@ namespace Pizzeria3D
         /// large ressemble a un objet pose la, pas a un emplacement a acheter.
         /// </summary>
         static ZoneAchat Zone(Transform parent, Joueur joueur, GameObject achat, Vector3 position,
-                              int prix, string libelle)
+                              int prix, string libelle, float rayon = 1.2f)
         {
             var go = new GameObject("ZoneAchat");
             go.transform.SetParent(parent, false);
@@ -1321,6 +1421,7 @@ namespace Pizzeria3D
             z.Achat = achat;
             z.Prix = prix;
             z.Libelle = libelle;
+            z.Rayon = rayon;
             return z;
         }
     }

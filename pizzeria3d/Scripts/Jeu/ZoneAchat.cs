@@ -13,6 +13,12 @@ namespace Pizzeria3D
         public GameObject Achat;          // objet a reveler une fois paye
         public int Prix = Reglages.PrixCaissier;
         public string Libelle = "Nouveau four";
+        /// <summary>
+        /// Distance a laquelle rester pour payer. Plus court pour une dalle
+        /// nichee dans une piece deja frequentee : sinon un passant qui ne
+        /// fait qu'y traverser la paierait sans le vouloir.
+        /// </summary>
+        public float Rayon = 1.2f;
 
         float _verse;
         float _reste;
@@ -22,7 +28,7 @@ namespace Pizzeria3D
         void Update()
         {
             if (Joueur == null) return;
-            bool dessus = Joueur.EstPres(transform.position, 1.2f);
+            bool dessus = Joueur.EstPres(transform.position, Rayon);
             if (dessus) Hud.MontrerIndice(this, $"{Libelle} — reste {Restant} EUR");
             else { Hud.EffacerIndice(this); return; }
 

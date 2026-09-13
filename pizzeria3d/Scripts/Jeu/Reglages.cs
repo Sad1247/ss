@@ -114,6 +114,8 @@ namespace Pizzeria3D
         public const int PrixPetitePiece = 400;
         /// <summary>La salle de repos du personnel, sa voisine.</summary>
         public const int PrixSalleRepos = 500;
+        /// <summary>Le bureau RH, derriere celui du patron.</summary>
+        public const int PrixBureauRH = 450;
         public const float DebitAchat = 45f;        // euros par seconde en restant dessus
 
         // --- pile de pizzas ---
