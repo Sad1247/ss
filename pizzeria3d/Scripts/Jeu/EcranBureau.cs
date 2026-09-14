@@ -179,7 +179,26 @@ namespace Pizzeria3D
             if (bureau == null) return;
             var loin = -bureau.VersLeBureau(bureau.Place);
             if (loin.sqrMagnitude < 0.0001f) loin = Vector3.back;
-            Joueur.transform.position = bureau.Place + loin * (bureau.Rayon + 1.0f);
+            Joueur.transform.position = Recul(bureau, loin);
+        }
+
+        /// <summary>
+        /// Ou reculer en quittant le fauteuil : droit derriere si la place est
+        /// libre, sinon sur le cote. Le mur du fond est a un pas du dossier :
+        /// reculer sans regarder le posait derriere, hors du terrain, d'ou il
+        /// etait aussitot ramene sur le fauteuil — impossible de se lever.
+        /// </summary>
+        static Vector3 Recul(Bureau bureau, Vector3 loin)
+        {
+            float distance = bureau.Rayon + 1.0f;
+            var cote = new Vector3(-loin.z, 0f, loin.x);   // un quart de tour
+            var essais = new Vector3[] { loin, cote, -cote, -loin };
+            foreach (var d in essais)
+            {
+                var place = bureau.Place + d.normalized * distance;
+                if (Obstacles.Praticable(place, Reglages.RayonJoueur)) return place;
+            }
+            return bureau.Place + loin * distance;
         }
 
         void AfficherOnglet(string nom)

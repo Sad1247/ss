@@ -68,21 +68,7 @@ namespace Pizzeria3D
         {
             var joueur = Object.FindObjectOfType<Joueur>();
             if (joueur == null) return;
-
-            var p = joueur.Position;
-            var c = transform.position;
-            float marge = Reglages.RayonJoueur + 0.05f;
-            float demiX = EmpriseX * 0.5f + marge, demiZ = EmpriseZ * 0.5f + marge;
-            float dx = p.x - c.x, dz = p.z - c.z;
-            if (Mathf.Abs(dx) >= demiX || Mathf.Abs(dz) >= demiZ) return;   // deja dehors
-
-            // Par le cote dont il est le plus pres : le moins de chemin, et
-            // jamais au travers du meuble.
-            if (demiX - Mathf.Abs(dx) <= demiZ - Mathf.Abs(dz))
-                p.x = c.x + (dx < 0f ? -demiX : demiX);
-            else
-                p.z = c.z + (dz < 0f ? -demiZ : demiZ);
-            joueur.transform.position = p;
+            joueur.transform.position = Obstacles.Degager(joueur.Position, Reglages.RayonJoueur);
         }
 
         /// <summary>

@@ -60,16 +60,60 @@ namespace Pizzeria3D
         public static float DemiTerrainX => _terrainX;
         public static float DemiTerrainZ => _terrainZ;
 
-        public static bool Bloque(Vector3 p, float rayon)
+        public static bool Bloque(Vector3 p, float rayon) => Dedans(p, rayon) >= 0;
+
+        /// <summary>
+        /// Vrai si l'on peut vraiment se tenir la : hors de tout meuble, et
+        /// dans le terrain. Un point libre mais hors des bornes n'est pas une
+        /// place — le joueur y serait ramene de force a l'image suivante.
+        /// </summary>
+        public static bool Praticable(Vector3 p, float rayon)
+            => !Bloque(p, rayon) && Mathf.Abs(p.x) <= _terrainX && Mathf.Abs(p.z) <= _terrainZ;
+
+        /// <summary>Le numero du premier obstacle ou ce point se trouve, -1 sinon.</summary>
+        static int Dedans(Vector3 p, float rayon)
         {
             for (int i = 0; i < _boites.Count; i++)
             {
                 var b = _boites[i];
                 if (b.xMax <= b.xMin) continue;      // obstacle leve
                 if (p.x > b.xMin - rayon && p.x < b.xMax + rayon &&
-                    p.z > b.zMin - rayon && p.z < b.zMax + rayon) return true;
+                    p.z > b.zMin - rayon && p.z < b.zMax + rayon) return i;
             }
-            return false;
+            return -1;
+        }
+
+        /// <summary>
+        /// Sort un point d'un meuble ou il se trouve deja, par le cote dont il
+        /// est le plus pres. C'est le filet de securite du deplacement : une
+        /// table qu'on vient de payer, une piece qui s'ouvre, un mur pose
+        /// pendant la partie — quoi qu'il arrive sous ses pieds, le joueur
+        /// n'est jamais enferme dedans. Plusieurs passes, parce que sortir
+        /// d'une boite peut poser le pied dans sa voisine.
+        /// </summary>
+        public static Vector3 Degager(Vector3 p, float rayon)
+        {
+            const float pouce = 0.001f;              // pour rester franchement dehors
+            for (int passe = 0; passe < 4; passe++)
+            {
+                int i = Dedans(p, rayon);
+                if (i < 0) break;
+                var b = _boites[i];
+
+                float gauche = p.x - (b.xMin - rayon);
+                float droite = (b.xMax + rayon) - p.x;
+                float arriere = p.z - (b.zMin - rayon);
+                float avant = (b.zMax + rayon) - p.z;
+
+                float court = Mathf.Min(Mathf.Min(gauche, droite), Mathf.Min(arriere, avant));
+                if (court == gauche) p.x = b.xMin - rayon - pouce;
+                else if (court == droite) p.x = b.xMax + rayon + pouce;
+                else if (court == arriere) p.z = b.zMin - rayon - pouce;
+                else p.z = b.zMax + rayon + pouce;
+            }
+            p.x = Mathf.Clamp(p.x, -_terrainX, _terrainX);
+            p.z = Mathf.Clamp(p.z, -_terrainZ, _terrainZ);
+            return p;
         }
 
         /// <summary>
@@ -78,18 +122,10 @@ namespace Pizzeria3D
         /// </summary>
         public static Vector3 Resoudre(Vector3 depart, Vector3 pas, float rayon)
         {
-            var p = depart;
-
-            // Deja dans un obstacle — un meuble apparu sous ses pieds : on le
-            // laisse en sortir. Sans cette echappatoire, chaque pas serait
-            // refuse et il ne bougerait plus jamais.
-            if (Bloque(depart, rayon))
-            {
-                p += pas;
-                p.x = Mathf.Clamp(p.x, -_terrainX, _terrainX);
-                p.z = Mathf.Clamp(p.z, -_terrainZ, _terrainZ);
-                return p;
-            }
+            // Un meuble a pu apparaitre sous ses pieds depuis le dernier pas :
+            // on le remet dehors avant de bouger, sinon chaque pas serait
+            // refuse et il ne repartirait jamais.
+            var p = Degager(depart, rayon);
 
             var enX = new Vector3(p.x + pas.x, p.y, p.z);
             if (!Bloque(enX, rayon)) p = enX;

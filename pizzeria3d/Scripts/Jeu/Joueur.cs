@@ -39,6 +39,10 @@ namespace Pizzeria3D
             }
 
             Deplacer(direction * Reglages.VitesseJoueur * Time.deltaTime);
+            // Un meuble a pu s'allumer sous ses pieds — une table qu'on vient
+            // de payer, une piece qui s'ouvre. Il en ressort de lui-meme,
+            // meme sans toucher a la manette : rien ne l'y enferme.
+            if (!Assis) transform.position = Obstacles.Degager(transform.position, Reglages.RayonJoueur);
             if (_compteurTransfert > 0f) _compteurTransfert -= Time.deltaTime;
             // bras tendus tant qu'il tient quelque chose, pendants sinon
             if (_demarche != null) _demarche.BrasPortent = !Portee.EstVide;

@@ -1985,6 +1985,11 @@ static class Harness3D
         bool ferme = boutonFermer != null && boutonFermer.Cliquer();
         Check("il ferme l'ecran sur le champ", ferme && !ecranBureau.Ouvert);
         Check("et il leve le patron", !joueur.Assis);
+        // Le fauteuil est adosse au mur du fond : recule tout droit, il se
+        // retrouvait derriere, hors du terrain — d'ou il etait ramene sur le
+        // siege a l'image suivante, incapable de se lever.
+        Check("et il le pose a une place ou l'on peut vraiment se tenir",
+              Obstacles.Praticable(joueur.Position, Reglages.RayonJoueur));
         Frames(2);
         Check("l'ecran reste ferme le temps que le capot se rabatte", !ecranBureau.Ouvert);
         Secondes(2f);
@@ -2332,9 +2337,11 @@ static class Harness3D
         Check("le joueur n'est pas enferme dans la table qu'il vient de payer",
               !Obstacles.Bloque(joueur.Position, Reglages.RayonJoueur));
         var avantDeBouger = joueur.Position;
-        PousserVers(joueur, avantDeBouger + new Vector3(0f, 0f, 2.5f), 1.2f);
+        var fuite = avantDeBouger - table2.transform.position; fuite.y = 0f;
+        PousserVers(joueur, avantDeBouger + fuite.normalized * 2.5f, 1.2f);
         Check("et il repart librement",
               (joueur.Position - avantDeBouger).magnitude > 0.5f);
+
         Check("et son emprise barre desormais le passage",
               Obstacles.Bloque(table2.transform.position, Reglages.RayonJoueur));
 
@@ -2373,6 +2380,28 @@ static class Harness3D
         // La salle revient a ce qu'elle etait au lancement d'une partie —
         // une seule table ouverte — et le solde a ce qu'il etait : la suite
         // du banc d'essai eprouve ce monde-la, et compte les euros.
+        // Le filet de securite, quelle que soit la table : pose au beau milieu
+        // d'un meuble, il en ressort de lui-meme, sans meme toucher la manette.
+        // C'est ce qui manquait quand le joueur se retrouvait plante dans la
+        // table de la salle, incapable d'en bouger.
+        int soldeAvantEssai = Banque.Solde;
+        foreach (var quelconque in Salles.Tables)
+        {
+            if (quelconque == null || quelconque.Etat == EtatTable.Verrouillee) continue;
+            Placer(joueur, quelconque.transform.position);
+            Frames(2);
+            Check("pose dans une table, il en ressort seul",
+                  !Obstacles.Bloque(joueur.Position, Reglages.RayonJoueur));
+            Check("et il reste sur le terrain",
+                  Mathf.Abs(joueur.Position.x) <= Obstacles.DemiTerrainX &&
+                  Mathf.Abs(joueur.Position.z) <= Obstacles.DemiTerrainZ);
+        }
+        Placer(joueur, avantDeBouger);
+        // Ces quelques images ont laisse la salle vivre : un client a pu payer.
+        // On remet la caisse ou elle etait, sinon le compte de la table
+        // suivante ne tomberait plus juste.
+        if (Banque.Solde > soldeAvantEssai) Banque.Retirer(Banque.Solde - soldeAvantEssai);
+
         table2.SetActive(false);
         table3.SetActive(false);
         Check("refermees, elles quittent la liste des tables utilisables",
