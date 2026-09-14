@@ -2326,6 +2326,15 @@ static class Harness3D
         Check("sa dalle verte disparait", dalleTable2.gameObject.Detruit);
         Check("ses chaises viennent avec elle", repas2.NombreDeChaises == 2);
         Check("elle rejoint aussitot les tables utilisables", Salles.Deverrouillees == 2);
+
+        // La table apparait sous les pieds de celui qui vient de la payer :
+        // sans precaution, il resterait enferme dans son emprise.
+        Check("le joueur n'est pas enferme dans la table qu'il vient de payer",
+              !Obstacles.Bloque(joueur.Position, Reglages.RayonJoueur));
+        var avantDeBouger = joueur.Position;
+        PousserVers(joueur, avantDeBouger + new Vector3(0f, 0f, 2.5f), 1.2f);
+        Check("et il repart librement",
+              (joueur.Position - avantDeBouger).magnitude > 0.5f);
         Check("et son emprise barre desormais le passage",
               Obstacles.Bloque(table2.transform.position, Reglages.RayonJoueur));
 

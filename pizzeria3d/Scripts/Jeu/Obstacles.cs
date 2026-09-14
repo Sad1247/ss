@@ -80,6 +80,17 @@ namespace Pizzeria3D
         {
             var p = depart;
 
+            // Deja dans un obstacle — un meuble apparu sous ses pieds : on le
+            // laisse en sortir. Sans cette echappatoire, chaque pas serait
+            // refuse et il ne bougerait plus jamais.
+            if (Bloque(depart, rayon))
+            {
+                p += pas;
+                p.x = Mathf.Clamp(p.x, -_terrainX, _terrainX);
+                p.z = Mathf.Clamp(p.z, -_terrainZ, _terrainZ);
+                return p;
+            }
+
             var enX = new Vector3(p.x + pas.x, p.y, p.z);
             if (!Bloque(enX, rayon)) p = enX;
 
