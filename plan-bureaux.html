@@ -1,0 +1,651 @@
+<title>Plan Bureaux 1–28</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+  :root{
+    --paper:#eceeed;
+    --floor:#f7f8f7;
+    --surface:#ffffff;
+    --ink:#141819;
+    --muted:#5d686c;
+    --line:#ccd3d3;
+    --line-strong:#9aa5a6;
+    --accent:#1d5f7d;
+    --accent-soft:#dcebf1;
+    --free:#2b7a57;
+    --free-soft:#dff0e6;
+    --away:#a2610f;
+    --away-soft:#f6ebd7;
+    --shadow:0 1px 2px rgba(20,24,25,.08), 0 8px 24px -16px rgba(20,24,25,.4);
+    --r:6px;
+    --desk-w:clamp(46px,12vw,66px);
+    --desk-h:clamp(54px,14vw,76px);
+    --isle-w:clamp(54px,14vw,84px);
+    --isle-h:clamp(38px,10vw,50px);
+    --chair:20px;
+    color-scheme:light;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --paper:#101415;
+      --floor:#181d1f;
+      --surface:#1e2426;
+      --ink:#e7ecec;
+      --muted:#97a3a5;
+      --line:#2f383a;
+      --line-strong:#556164;
+      --accent:#6cb4d4;
+      --accent-soft:#1b3641;
+      --free:#5cbc8c;
+      --free-soft:#17342a;
+      --away:#dda14b;
+      --away-soft:#352a17;
+      --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.8);
+      color-scheme:dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#101415;
+    --floor:#181d1f;
+    --surface:#1e2426;
+    --ink:#e7ecec;
+    --muted:#97a3a5;
+    --line:#2f383a;
+    --line-strong:#556164;
+    --accent:#6cb4d4;
+    --accent-soft:#1b3641;
+    --free:#5cbc8c;
+    --free-soft:#17342a;
+    --away:#dda14b;
+    --away-soft:#352a17;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.8);
+    color-scheme:dark;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:"Archivo","Helvetica Neue",Arial,sans-serif;
+    font-size:15px;
+    line-height:1.45;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:20px 56px}
+
+  /* ---------- header ---------- */
+  header.top{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;justify-content:space-between;margin-bottom:18px}
+  .brand h1{
+    font-size:clamp(22px,4.4vw,30px);font-weight:700;letter-spacing:-.02em;margin:0;text-wrap:balance;
+  }
+  .brand p{margin:2px 0 0;color:var(--muted);font-size:13.5px}
+  .eyebrow{
+    font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:11px;font-weight:600;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:0 0 4px
+  }
+  .tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .search{position:relative;display:flex;align-items:center}
+  .search input{
+    font:inherit;font-size:14px;color:var(--ink);background:var(--surface);
+    border:1px solid var(--line);border-radius:var(--r);padding:8px 10px 8px 30px;width:min(230px,52vw)
+  }
+  .search svg{position:absolute;left:9px;width:14px;height:14px;stroke:var(--muted);fill:none;stroke-width:2}
+  .btn{
+    font:inherit;font-size:13.5px;font-weight:500;color:var(--ink);background:var(--surface);
+    border:1px solid var(--line);border-radius:var(--r);padding:8px 12px;cursor:pointer
+  }
+  .btn:hover{border-color:var(--line-strong)}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.primary:hover{filter:brightness(1.08)}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  /* ---------- stats ---------- */
+  .stats{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+  .stat{
+    display:flex;align-items:baseline;gap:7px;background:var(--surface);border:1px solid var(--line);
+    border-radius:var(--r);padding:7px 12px
+  }
+  .stat b{font-family:"IBM Plex Mono",monospace;font-size:17px;font-variant-numeric:tabular-nums;font-weight:600}
+  .stat span{font-size:12.5px;color:var(--muted);letter-spacing:.01em}
+  .stat.occ b{color:var(--accent)} .stat.lib b{color:var(--free)} .stat.tel b{color:var(--away)}
+
+  .notice{
+    display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;
+    background:var(--away-soft);border:1px solid var(--line);border-left:3px solid var(--away);
+    border-radius:var(--r);padding:9px 12px;margin-bottom:14px;font-size:13px;color:var(--ink)
+  }
+  .notice button{font:inherit;font-size:12.5px;background:none;border:1px solid var(--line-strong);border-radius:4px;padding:4px 9px;cursor:pointer;color:inherit}
+
+  /* ---------- plan ---------- */
+  .planwrap{
+    background:var(--floor);border:1px solid var(--line);border-radius:10px;
+    padding:clamp(14px,3vw,28px);overflow-x:auto;box-shadow:var(--shadow)
+  }
+  .plan{display:flex;gap:clamp(18px,4vw,54px);align-items:stretch;justify-content:center;min-width:min-content}
+  @media (max-width:720px){
+    .plan{flex-direction:column;align-items:center;min-width:0}
+    .zone.floor > .zone-body{align-items:flex-start}
+    .zone{width:100%}
+    .zone-body{justify-content:center}
+  }
+  .zone{display:flex;flex-direction:column;gap:10px}
+  .zone.floor{flex:0 1 auto}
+  .zone.floor > .zone-body{flex:1;align-items:center}
+  .zone-label{
+    font-family:"IBM Plex Mono",monospace;font-size:10.5px;font-weight:600;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted);padding-bottom:4px;border-bottom:1px solid var(--line)
+  }
+  .zone-body{display:flex;gap:clamp(12px,2.4vw,26px);align-items:flex-start}
+
+  .bank{display:flex;gap:6px;align-items:flex-start}
+  .col{display:grid;grid-auto-rows:var(--desk-h);gap:14px;justify-items:center;align-items:center}
+  .col.seats{gap:14px}
+
+  .island{display:grid;gap:7px;justify-items:stretch}
+  .island .seats-row{display:grid;grid-template-columns:1fr 1fr;justify-items:center;gap:6px}
+  .island .desks{display:grid;grid-template-columns:auto auto;gap:0}
+
+  /* desk */
+  .desk{
+    position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+    width:var(--desk-w);height:var(--desk-h);padding:2px;cursor:pointer;
+    background:var(--surface);color:var(--ink);border:1.5px solid var(--line-strong);border-radius:3px;
+    font:inherit;transition:transform .12s ease, box-shadow .12s ease;
+  }
+  .desk .num{font-family:"IBM Plex Mono",monospace;font-size:14px;font-weight:600;font-variant-numeric:tabular-nums}
+  .desk .who{
+    font-size:9.5px;line-height:1.1;color:var(--muted);max-width:100%;overflow:hidden;
+    text-overflow:ellipsis;white-space:nowrap;padding-inline:2px
+  }
+  .island .desk{width:var(--isle-w);height:var(--isle-h);border-radius:0;margin:-0.75px}
+  .desk:hover{transform:translateY(-1px);box-shadow:var(--shadow);z-index:2}
+  .desk[data-st="occupe"]{background:var(--accent-soft);border-color:var(--accent)}
+  .desk[data-st="occupe"] .who{color:var(--accent)}
+  .desk[data-st="libre"]{background:var(--surface);border-style:dashed;border-color:var(--free)}
+  .desk[data-st="teletravail"]{background:var(--away-soft);border-color:var(--away)}
+  .desk[data-st="teletravail"] .who{color:var(--away)}
+  .desk.dim{opacity:.26}
+  .desk.hit{box-shadow:0 0 0 3px var(--accent);z-index:3}
+
+  /* chair */
+  .chair{
+    width:var(--chair);height:var(--chair);border-radius:50%;
+    border:1.5px solid var(--line-strong);background:transparent
+  }
+  .chair[data-st="occupe"]{background:var(--accent);border-color:var(--accent)}
+  .chair[data-st="libre"]{border-color:var(--free);border-style:dashed}
+  .chair[data-st="teletravail"]{background:var(--away-soft);border-color:var(--away)}
+  .chair.dim{opacity:.26}
+
+  .printer{
+    align-self:center;display:flex;align-items:center;justify-content:center;text-align:center;
+    width:clamp(50px,12vw,68px);height:clamp(46px,11vw,60px);
+    border:1.5px dashed var(--line-strong);border-radius:3px;background:transparent;
+    font-size:10px;color:var(--muted);letter-spacing:.02em;padding:3px
+  }
+
+  /* legend */
+  .legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:16px;font-size:12.5px;color:var(--muted)}
+  .legend div{display:flex;align-items:center;gap:6px}
+  .key{width:15px;height:15px;border-radius:3px;border:1.5px solid var(--line-strong)}
+  .key.occupe{background:var(--accent-soft);border-color:var(--accent)}
+  .key.libre{border-color:var(--free);border-style:dashed}
+  .key.teletravail{background:var(--away-soft);border-color:var(--away)}
+  .key.chaise{border-radius:50%;width:14px;height:14px}
+
+  /* directory */
+  .dir{margin-top:32px}
+  .dir h2{font-size:15px;font-weight:600;letter-spacing:-.01em;margin:0 0 10px}
+  .dirlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px}
+  .dirrow{
+    display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);
+    border-radius:var(--r);padding:7px 10px;cursor:pointer;font:inherit;color:inherit;text-align:left;width:100%
+  }
+  .dirrow:hover{border-color:var(--line-strong)}
+  .dirrow .n{
+    font-family:"IBM Plex Mono",monospace;font-size:12.5px;font-weight:600;font-variant-numeric:tabular-nums;
+    color:var(--muted);min-width:22px
+  }
+  .dirrow .nm{flex:1;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .dirrow .tm{font-size:11.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:40%}
+  .pill{width:9px;height:9px;border-radius:50%;flex:none}
+  .pill[data-st="occupe"]{background:var(--accent)}
+  .pill[data-st="libre"]{background:var(--free)}
+  .pill[data-st="teletravail"]{background:var(--away)}
+
+  /* drawer */
+  .scrim{position:fixed;inset:0;background:rgba(10,14,15,.45);opacity:0;pointer-events:none;transition:opacity .18s ease;z-index:40}
+  .scrim.open{opacity:1;pointer-events:auto}
+  .drawer{
+    position:fixed;z-index:50;top:0;right:0;height:100%;width:min(370px,100%);
+    background:var(--surface);border-left:1px solid var(--line);box-shadow:var(--shadow);
+    transform:translateX(100%);transition:transform .2s ease;display:flex;flex-direction:column;
+    padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)
+  }
+  .drawer.open{transform:translateX(0)}
+  .drawer-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:18px 18px 12px;border-bottom:1px solid var(--line)}
+  .drawer-head .lbl{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .drawer-head h3{margin:2px 0 0;font-size:24px;font-weight:700;letter-spacing:-.02em}
+  .drawer-body{padding:16px 18px;overflow-y:auto;display:flex;flex-direction:column;gap:14px}
+  .field{display:flex;flex-direction:column;gap:5px}
+  .field label{font-size:12px;font-weight:600;letter-spacing:.02em;color:var(--muted)}
+  .field input,.field textarea{
+    font:inherit;font-size:14px;color:var(--ink);background:var(--paper);
+    border:1px solid var(--line);border-radius:var(--r);padding:8px 10px;width:100%
+  }
+  .field textarea{resize:vertical;min-height:62px}
+  .segmented{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+  .segmented button{
+    font:inherit;font-size:12.5px;font-weight:500;padding:8px 4px;cursor:pointer;
+    background:var(--paper);border:1px solid var(--line);border-radius:var(--r);color:var(--muted)
+  }
+  .segmented button[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:600}
+  .drawer-foot{margin-top:auto;padding:14px 18px;border-top:1px solid var(--line);display:flex;gap:8px}
+  .drawer-foot .btn{flex:1}
+  .icon-btn{background:none;border:none;cursor:pointer;color:var(--muted);font-size:22px;line-height:1;padding:2px 6px}
+
+  .datapanel{margin-top:26px;border-top:1px solid var(--line);padding-top:14px}
+  .datapanel summary{cursor:pointer;font-size:13px;color:var(--muted);font-weight:500}
+  .datapanel textarea{
+    width:100%;margin-top:10px;min-height:110px;font-family:"IBM Plex Mono",monospace;font-size:11.5px;
+    background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:var(--r);padding:10px
+  }
+  .datarow{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .hint{font-size:12px;color:var(--muted);margin:8px 0 0}
+
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <p class="eyebrow">Plan d'étage · 28 postes</p>
+      <h1>Plan des bureaux</h1>
+      <p>Cliquez sur un bureau pour attribuer un poste. Chaque rond est une chaise.</p>
+    </div>
+    <div class="tools">
+      <div class="search">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg>
+        <input id="q" type="search" placeholder="Nom, équipe ou n°" aria-label="Rechercher un bureau ou une personne">
+      </div>
+      <button class="btn" id="theme" type="button" title="Changer de thème">Thème</button>
+    </div>
+  </header>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="notice" id="sample" hidden>
+    <span><b>Exemple :</b> quelques postes sont pré-remplis pour montrer le fonctionnement. Remplacez-les par vos collègues.</span>
+    <button type="button" id="clearSample">Vider tous les postes</button>
+  </div>
+
+  <div class="planwrap">
+    <div class="plan" id="plan"></div>
+  </div>
+
+  <div class="legend">
+    <div><span class="key occupe"></span> Occupé</div>
+    <div><span class="key libre"></span> Libre</div>
+    <div><span class="key teletravail"></span> Télétravail</div>
+    <div><span class="key chaise"></span> Chaise</div>
+  </div>
+
+  <section class="dir">
+    <h2>Annuaire des postes</h2>
+    <div class="dirlist" id="dir"></div>
+  </section>
+
+  <details class="datapanel">
+    <summary>Sauvegarde et partage des données</summary>
+    <p class="hint">Les attributions sont enregistrées dans ce navigateur uniquement. Copiez ce texte pour en garder une copie, ou collez-en un pour restaurer.</p>
+    <textarea id="json" spellcheck="false" aria-label="Données au format JSON"></textarea>
+    <div class="datarow">
+      <button class="btn" type="button" id="copy">Copier</button>
+      <button class="btn" type="button" id="load">Charger le texte collé</button>
+      <button class="btn" type="button" id="reset">Tout réinitialiser</button>
+      <span class="hint" id="dataMsg" style="align-self:center"></span>
+    </div>
+  </details>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dTitle" hidden>
+  <div class="drawer-head">
+    <div>
+      <div class="lbl">Bureau</div>
+      <h3 id="dTitle">—</h3>
+    </div>
+    <button class="icon-btn" id="close" type="button" aria-label="Fermer">&times;</button>
+  </div>
+  <div class="drawer-body">
+    <div class="field">
+      <label for="fName">Occupant</label>
+      <input id="fName" type="text" placeholder="Prénom Nom" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="fTeam">Équipe</label>
+      <input id="fTeam" type="text" placeholder="Compta, Dev, RH…" autocomplete="off">
+    </div>
+    <div class="field">
+      <label id="stLbl">Statut</label>
+      <div class="segmented" role="group" aria-labelledby="stLbl">
+        <button type="button" data-st="occupe">Occupé</button>
+        <button type="button" data-st="libre">Libre</button>
+        <button type="button" data-st="teletravail">Télétravail</button>
+      </div>
+    </div>
+    <div class="field">
+      <label for="fNote">Note</label>
+      <textarea id="fNote" placeholder="Écran double, près de la fenêtre…"></textarea>
+    </div>
+  </div>
+  <div class="drawer-foot">
+    <button class="btn" type="button" id="empty">Libérer le poste</button>
+    <button class="btn primary" type="button" id="save">Enregistrer</button>
+  </div>
+</aside>
+
+<script>
+(function(){
+  "use strict";
+
+  /* --- Plan relevé sur le croquis ------------------------------------- */
+  // Rangée A : 25-28 (chaises à gauche) adossés à 21-24 (chaises à droite)
+  // Rangée B : 17-20 (chaises à gauche)  ·  Îlots : 4 blocs de 4 postes
+  var BANK_A = [25,26,27,28], BANK_B = [21,22,23,24], BANK_C = [17,18,19,20];
+  var ISLANDS = [[1,2,3,4],[5,6,7,8],[9,10,11,12],[13,14,15,16]];
+  var ALL = [];
+  ISLANDS.forEach(function(i){ ALL = ALL.concat(i); });
+  ALL = ALL.concat(BANK_C, BANK_B, BANK_A).sort(function(a,b){return a-b;});
+
+  var KEY = "plan-bureaux-v1";
+  var SAMPLE = {
+    1:{name:"Camille Roy", team:"Compta", st:"occupe", note:""},
+    2:{name:"Yanis Benali", team:"Compta", st:"occupe", note:""},
+    5:{name:"Sofia Marchand", team:"Support", st:"teletravail", note:"Mardi et jeudi sur site"},
+    11:{name:"Léa Nguyen", team:"Dev", st:"occupe", note:"Écran double"},
+    18:{name:"Marc Ferreira", team:"RH", st:"occupe", note:""},
+    26:{name:"Inès Dubois", team:"Direction", st:"occupe", note:""}
+  };
+
+  var state = {}, isSample = false, current = null;
+
+  function blank(){ return {name:"", team:"", st:"libre", note:""}; }
+  function get(n){ return state[n] || blank(); }
+
+  function load(){
+    var raw = null;
+    try { raw = localStorage.getItem(KEY); } catch(e){}
+    if (raw){
+      try {
+        var p = JSON.parse(raw);
+        if (p && typeof p === "object"){ state = p; return; }
+      } catch(e){}
+    }
+    state = JSON.parse(JSON.stringify(SAMPLE));
+    isSample = true;
+  }
+  function save(){
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(e){}
+  }
+
+  /* --- Construction du plan -------------------------------------------- */
+  var plan = document.getElementById("plan");
+
+  function el(tag, cls, txt){
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (txt != null) e.textContent = txt;
+    return e;
+  }
+  function desk(n){
+    var b = el("button","desk");
+    b.type = "button";
+    b.dataset.desk = n;
+    b.appendChild(el("span","num", n));
+    b.appendChild(el("span","who",""));
+    b.addEventListener("click", function(){ open(n); });
+    return b;
+  }
+  function chair(n){
+    var c = el("span","chair");
+    c.dataset.seat = n;
+    c.setAttribute("aria-hidden","true");
+    return c;
+  }
+  function column(nums, what){
+    var c = el("div","col" + (what === "seats" ? " seats" : ""));
+    nums.forEach(function(n){ c.appendChild(what === "seats" ? chair(n) : desk(n)); });
+    return c;
+  }
+  function zone(label, extra){
+    var z = el("div","zone" + (extra ? " " + extra : ""));
+    z.appendChild(el("div","zone-label", label));
+    var body = el("div","zone-body");
+    z.appendChild(body);
+    return { root:z, body:body };
+  }
+
+  // Zone gauche
+  var left = zone("Open space · 17 → 28","floor");
+  var bank1 = el("div","bank");
+  bank1.appendChild(column(BANK_A,"seats"));
+  bank1.appendChild(column(BANK_A));
+  bank1.appendChild(column(BANK_B));
+  bank1.appendChild(column(BANK_B,"seats"));
+  var bank2 = el("div","bank");
+  bank2.appendChild(column(BANK_C,"seats"));
+  bank2.appendChild(column(BANK_C));
+  var printer = el("div","printer","imprimante");
+  left.body.appendChild(bank1);
+  left.body.appendChild(bank2);
+  left.body.appendChild(printer);
+
+  // Zone droite
+  var right = zone("Îlots · 1 → 16");
+  var stack = el("div","zone");
+  stack.style.gap = "18px";
+  ISLANDS.forEach(function(four){
+    var isl = el("div","island");
+    var top = el("div","seats-row");
+    top.appendChild(chair(four[0])); top.appendChild(chair(four[1]));
+    var grid = el("div","desks");
+    grid.appendChild(desk(four[0])); grid.appendChild(desk(four[1]));
+    grid.appendChild(desk(four[2])); grid.appendChild(desk(four[3]));
+    var bot = el("div","seats-row");
+    bot.appendChild(chair(four[2])); bot.appendChild(chair(four[3]));
+    isl.appendChild(top); isl.appendChild(grid); isl.appendChild(bot);
+    stack.appendChild(isl);
+  });
+  right.body.appendChild(stack);
+
+  plan.appendChild(left.root);
+  plan.appendChild(right.root);
+
+  /* --- Rendu ------------------------------------------------------------ */
+  var dir = document.getElementById("dir");
+  var statsEl = document.getElementById("stats");
+  var LABEL = { occupe:"Occupé", libre:"Libre", teletravail:"Télétravail" };
+
+  function render(){
+    var counts = { occupe:0, libre:0, teletravail:0 };
+
+    ALL.forEach(function(n){
+      var d = get(n);
+      counts[d.st] = (counts[d.st] || 0) + 1;
+      document.querySelectorAll('.desk[data-desk="'+n+'"]').forEach(function(b){
+        b.dataset.st = d.st;
+        b.querySelector(".who").textContent = d.name ? d.name.split(" ")[0] : "";
+        b.setAttribute("aria-label","Bureau "+n+" — "+(d.name || LABEL[d.st]));
+        b.title = "Bureau "+n+(d.name ? " — "+d.name : "")+" · "+LABEL[d.st];
+      });
+      document.querySelectorAll('.chair[data-seat="'+n+'"]').forEach(function(c){
+        c.dataset.st = d.st;
+      });
+    });
+
+    statsEl.innerHTML = "";
+    [["",ALL.length,"postes"],["occ",counts.occupe,"occupés"],["lib",counts.libre,"libres"],["tel",counts.teletravail,"en télétravail"]]
+      .forEach(function(row){
+        var s = el("div","stat"+(row[0] ? " "+row[0] : ""));
+        s.appendChild(el("b", null, row[1]));
+        s.appendChild(el("span", null, row[2]));
+        statsEl.appendChild(s);
+      });
+
+    dir.innerHTML = "";
+    ALL.forEach(function(n){
+      var d = get(n);
+      var r = el("button","dirrow"); r.type = "button"; r.dataset.row = n;
+      var p = el("span","pill"); p.dataset.st = d.st;
+      r.appendChild(p);
+      r.appendChild(el("span","n", String(n).padStart(2,"0")));
+      r.appendChild(el("span","nm", d.name || "Libre"));
+      r.appendChild(el("span","tm", d.team || ""));
+      if (!d.name) r.querySelector(".nm").style.color = "var(--muted)";
+      r.addEventListener("click", function(){ open(n); });
+      dir.appendChild(r);
+    });
+
+    document.getElementById("json").value = JSON.stringify(state, null, 1);
+    document.getElementById("sample").hidden = !isSample;
+    filter(document.getElementById("q").value);
+  }
+
+  /* --- Recherche -------------------------------------------------------- */
+  function filter(term){
+    term = (term || "").trim().toLowerCase();
+    var matches = ALL.filter(function(n){
+      if (!term) return true;
+      var d = get(n);
+      return String(n) === term || String(n).indexOf(term) === 0 ||
+             d.name.toLowerCase().indexOf(term) > -1 ||
+             d.team.toLowerCase().indexOf(term) > -1;
+    });
+    var set = {};
+    matches.forEach(function(n){ set[n] = 1; });
+    document.querySelectorAll(".desk").forEach(function(b){
+      var on = !!set[b.dataset.desk];
+      b.classList.toggle("dim", !!term && !on);
+      b.classList.toggle("hit", !!term && on);
+    });
+    document.querySelectorAll(".chair").forEach(function(c){
+      c.classList.toggle("dim", !!term && !set[c.dataset.seat]);
+    });
+    document.querySelectorAll(".dirrow").forEach(function(r){
+      r.hidden = !!term && !set[r.dataset.row];
+    });
+  }
+
+  /* --- Panneau ---------------------------------------------------------- */
+  var drawer = document.getElementById("drawer"),
+      scrim  = document.getElementById("scrim"),
+      fName  = document.getElementById("fName"),
+      fTeam  = document.getElementById("fTeam"),
+      fNote  = document.getElementById("fNote"),
+      segs   = drawer.querySelectorAll(".segmented button"),
+      pending = "libre";
+
+  function setSeg(st){
+    pending = st;
+    segs.forEach(function(b){ b.setAttribute("aria-pressed", b.dataset.st === st ? "true" : "false"); });
+  }
+  segs.forEach(function(b){ b.addEventListener("click", function(){ setSeg(b.dataset.st); }); });
+
+  function open(n){
+    current = n;
+    var d = get(n);
+    document.getElementById("dTitle").textContent = "N° " + n;
+    fName.value = d.name; fTeam.value = d.team; fNote.value = d.note;
+    setSeg(d.st);
+    drawer.hidden = false;
+    requestAnimationFrame(function(){
+      drawer.classList.add("open");
+      scrim.classList.add("open");
+      fName.focus();
+    });
+  }
+  function close(){
+    drawer.classList.remove("open");
+    scrim.classList.remove("open");
+    setTimeout(function(){ if (!drawer.classList.contains("open")) drawer.hidden = true; }, 220);
+    current = null;
+  }
+  function commit(d){
+    if (current == null) return;
+    state[current] = d;
+    isSample = false;
+    save(); render(); close();
+  }
+
+  document.getElementById("save").addEventListener("click", function(){
+    var name = fName.value.trim();
+    commit({
+      name: name,
+      team: fTeam.value.trim(),
+      st: (!name && pending === "occupe") ? "libre" : pending,
+      note: fNote.value.trim()
+    });
+  });
+  document.getElementById("empty").addEventListener("click", function(){ commit(blank()); });
+  document.getElementById("close").addEventListener("click", close);
+  scrim.addEventListener("click", close);
+  fName.addEventListener("input", function(){
+    if (fName.value.trim() && pending === "libre") setSeg("occupe");
+  });
+  document.addEventListener("keydown", function(e){
+    if (e.key === "Escape" && current != null) close();
+  });
+
+  /* --- Barre d'outils --------------------------------------------------- */
+  document.getElementById("q").addEventListener("input", function(e){ filter(e.target.value); });
+
+  document.getElementById("clearSample").addEventListener("click", function(){
+    state = {}; isSample = false; save(); render();
+  });
+
+  document.getElementById("theme").addEventListener("click", function(){
+    var r = document.documentElement;
+    var dark = r.getAttribute("data-theme") === "dark" ||
+      (!r.getAttribute("data-theme") && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    r.setAttribute("data-theme", dark ? "light" : "dark");
+  });
+
+  var msg = document.getElementById("dataMsg");
+  function say(t){ msg.textContent = t; setTimeout(function(){ msg.textContent = ""; }, 2600); }
+
+  document.getElementById("copy").addEventListener("click", function(){
+    var ta = document.getElementById("json");
+    ta.select();
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(ta.value).then(function(){ say("Copié."); }, function(){ say("Sélectionné — faites Ctrl+C."); });
+    } else { say("Sélectionné — faites Ctrl+C."); }
+  });
+  document.getElementById("load").addEventListener("click", function(){
+    try {
+      var p = JSON.parse(document.getElementById("json").value);
+      if (!p || typeof p !== "object") throw new Error("bad");
+      var next = {};
+      ALL.forEach(function(n){
+        var v = p[n];
+        if (v && typeof v === "object"){
+          next[n] = {
+            name: String(v.name || ""), team: String(v.team || ""),
+            st: LABEL[v.st] ? v.st : "libre", note: String(v.note || "")
+          };
+        }
+      });
+      state = next; isSample = false; save(); render();
+      say("Données chargées.");
+    } catch(e){ say("Texte illisible : vérifiez le format JSON."); }
+  });
+  document.getElementById("reset").addEventListener("click", function(){
+    state = {}; isSample = false; save(); render(); say("Tous les postes sont libres.");
+  });
+
+  load();
+  render();
+})();
+</script>
