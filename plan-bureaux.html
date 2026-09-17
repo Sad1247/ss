@@ -299,7 +299,7 @@
 
   <details class="datapanel">
     <summary>Sauvegarde et partage des données</summary>
-    <p class="hint">Les attributions sont enregistrées dans ce navigateur uniquement. Copiez ce texte pour en garder une copie, ou collez-en un pour restaurer.</p>
+    <p class="hint" id="storeInfo">Lecture des données…</p>
     <textarea id="json" spellcheck="false" aria-label="Données au format JSON"></textarea>
     <div class="datarow">
       <button class="btn" type="button" id="copy">Copier</button>
@@ -375,7 +375,11 @@
   function blank(){ return {name:"", team:"", st:"libre", note:""}; }
   function get(n){ return state[n] || blank(); }
 
-  function load(){
+  // Deux modes de stockage : l'application Windows expose "api/data" et
+  // enregistre dans plan-bureaux.json ; sinon on retombe sur ce navigateur.
+  var mode = "navigateur";
+
+  function loadLocal(){
     var raw = null;
     try { raw = localStorage.getItem(KEY); } catch(e){}
     if (raw){
@@ -388,7 +392,36 @@
     isSample = true;
   }
   function save(){
+    if (mode === "fichier"){
+      try {
+        fetch("api/data", {
+          method:"POST",
+          headers:{"Content-Type":"application/json"},
+          body: JSON.stringify(state)
+        }).then(function(r){ if (!r.ok) say("Enregistrement impossible."); },
+                function(){ say("Enregistrement impossible."); });
+      } catch(e){ say("Enregistrement impossible."); }
+      return;
+    }
     try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(e){}
+  }
+
+  function probeServer(cb){
+    if (location.protocol === "file:" || typeof fetch !== "function") return cb(false);
+    var done = false, timer = null;
+    function finish(ok, data){
+      if (done) return;
+      done = true;
+      if (timer) clearTimeout(timer);
+      cb(ok, data);
+    }
+    timer = setTimeout(function(){ finish(false); }, 1500);
+    try {
+      fetch("api/data", { cache:"no-store" }).then(function(r){
+        if (!r.ok) return finish(false);
+        r.json().then(function(j){ finish(true, j); }, function(){ finish(false); });
+      }, function(){ finish(false); });
+    } catch(e){ finish(false); }
   }
 
   /* --- Construction du plan -------------------------------------------- */
@@ -645,7 +678,22 @@
     state = {}; isSample = false; save(); render(); say("Tous les postes sont libres.");
   });
 
-  load();
-  render();
+  probeServer(function(ok, data){
+    if (ok){
+      mode = "fichier";
+      if (data && typeof data === "object" && Object.keys(data).length){
+        state = data;
+      } else {
+        state = JSON.parse(JSON.stringify(SAMPLE));
+        isSample = true;
+      }
+    } else {
+      loadLocal();
+    }
+    document.getElementById("storeInfo").textContent = (mode === "fichier")
+      ? "Enregistré dans le fichier plan-bureaux.json, à côté de l'application. Tout le monde qui ouvre cette application voit les mêmes attributions."
+      : "Enregistré dans ce navigateur uniquement. Copiez ce texte pour en garder une copie, ou collez-en un pour restaurer.";
+    render();
+  });
 })();
 </script>
