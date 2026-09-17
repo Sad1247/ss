@@ -20,7 +20,7 @@
     --shadow:0 1px 2px rgba(20,24,25,.08), 0 8px 24px -16px rgba(20,24,25,.4);
     --r:6px;
     --desk-w:clamp(46px,12vw,66px);
-    --desk-h:clamp(54px,14vw,76px);
+    --desk-h:clamp(58px,15vw,84px);
     --isle-w:clamp(54px,14vw,84px);
     --isle-h:clamp(38px,10vw,50px);
     --chair:20px;
@@ -126,22 +126,24 @@
   .plan{display:flex;gap:clamp(18px,4vw,54px);align-items:stretch;justify-content:center;min-width:min-content}
   @media (max-width:720px){
     .plan{flex-direction:column;align-items:center;min-width:0}
-    .zone.floor > .zone-body{align-items:flex-start}
+    .zone.floor > .zone-body{align-items:stretch}
     .zone{width:100%}
     .zone-body{justify-content:center}
   }
   .zone{display:flex;flex-direction:column;gap:10px}
   .zone.floor{flex:0 1 auto}
-  .zone.floor > .zone-body{flex:1;align-items:center}
+  .zone.floor > .zone-body{flex:1;align-items:stretch}
   .zone-label{
     font-family:"IBM Plex Mono",monospace;font-size:10.5px;font-weight:600;letter-spacing:.14em;
     text-transform:uppercase;color:var(--muted);padding-bottom:4px;border-bottom:1px solid var(--line)
   }
   .zone-body{display:flex;gap:clamp(12px,2.4vw,26px);align-items:flex-start}
 
-  .bank{display:flex;gap:6px;align-items:flex-start}
-  .col{display:grid;grid-auto-rows:var(--desk-h);gap:14px;justify-items:center;align-items:center}
-  .col.seats{gap:14px}
+  /* Rangées continues : les bureaux se touchent et occupent toute la hauteur. */
+  .bank{display:flex;gap:6px;align-items:stretch}
+  .col{display:grid;grid-auto-rows:minmax(var(--desk-h),1fr);gap:0;justify-items:center;align-items:stretch}
+  .col.seats{align-items:center}
+  .col .desk{height:100%;border-radius:0;margin-block:-0.75px}
 
   .island{display:grid;gap:7px;justify-items:stretch}
   .island .seats-row{display:grid;grid-template-columns:1fr 1fr;justify-items:center;gap:6px}
