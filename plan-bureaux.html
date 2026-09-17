@@ -269,6 +269,44 @@
   .hint{font-size:12px;color:var(--muted);margin:8px 0 0}
 
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+  /* ---------- impression : une page A4 paysage ---------- */
+  .printonly{display:none}
+  @page{size:A4 landscape;margin:11mm}
+  @media print{
+    /* Palette claire imposée : une page sombre à l'impression est illisible. */
+    :root{
+      --paper:#fff;--floor:#fff;--surface:#fff;--ink:#000;--muted:#444;
+      --line:#999;--line-strong:#333;--accent:#0b4a66;--accent-soft:#d7e8f0;
+      --free:#0a6b45;--away:#8a5000;--away-soft:#f3e6cd;--shadow:none;
+      --desk-w:62px;--desk-h:70px;--isle-w:82px;--isle-h:38px;
+      --bench-w:100px;--chair:15px;
+      color-scheme:light;
+    }
+    *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .screenonly,.tools,.notice,.dir,.datapanel,.drawer,.scrim,.stat.tel{display:none!important}
+    .printonly{display:block}
+    .wrap{max-width:none;padding:0}
+    header.top{margin-bottom:5px}
+    .brand h1{font-size:19px}
+    .printonly{font-size:11px;color:var(--muted);margin:2px 0 0}
+    .eyebrow{font-size:9px;margin-bottom:2px}
+    .stats{gap:6px;margin-bottom:6px}
+    .stat{padding:3px 8px;border-color:var(--line)}
+    .stat b{font-size:13px}
+    .stat span{font-size:10px}
+    .planwrap{border:1px solid var(--line);border-radius:4px;padding:7px;overflow:visible;box-shadow:none;break-inside:avoid}
+    .plan{gap:26px;break-inside:avoid}
+    .zone-label{font-size:9px}
+    .island{gap:4px}
+    .benches{gap:14px}
+    .floorcol{gap:14px}
+    .desk .num{font-size:12px}
+    .desk .who{font-size:8.5px}
+    .desk:hover{transform:none;box-shadow:none}
+    .legend{margin-top:6px;font-size:10px;gap:12px}
+    .printer{font-size:8.5px}
+  }
 </style>
 
 <div class="wrap">
@@ -276,13 +314,15 @@
     <div class="brand">
       <p class="eyebrow" id="deskCount">Plan d'étage</p>
       <h1>Plan des bureaux</h1>
-      <p>Cliquez sur un bureau pour attribuer un poste. Chaque rond est une chaise.</p>
+      <p class="screenonly">Cliquez sur un bureau pour attribuer un poste. Chaque rond est une chaise.</p>
+      <p class="printonly" id="printMeta"></p>
     </div>
     <div class="tools">
       <div class="search">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg>
         <input id="q" type="search" placeholder="Nom, équipe ou n°" aria-label="Rechercher un bureau ou une personne">
       </div>
+      <button class="btn" id="print" type="button" title="Imprimer ou enregistrer en PDF">Imprimer</button>
       <button class="btn" id="theme" type="button" title="Changer de thème">Thème</button>
     </div>
   </header>
@@ -587,6 +627,7 @@
       dir.appendChild(r);
     });
 
+    stampPrintMeta();
     document.getElementById("json").value = JSON.stringify(state, null, 1);
     document.getElementById("sample").hidden = !isSample;
     filter(document.getElementById("q").value);
@@ -682,6 +723,23 @@
 
   document.getElementById("clearSample").addEventListener("click", function(){
     state = {}; isSample = false; save(); render();
+  });
+
+  function stampPrintMeta(){
+    var occ = 0, tel = 0;
+    ALL.forEach(function(n){
+      var st = get(n).st;
+      if (st === "occupe") occ++;
+      if (st === "teletravail") tel++;
+    });
+    document.getElementById("printMeta").textContent =
+      "Imprimé le " + new Date().toLocaleDateString("fr-FR") +
+      " · " + ALL.length + " postes · " + occ + " occupés · " + tel + " en télétravail";
+  }
+  window.addEventListener("beforeprint", stampPrintMeta);
+  document.getElementById("print").addEventListener("click", function(){
+    stampPrintMeta();
+    window.print();
   });
 
   document.getElementById("theme").addEventListener("click", function(){

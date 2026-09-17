@@ -30,6 +30,19 @@ enregistrée gagne.
 Le serveur écoute uniquement sur `127.0.0.1` : rien n'est exposé sur le réseau
 de l'entreprise, et aucune donnée ne sort de votre machine.
 
+## Imprimer
+
+Le bouton **Imprimer** de l'application ouvre la boîte d'impression du
+navigateur avec une mise en page prévue pour une **page A4 paysage** : le plan
+complet, les compteurs et la légende, sans les boutons ni l'annuaire. Dans
+cette boîte, « Destination : Enregistrer au format PDF » produit un PDF.
+
+Pensez à laisser l'option **« Graphiques d'arrière-plan »** cochée, sinon les
+postes occupés ressortent en blanc.
+
+`plan-bureaux.pdf` est un plan vierge déjà prêt à imprimer, pour noter les noms
+à la main.
+
 ## Recompiler
 
 `plan-bureaux.html` est la source unique de l'interface : la même page
