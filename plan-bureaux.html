@@ -1,4 +1,4 @@
-<title>Plan Bureaux 1–28</title>
+<title>Plan Bureaux 1–32</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
@@ -22,6 +22,7 @@
     --desk-w:clamp(46px,12vw,66px);
     --desk-h:clamp(58px,15vw,84px);
     --isle-w:clamp(54px,14vw,84px);
+  --bench-w:clamp(72px,19vw,108px);
     --isle-h:clamp(38px,10vw,50px);
     --chair:20px;
     color-scheme:light;
@@ -145,6 +146,13 @@
   .col.seats{align-items:center}
   .col .desk{height:100%;border-radius:0;margin-block:-0.75px}
 
+  /* Blocs de deux bureaux dos à dos, une chaise de chaque côté. */
+  .benches{display:flex;flex-direction:column;justify-content:space-evenly;gap:clamp(20px,5vw,44px);align-self:stretch}
+  .bench{display:grid;gap:7px;justify-items:center}
+  .bench .seats-row{display:grid;grid-template-columns:1fr;justify-items:center}
+  .bench .desks{display:grid;grid-template-columns:1fr}
+  .bench .desk{width:var(--bench-w);height:var(--isle-h);border-radius:0;margin-block:-0.75px}
+
   .island{display:grid;gap:7px;justify-items:stretch}
   .island .seats-row{display:grid;grid-template-columns:1fr 1fr;justify-items:center;gap:6px}
   .island .desks{display:grid;grid-template-columns:auto auto;gap:0}
@@ -263,7 +271,7 @@
 <div class="wrap">
   <header class="top">
     <div class="brand">
-      <p class="eyebrow">Plan d'étage · 28 postes</p>
+      <p class="eyebrow" id="deskCount">Plan d'étage</p>
       <h1>Plan des bureaux</h1>
       <p>Cliquez sur un bureau pour attribuer un poste. Chaque rond est une chaise.</p>
     </div>
@@ -357,9 +365,11 @@
   // Rangée A : 25-28 (chaises à gauche) adossés à 21-24 (chaises à droite)
   // Rangée B : 17-20 (chaises à gauche)  ·  Îlots : 4 blocs de 4 postes
   var BANK_A = [25,26,27,28], BANK_B = [21,22,23,24], BANK_C = [17,18,19,20];
+  var BENCHES = [[29,30],[31,32]];
   var ISLANDS = [[1,2,3,4],[5,6,7,8],[9,10,11,12],[13,14,15,16]];
   var ALL = [];
   ISLANDS.forEach(function(i){ ALL = ALL.concat(i); });
+  BENCHES.forEach(function(b){ ALL = ALL.concat(b); });
   ALL = ALL.concat(BANK_C, BANK_B, BANK_A).sort(function(a,b){return a-b;});
 
   var KEY = "plan-bureaux-v1";
@@ -464,7 +474,19 @@
   }
 
   // Zone gauche
-  var left = zone("Open space · 17 → 28","floor");
+  var left = zone("Open space · 17 → 32","floor");
+
+  var benches = el("div","benches");
+  BENCHES.forEach(function(pair){
+    var b = el("div","bench");
+    var top = el("div","seats-row"); top.appendChild(chair(pair[0]));
+    var grid = el("div","desks");
+    grid.appendChild(desk(pair[0])); grid.appendChild(desk(pair[1]));
+    var bot = el("div","seats-row"); bot.appendChild(chair(pair[1]));
+    b.appendChild(top); b.appendChild(grid); b.appendChild(bot);
+    benches.appendChild(b);
+  });
+
   var bank1 = el("div","bank");
   bank1.appendChild(column(BANK_A,"seats"));
   bank1.appendChild(column(BANK_A));
@@ -474,6 +496,7 @@
   bank2.appendChild(column(BANK_C,"seats"));
   bank2.appendChild(column(BANK_C));
   var printer = el("div","printer","imprimante");
+  left.body.appendChild(benches);
   left.body.appendChild(bank1);
   left.body.appendChild(bank2);
   left.body.appendChild(printer);
@@ -506,6 +529,7 @@
 
   function render(){
     var counts = { occupe:0, libre:0, teletravail:0 };
+    document.getElementById("deskCount").textContent = "Plan d'étage · " + ALL.length + " postes";
 
     ALL.forEach(function(n){
       var d = get(n);
