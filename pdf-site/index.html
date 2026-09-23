@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PDFacile — outils PDF gratuits</title>
+  <meta name="description" content="Fusionner, diviser, compresser, convertir et annoter vos PDF directement dans le navigateur. Aucun fichier n'est envoyé sur un serveur.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="logo" href="#/" aria-label="PDFacile, accueil">
+      <span class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 32 32" width="30" height="30"><rect x="4" y="2" width="20" height="26" rx="4" fill="currentColor"/><path d="M18 2v6a2 2 0 0 0 2 2h6" fill="none" stroke="var(--bg)" stroke-width="2"/><path d="M10 17l4 4 8-9" fill="none" stroke="var(--bg)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </span>
+      <span class="logo-text">PDF<b>acile</b></span>
+    </a>
+    <nav class="mainnav" aria-label="Outils principaux">
+      <a href="#/merge">Fusionner PDF</a>
+      <a href="#/split">Diviser PDF</a>
+      <a href="#/compress">Compresser PDF</a>
+      <a href="#/" data-filter="convert">Convertir PDF</a>
+      <a href="#/" data-filter="all">Tous les outils</a>
+    </nav>
+    <button class="theme-toggle" type="button" aria-label="Changer de thème" title="Changer de thème">
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z" fill="currentColor"/></svg>
+    </button>
+  </header>
+
+  <main id="app">
+    <!-- Accueil -->
+    <section id="home" class="view">
+      <div class="hero">
+        <h1>Tous les outils pour travailler sur vos PDF, au même endroit</h1>
+        <p>Fusionnez, divisez, compressez, convertissez, faites pivoter et ajoutez un filigrane à vos PDF en quelques clics.
+          Tout est gratuit et se passe <strong>dans votre navigateur</strong> : vos fichiers ne quittent jamais votre ordinateur.</p>
+      </div>
+      <div class="filters" role="tablist" aria-label="Catégories"></div>
+      <div class="grid" id="grid"></div>
+    </section>
+
+    <!-- Page d'un outil -->
+    <section id="tool" class="view" hidden>
+      <a class="back" href="#/">← Tous les outils</a>
+      <div class="tool-head">
+        <div class="tool-icon big" id="tool-icon"></div>
+        <h1 id="tool-title"></h1>
+        <p id="tool-desc"></p>
+      </div>
+
+      <div id="stage-pick" class="stage">
+        <label class="dropzone" id="dropzone">
+          <input type="file" id="file-input" hidden>
+          <span class="btn primary big">Sélectionner des fichiers</span>
+          <span class="hint">ou déposez-les ici</span>
+        </label>
+      </div>
+
+      <div id="stage-work" class="stage" hidden>
+        <div class="work">
+          <div class="files-wrap">
+            <div class="files" id="files"></div>
+            <label class="add-more" id="add-more" title="Ajouter des fichiers">
+              <input type="file" id="file-input-more" hidden>
+              <span>+</span>
+            </label>
+          </div>
+          <aside class="options">
+            <h2 id="opt-title">Options</h2>
+            <form id="opt-form" onsubmit="return false"></form>
+            <button class="btn primary big full" id="run">Lancer</button>
+            <p class="error" id="error" role="alert" hidden></p>
+          </aside>
+        </div>
+      </div>
+
+      <div id="stage-busy" class="stage center" hidden>
+        <div class="spinner" aria-hidden="true"></div>
+        <p id="busy-msg">Traitement en cours…</p>
+      </div>
+
+      <div id="stage-done" class="stage center" hidden>
+        <h2 id="done-title">C'est prêt !</h2>
+        <p id="done-msg"></p>
+        <a class="btn primary big" id="download" href="#">Télécharger</a>
+        <p><button class="btn ghost" id="restart">Recommencer</button></p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>PDFacile · Traitement 100 % local grâce à <a href="https://pdf-lib.js.org/">pdf-lib</a> et <a href="https://mozilla.github.io/pdf.js/">PDF.js</a>.</p>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="tools.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
