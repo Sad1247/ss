@@ -506,3 +506,355 @@ function iconSvg(tool) {
 function inkOf(tool) {
   return CATEGORIES.find((c) => c.id === tool.cats[0]).ink;
 }
+
+/* ------------------------------------------------------------ signature */
+
+// État de l'outil « Signer » : la page affichée, la position de la signature
+// (en fractions de la page telle qu'on la voit) et l'image de la signature.
+const SIGN = { pdf: null, page: 1, fx: 0.58, fy: 0.78, fw: 0.3, img: null, strokes: [], stage: null };
+
+const SIGN_FONTS = {
+  dancing: '"Dancing Script", cursive',
+  caveat: 'Caveat, cursive',
+  vibes: '"Great Vibes", cursive',
+};
+
+function signOptions() {
+  return `<div class="sign-opts">
+    <div class="field"><span class="label">Votre signature</span>
+      <div class="seg" role="radiogroup" aria-label="Type de signature">
+        <label><input type="radio" name="mode" value="draw" checked><span>Dessiner</span></label>
+        <label><input type="radio" name="mode" value="type"><span>Taper</span></label>
+        <label><input type="radio" name="mode" value="image"><span>Image</span></label>
+      </div>
+    </div>
+    <div class="sig-panel" data-mode="draw">
+      <div class="pad"><canvas id="sig-pad" aria-label="Zone de dessin de la signature"></canvas>
+        <span class="pad-line" aria-hidden="true"></span>
+        <button type="button" class="pad-clear" id="sig-clear">Effacer</button></div>
+      <p class="small">Signez avec la souris, le doigt ou un stylet.</p>
+    </div>
+    <div class="sig-panel" data-mode="type" hidden>
+      <div class="field"><label for="o-name">Nom</label>
+        <input type="text" id="o-name" name="name" placeholder="Camille Martin" autocomplete="name"></div>
+      <div class="field"><label for="o-font">Écriture</label>
+        <select id="o-font" name="font">
+          <option value="dancing">Dancing Script</option>
+          <option value="caveat">Caveat</option>
+          <option value="vibes">Great Vibes</option>
+        </select></div>
+    </div>
+    <div class="sig-panel" data-mode="image" hidden>
+      <div class="field"><label for="o-img">Photo ou scan de votre signature</label>
+        <input type="file" id="o-img" name="img" accept="image/*"></div>
+      <label class="check"><input type="checkbox" name="clearbg" checked> Retirer le fond blanc</label>
+    </div>
+    <div class="field"><span class="label">Encre</span>
+      <div class="inks">
+        <label><input type="radio" name="ink" value="#1a1f36" checked><span style="--sw:#1a1f36">Noir</span></label>
+        <label><input type="radio" name="ink" value="#1f3fb4"><span style="--sw:#1f3fb4">Bleu</span></label>
+      </div>
+    </div>
+    <div class="field"><label for="o-where">Pages à signer</label>
+      <select id="o-where" name="where">
+        <option value="current" selected>Page affichée uniquement</option>
+        <option value="last">Dernière page</option>
+        <option value="all">Toutes les pages</option>
+      </select></div>
+    <label class="check"><input type="checkbox" name="date"> Ajouter « Signé le ${new Date().toLocaleDateString('fr-FR')} »</label>
+  </div>`;
+}
+
+/* --- fabrication de l'image de la signature --- */
+
+function drawStrokes(ctx, strokes, scale, ox, oy, color) {
+  ctx.strokeStyle = color;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.lineWidth = 2.6 * scale;
+  for (const s of strokes) {
+    ctx.beginPath();
+    ctx.moveTo((s[0].x - ox) * scale, (s[0].y - oy) * scale);
+    if (s.length === 1) ctx.lineTo((s[0].x - ox) * scale + 0.1, (s[0].y - oy) * scale);
+    for (let i = 1; i < s.length - 1; i++) {
+      const mx = (s[i].x + s[i + 1].x) / 2, my = (s[i].y + s[i + 1].y) / 2;
+      ctx.quadraticCurveTo((s[i].x - ox) * scale, (s[i].y - oy) * scale, (mx - ox) * scale, (my - oy) * scale);
+    }
+    if (s.length > 1) ctx.lineTo((s.at(-1).x - ox) * scale, (s.at(-1).y - oy) * scale);
+    ctx.stroke();
+  }
+}
+
+async function buildSignature(form) {
+  const mode = form.mode.value, color = form.ink.value;
+  const c = document.createElement('canvas');
+  const ctx = c.getContext('2d');
+
+  if (mode === 'draw') {
+    const pts = SIGN.strokes.flat();
+    if (!pts.length) return null;
+    const pad = 6, scale = 4;
+    const minX = Math.min(...pts.map((p) => p.x)) - pad, minY = Math.min(...pts.map((p) => p.y)) - pad;
+    const maxX = Math.max(...pts.map((p) => p.x)) + pad, maxY = Math.max(...pts.map((p) => p.y)) + pad;
+    c.width = Math.ceil((maxX - minX) * scale); c.height = Math.ceil((maxY - minY) * scale);
+    drawStrokes(ctx, SIGN.strokes, scale, minX, minY, color);
+  } else if (mode === 'type') {
+    const name = form.name.value.trim();
+    if (!name) return null;
+    const family = SIGN_FONTS[form.font.value];
+    try { await document.fonts.load(`120px ${family}`, name); } catch {}
+    const font = `120px ${family}`;
+    ctx.font = font;
+    const m = ctx.measureText(name);
+    c.width = Math.ceil(m.width + 40); c.height = 190;
+    ctx.font = font; ctx.fillStyle = color; ctx.textBaseline = 'alphabetic';
+    ctx.fillText(name, 20, 140);
+  } else {
+    const file = form.img.files[0];
+    if (!file) return null;
+    const bmp = await createImageBitmap(file);
+    const k = Math.min(1, 1600 / bmp.width);
+    c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+    ctx.drawImage(bmp, 0, 0, c.width, c.height);
+    if (form.clearbg.checked) {
+      const data = ctx.getImageData(0, 0, c.width, c.height);
+      const d = data.data;
+      for (let i = 0; i < d.length; i += 4) {
+        const lum = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+        // blanc → transparent, avec un fondu pour garder des bords propres
+        d[i + 3] = Math.min(d[i + 3], Math.max(0, Math.min(255, (235 - lum) * 6)));
+      }
+      ctx.putImageData(data, 0, 0);
+    }
+  }
+  return { url: c.toDataURL('image/png'), aspect: c.height / c.width };
+}
+
+/* --- pavé de dessin --- */
+
+function setupPad(canvas, onChange) {
+  const ctx = canvas.getContext('2d');
+  const color = () => canvas.closest('form')?.ink.value || '#1a1f36';
+  function resize() {
+    if (!canvas.isConnected) return;
+    const r = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.round(r.width * dpr); canvas.height = Math.round(r.height * dpr);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawStrokes(ctx, SIGN.strokes, dpr, 0, 0, color());
+  }
+  let current = null;
+  const pos = (e) => { const r = canvas.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+  canvas.addEventListener('pointerdown', (e) => {
+    canvas.setPointerCapture(e.pointerId);
+    current = [pos(e)];
+    SIGN.strokes.push(current);
+    resize();
+  });
+  canvas.addEventListener('pointermove', (e) => {
+    if (!current) return;
+    current.push(pos(e));
+    resize();
+  });
+  const end = () => { if (current) { current = null; onChange(); } };
+  canvas.addEventListener('pointerup', end);
+  canvas.addEventListener('pointercancel', end);
+  new ResizeObserver(resize).observe(canvas);
+  return { redraw: resize, clear() { SIGN.strokes = []; resize(); onChange(); } };
+}
+
+/* --- zone de placement sur la page --- */
+
+async function renderSignPage(stage) {
+  const page = await SIGN.pdf.getPage(SIGN.page);
+  const base = page.getViewport({ scale: 1 });
+  // La page doit tenir en entier à l'écran, en largeur comme en hauteur.
+  const maxH = Math.max(420, window.innerHeight - 180);
+  const width = Math.min(stage.parentElement.clientWidth, 760, maxH * base.width / base.height);
+  const dpr = window.devicePixelRatio || 1;
+  const viewport = page.getViewport({ scale: (width / base.width) * dpr });
+  const canvas = stage.querySelector('canvas');
+  canvas.width = Math.round(viewport.width); canvas.height = Math.round(viewport.height);
+  stage.style.aspectRatio = `${base.width} / ${base.height}`;
+  stage.style.width = '100%';
+  stage.style.maxWidth = `${width}px`;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  await page.render({ canvasContext: ctx, viewport }).promise;
+  stage.closest('.signer').querySelector('.page-no').textContent = `Page ${SIGN.page} / ${SIGN.pdf.numPages}`;
+  placeBox(stage);
+}
+
+function boxHeightFraction(stage) {
+  const r = stage.getBoundingClientRect();
+  const aspect = SIGN.img ? SIGN.img.aspect : 0.33;
+  return r.height ? (SIGN.fw * r.width * aspect) / r.height : 0.1;
+}
+
+function clampBox(stage) {
+  SIGN.fw = Math.min(Math.max(SIGN.fw, 0.06), 1);
+  const fh = boxHeightFraction(stage);
+  SIGN.fx = Math.min(Math.max(SIGN.fx, 0), 1 - SIGN.fw);
+  SIGN.fy = Math.min(Math.max(SIGN.fy, 0), Math.max(0, 1 - fh));
+}
+
+function placeBox(stage) {
+  clampBox(stage);
+  const box = stage.querySelector('.sig-box');
+  box.style.left = `${SIGN.fx * 100}%`;
+  box.style.top = `${SIGN.fy * 100}%`;
+  box.style.width = `${SIGN.fw * 100}%`;
+  box.style.height = `${boxHeightFraction(stage) * 100}%`;
+  const img = box.querySelector('img');
+  img.hidden = !SIGN.img;
+  if (SIGN.img) img.src = SIGN.img.url;
+  box.querySelector('.sig-ph').hidden = !!SIGN.img;
+}
+
+function setupStage(stage) {
+  const box = stage.querySelector('.sig-box');
+  let drag = null;
+  const start = (e, kind) => {
+    e.preventDefault(); e.stopPropagation();
+    box.setPointerCapture(e.pointerId);
+    drag = { kind, x: e.clientX, y: e.clientY, fx: SIGN.fx, fy: SIGN.fy, fw: SIGN.fw };
+  };
+  box.addEventListener('pointerdown', (e) => start(e, e.target.classList.contains('sig-handle') ? 'resize' : 'move'));
+  box.addEventListener('pointermove', (e) => {
+    if (!drag) return;
+    const r = stage.getBoundingClientRect();
+    const dx = (e.clientX - drag.x) / r.width, dy = (e.clientY - drag.y) / r.height;
+    if (drag.kind === 'move') { SIGN.fx = drag.fx + dx; SIGN.fy = drag.fy + dy; }
+    else { SIGN.fw = Math.min(drag.fw + dx, 1 - drag.fx); }
+    placeBox(stage);
+  });
+  const stop = () => { drag = null; };
+  box.addEventListener('pointerup', stop);
+  box.addEventListener('pointercancel', stop);
+  // Cliquer sur la page y amène la signature.
+  stage.addEventListener('pointerdown', (e) => {
+    if (e.target.closest('.sig-box')) return;
+    const r = stage.getBoundingClientRect();
+    SIGN.fx = (e.clientX - r.left) / r.width - SIGN.fw / 2;
+    SIGN.fy = (e.clientY - r.top) / r.height - boxHeightFraction(stage) / 2;
+    placeBox(stage);
+  });
+  box.addEventListener('keydown', (e) => {
+    const step = e.shiftKey ? 0.05 : 0.01;
+    const moves = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] };
+    if (e.key === '+' || e.key === '-') { SIGN.fw += e.key === '+' ? 0.02 : -0.02; }
+    else if (moves[e.key]) { SIGN.fx += moves[e.key][0]; SIGN.fy += moves[e.key][1]; }
+    else return;
+    e.preventDefault();
+    placeBox(stage);
+  });
+}
+
+/* --- report sur le PDF --- */
+
+// Convertit un point de la page telle qu'affichée (origine en haut à gauche)
+// en coordonnées PDF, en tenant compte de la rotation de la page.
+function displayToPdf(page, rot, dx, dy) {
+  const { x: x0, y: y0, width: W, height: H } = page.getCropBox();
+  if (rot === 90) return { x: x0 + dy, y: y0 + dx };
+  if (rot === 180) return { x: x0 + W - dx, y: y0 + dy };
+  if (rot === 270) return { x: x0 + W - dy, y: y0 + H - dx };
+  return { x: x0 + dx, y: y0 + H - dy };
+}
+
+const SIGN_TOOL = {
+  id: 'sign', name: 'Signer PDF', cats: ['security'], icon: 'sign',
+  desc: 'Dessinez, tapez ou importez votre signature, puis placez-la où vous voulez sur le document.',
+  accept: 'pdf', multiple: false, action: 'Signer le PDF', tableLabel: 'Placez votre signature',
+  options: signOptions,
+
+  async mount({ area, file, form, firstTime, reset }) {
+    if (firstTime) {
+      Object.assign(SIGN, { page: 1, fx: 0.58, fy: 0.78, fw: 0.3, img: null, strokes: [] });
+      const refresh = async () => {
+        SIGN.img = await buildSignature(form);
+        if (SIGN.stage) placeBox(SIGN.stage);
+      };
+      // Les écouteurs vont sur le bloc d'options (recréé à chaque ouverture),
+      // pas sur le formulaire, partagé par tous les outils.
+      const opts = form.querySelector('.sign-opts');
+      const pad = setupPad(form.querySelector('#sig-pad'), refresh);
+      form.querySelector('#sig-clear').addEventListener('click', () => pad.clear());
+      opts.addEventListener('input', (e) => {
+        if (e.target.name === 'mode') {
+          form.querySelectorAll('.sig-panel').forEach((p) => { p.hidden = p.dataset.mode !== form.mode.value; });
+          pad.redraw();
+        }
+        if (e.target.name === 'ink') pad.redraw();
+        if (['mode', 'ink', 'name', 'font', 'clearbg'].includes(e.target.name)) refresh();
+      });
+      opts.addEventListener('change', (e) => { if (e.target.name === 'img') refresh(); });
+    }
+    area.innerHTML = `
+      <div class="signer">
+        <div class="signer-bar">
+          <button type="button" class="nav prev" aria-label="Page précédente">◀</button>
+          <span class="page-no mono">Page 1</span>
+          <button type="button" class="nav next" aria-label="Page suivante">▶</button>
+          <button type="button" class="change">Changer de fichier</button>
+        </div>
+        <div class="page-stage">
+          <canvas></canvas>
+          <div class="sig-box" tabindex="0" role="button"
+               aria-label="Signature : glissez pour déplacer, flèches pour ajuster, + et − pour la taille">
+            <img alt="" hidden><span class="sig-ph">Votre signature</span><span class="sig-handle" aria-hidden="true"></span>
+          </div>
+        </div>
+        <p class="small mono">Glissez la signature, tirez le coin pour l’agrandir, ou cliquez sur la page pour l’y déposer.</p>
+      </div>`;
+    const stage = area.querySelector('.page-stage');
+    SIGN.stage = stage;
+    area.querySelector('.change').addEventListener('click', reset);
+    SIGN.pdf = await openWithPdfJs(file);
+    SIGN.page = Math.min(SIGN.page, SIGN.pdf.numPages);
+    const go = (d) => {
+      const n = SIGN.page + d;
+      if (n < 1 || n > SIGN.pdf.numPages) return;
+      SIGN.page = n;
+      renderSignPage(stage);
+    };
+    area.querySelector('.prev').addEventListener('click', () => go(-1));
+    area.querySelector('.next').addEventListener('click', () => go(1));
+    setupStage(stage);
+    await renderSignPage(stage);
+  },
+
+  async run([file], o, progress) {
+    if (!SIGN.img) throw new Error('Créez d’abord votre signature : dessinez-la, tapez votre nom ou importez une image.');
+    progress('Apposition de la signature…');
+    const doc = await loadPdf(file);
+    const png = await doc.embedPng(SIGN.img.url);
+    const font = o.date ? await doc.embedFont(StandardFonts.Helvetica) : null;
+    const pages = doc.getPages();
+    const targets = o.where === 'all' ? pages.map((_, i) => i) : o.where === 'last' ? [pages.length - 1] : [SIGN.page - 1];
+    const [r, g, b] = [1, 3, 5].map((i) => parseInt(o.ink.slice(i, i + 2), 16) / 255);
+    for (const i of targets) {
+      const page = pages[i];
+      const rot = ((page.getRotation().angle % 360) + 360) % 360;
+      const { width: W, height: H } = page.getCropBox();
+      const [dw, dh] = rot === 90 || rot === 270 ? [H, W] : [W, H];
+      const w = SIGN.fw * dw, h = w * SIGN.img.aspect;
+      const left = SIGN.fx * dw, top = Math.min(SIGN.fy * dh, dh - h);
+      const at = displayToPdf(page, rot, left, top + h);
+      page.drawImage(png, { x: at.x, y: at.y, width: w, height: h, rotate: degrees(rot) });
+      if (font) {
+        const size = Math.max(7, Math.min(11, w / 14));
+        const t = displayToPdf(page, rot, left, Math.min(top + h + size * 1.3, dh - 2));
+        page.drawText(`Signé le ${new Date().toLocaleDateString('fr-FR')}`,
+          { x: t.x, y: t.y, size, font, color: rgb(r, g, b), rotate: degrees(rot) });
+      }
+    }
+    return { blob: pdfBlob(await doc.save()), filename: `${baseName(file.name)}_signe.pdf`,
+      message: `Signature apposée sur ${targets.length} page(s).` };
+  },
+};
+
+TOOLS.splice(TOOLS.findIndex((t) => t.id === 'protect'), 0, SIGN_TOOL);
+IO.sign = 'PDF + signature → PDF';
+GLYPHS.sign = 'M3 20.5h18 M15 4l5 5L9.5 19.5H4.5v-5z M12.5 6.5l5 5';

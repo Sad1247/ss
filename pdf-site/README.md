@@ -23,9 +23,13 @@ Site 100 % statique : il peut être déployé tel quel sur GitHub Pages, Netlify
 | Optimiser | Compresser (pages converties en JPEG optimisé) |
 | Convertir | PDF → JPG, JPG/PNG → PDF, PDF → texte |
 | Modifier | Filigrane, Numéros de page, Propriétés (titre, auteur, sujet) |
+| Sécurité | Signer (signature dessinée, tapée ou importée, placée par glisser-déposer) |
 
 Marqués « Bientôt » (nécessitent un serveur ou une bibliothèque de chiffrement) :
 PDF ↔ Word / PowerPoint / Excel, Protéger et Déverrouiller un PDF.
+
+La signature ajoutée par « Signer PDF » est une signature visuelle (image apposée sur la page),
+pas une signature électronique certifiée avec certificat numérique.
 
 ## Structure
 

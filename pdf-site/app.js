@@ -89,6 +89,8 @@ function openTool(tool) {
     input.value = '';
   }
   $('#add-more').hidden = !tool.multiple;
+  $('#table-label').textContent = tool.tableLabel || 'Sur la table';
+  $('#files').className = tool.mount ? 'files custom' : 'files';
   $('#opt-title').textContent = tool.name;
   $('#run').textContent = tool.action;
   $('#error').hidden = true;
@@ -112,13 +114,18 @@ function addFiles(list) {
   }
   state.files = state.tool.multiple ? state.files.concat(incoming) : [incoming[0]];
   const firstTime = $('#stage-work').hidden;
-  renderFiles();
+  const form = $('#opt-form');
   if (firstTime) {
-    const form = $('#opt-form');
     form.innerHTML = state.tool.options ? state.tool.options() : '';
     if (state.tool.prefill) state.tool.prefill(state.files, form).catch(() => {});
   }
   showStage('work');
+  if (state.tool.mount) {
+    // Outil avec sa propre zone de travail (ex. : placer une signature sur la page).
+    state.tool.mount({ area: $('#files'), file: state.files[0], form, firstTime, reset: () => openTool(state.tool) });
+  } else {
+    renderFiles();
+  }
   hideError();
   if (rejected) showError(`${rejected} fichier(s) ignoré(s) : format non pris en charge.`);
 }
