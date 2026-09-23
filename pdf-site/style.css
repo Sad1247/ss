@@ -111,12 +111,7 @@ main { flex: 1; width: 100%; max-width: 1320px; margin: 0 auto; padding: 0 32px;
   font-style: normal;
   text-shadow: -.035em 0 0 var(--c), .035em .01em 0 var(--m);
 }
-.lede { font-size: clamp(17px, 1.6vw, 20px); color: var(--ink-2); max-width: 36em; margin: 0 0 32px; }
-.specs { display: flex; flex-wrap: wrap; gap: 0; margin: 0; border-top: 1px solid var(--rule-strong); max-width: 520px; }
-.specs div { flex: 1; min-width: 0; padding: 12px 16px 0 0; }
-.specs div + div { padding-left: 16px; border-left: 1px solid var(--rule); }
-.specs dt { font: 500 11px/1 var(--mono); text-transform: uppercase; letter-spacing: .12em; color: var(--ink-2); margin-bottom: 8px; }
-.specs dd { margin: 0; white-space: nowrap; font: 700 26px/1 var(--display); font-variant-numeric: tabular-nums; }
+.lede { font-size: clamp(17px, 1.6vw, 20px); color: var(--ink-2); max-width: 36em; margin: 0; }
 
 .hero-art { position: relative; height: 380px; }
 .paper {
@@ -443,5 +438,4 @@ a.sheet:hover::after { width: 34px; height: 34px; }
   .files { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
   .btn.big { font-size: 17px; padding: 15px 22px; }
   .footer { padding: 20px 16px; }
-  .specs dd { font-size: 21px; }
-}
+  }

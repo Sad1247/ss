@@ -273,7 +273,6 @@ function route() {
 }
 
 window.addEventListener('hashchange', route);
-$('#spec-count').textContent = TOOLS.filter((t) => !t.soon).length;
 renderFilters();
 renderGrid();
 route();
