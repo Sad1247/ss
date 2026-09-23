@@ -12,18 +12,18 @@
 </head>
 <body>
   <header class="topbar">
-    <a class="logo" href="#/" aria-label="PDFacile, accueil">
+    <a class="logo" href="#accueil" aria-label="PDFacile, accueil">
       <span class="logo-mark" aria-hidden="true">
         <svg viewBox="0 0 32 32" width="30" height="30"><rect x="4" y="2" width="20" height="26" rx="4" fill="currentColor"/><path d="M18 2v6a2 2 0 0 0 2 2h6" fill="none" stroke="var(--bg)" stroke-width="2"/><path d="M10 17l4 4 8-9" fill="none" stroke="var(--bg)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </span>
       <span class="logo-text">PDF<b>acile</b></span>
     </a>
     <nav class="mainnav" aria-label="Outils principaux">
-      <a href="#/merge">Fusionner PDF</a>
-      <a href="#/split">Diviser PDF</a>
-      <a href="#/compress">Compresser PDF</a>
-      <a href="#/" data-filter="convert">Convertir PDF</a>
-      <a href="#/" data-filter="all">Tous les outils</a>
+      <a href="#merge">Fusionner PDF</a>
+      <a href="#split">Diviser PDF</a>
+      <a href="#compress">Compresser PDF</a>
+      <a href="#accueil" data-filter="convert">Convertir PDF</a>
+      <a href="#accueil" data-filter="all">Tous les outils</a>
     </nav>
     <button class="theme-toggle" type="button" aria-label="Changer de thème" title="Changer de thème">
       <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z" fill="currentColor"/></svg>
@@ -44,7 +44,7 @@
 
     <!-- Page d'un outil -->
     <section id="tool" class="view" hidden>
-      <a class="back" href="#/">← Tous les outils</a>
+      <a class="back" href="#accueil">← Tous les outils</a>
       <div class="tool-head">
         <div class="tool-icon big" id="tool-icon"></div>
         <h1 id="tool-title"></h1>

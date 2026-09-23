@@ -34,7 +34,7 @@ function renderGrid() {
     const inner = `<div class="tool-icon">${iconSvg(t)}</div><h3>${t.name}</h3><p>${t.desc}</p>`;
     return t.soon
       ? `<div class="card soon" aria-disabled="true"><span class="badge">Bientôt</span>${inner}</div>`
-      : `<a class="card" href="#/${t.id}">${inner}</a>`;
+      : `<a class="card" href="#${t.id}">${inner}</a>`;
   }).join('');
 }
 
@@ -207,6 +207,7 @@ $('#run').addEventListener('click', async () => {
     const res = await tool.run(state.files, opts, (msg) => { $('#busy-msg').textContent = msg; });
     if (state.downloadUrl) URL.revokeObjectURL(state.downloadUrl);
     state.downloadUrl = URL.createObjectURL(res.blob);
+    state.result = res;
     const a = $('#download');
     a.href = state.downloadUrl;
     a.download = res.filename;
@@ -221,6 +222,20 @@ $('#run').addEventListener('click', async () => {
 });
 
 $('#restart').addEventListener('click', () => openTool(state.tool));
+
+// Dans une page Artifact de claude.ai, les liens <a download> sont bloqués :
+// on passe alors par la capacité « downloads » du lecteur.
+let downloads = null;
+if (window.claude?.use) window.claude.use('downloads').then((d) => { downloads = d; }, () => {});
+$('#download').addEventListener('click', async (e) => {
+  if (!downloads || !state.result) return;
+  e.preventDefault();
+  try {
+    await downloads.save({ filename: state.result.filename, data: state.result.blob });
+  } catch (err) {
+    if (err?.code !== 'declined') $('#done-msg').textContent = 'Le téléchargement a échoué, réessayez.';
+  }
+});
 
 /* ---------------------------------------------------------------- routage */
 

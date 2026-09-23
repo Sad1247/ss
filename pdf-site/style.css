@@ -57,7 +57,7 @@ a { color: var(--accent); }
 
 /* ---------- Barre du haut ---------- */
 .topbar {
-  position: sticky; top: 0; z-index: 10;
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10;
   display: flex; align-items: center; gap: 32px;
   padding: 0 24px; height: 60px;
   background: var(--surface);
