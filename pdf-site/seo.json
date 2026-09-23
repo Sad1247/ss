@@ -1,0 +1,203 @@
+{
+  "home": {
+    "title": "PDFacile – Outils PDF gratuits, sans envoi de fichier",
+    "description": "Fusionner, diviser, compresser, convertir et signer vos PDF gratuitement. Tout se fait dans votre navigateur : vos fichiers ne sont jamais envoyés sur un serveur."
+  },
+  "tools": {
+    "merge": {
+      "title": "Fusionner PDF en ligne gratuitement, sans envoi de fichier",
+      "description": "Assemblez plusieurs PDF en un seul document, dans l’ordre de votre choix. Gratuit, sans inscription, et vos fichiers ne quittent jamais votre ordinateur.",
+      "intro": "Rassemblez des factures, des chapitres ou des pièces justificatives dans un seul fichier PDF. Vous choisissez l’ordre, PDFacile fait le reste, directement dans votre navigateur.",
+      "steps": [
+        "Sélectionnez ou déposez au moins deux fichiers PDF.",
+        "Réorganisez-les avec les flèches pour choisir l’ordre final.",
+        "Cliquez sur « Fusionner PDF » et téléchargez le document assemblé."
+      ],
+      "faq": [
+        ["Combien de fichiers puis-je fusionner ?", "Autant que vous voulez. La seule limite est la mémoire de votre ordinateur, car la fusion se fait localement."],
+        ["Mes fichiers sont-ils envoyés sur un serveur ?", "Non. La fusion est réalisée par votre navigateur : vos PDF ne quittent jamais votre ordinateur."],
+        ["La qualité est-elle conservée ?", "Oui. Les pages sont copiées telles quelles, sans recompression : texte, images et liens restent identiques."]
+      ]
+    },
+    "split": {
+      "title": "Diviser un PDF en ligne : séparer les pages gratuitement",
+      "description": "Séparez un PDF page par page ou selon vos propres plages (1-3, 4-6…). Gratuit, sans inscription, sans envoi de fichier.",
+      "intro": "Découpez un long document en plusieurs PDF : une page par fichier, ou des plages de pages que vous définissez. Idéal pour extraire un chapitre ou séparer des documents scannés ensemble.",
+      "steps": [
+        "Sélectionnez le PDF à diviser.",
+        "Choisissez « Chaque page » ou indiquez vos plages, par exemple 1-3, 4-6, 7-.",
+        "Lancez la division et téléchargez les fichiers (regroupés dans un ZIP s’il y en a plusieurs)."
+      ],
+      "faq": [
+        ["Comment écrire les plages de pages ?", "Séparez-les par des virgules : « 1-3, 5, 8- ». « 8- » signifie de la page 8 jusqu’à la fin."],
+        ["Le PDF d’origine est-il modifié ?", "Non. PDFacile crée de nouveaux fichiers et votre document d’origine reste intact."],
+        ["Est-ce vraiment gratuit ?", "Oui, sans inscription ni limite. Le traitement se fait sur votre ordinateur, cela ne nous coûte rien."]
+      ]
+    },
+    "compress": {
+      "title": "Compresser un PDF en ligne : réduire la taille gratuitement",
+      "description": "Réduisez le poids de vos PDF pour les envoyer par e-mail ou les déposer sur un site administratif. Trois niveaux de compression, sans envoi de fichier.",
+      "intro": "Un PDF trop lourd pour un e-mail ou un formulaire en ligne ? Choisissez un niveau de compression et obtenez un fichier plus léger en quelques secondes.",
+      "steps": [
+        "Sélectionnez le PDF à compresser.",
+        "Choisissez un niveau : faible, recommandé ou fort.",
+        "Lancez la compression et comparez la taille avant et après."
+      ],
+      "faq": [
+        ["Quel niveau choisir ?", "Le niveau recommandé convient à la plupart des documents. Choisissez « fort » si le fichier doit passer sous une limite stricte, par exemple 2 Mo."],
+        ["Le texte reste-t-il sélectionnable ?", "Non : pour gagner de la place, les pages sont converties en images optimisées. Gardez l’original si vous avez besoin de copier le texte."],
+        ["Et si mon fichier est déjà léger ?", "PDFacile vous le signale et vous rend le fichier d’origine plutôt qu’une version plus lourde."]
+      ]
+    },
+    "pdf-jpg": {
+      "title": "Convertir PDF en JPG en ligne, page par page, gratuitement",
+      "description": "Transformez chaque page d’un PDF en image JPG de haute qualité (jusqu’à 300 ppp). Gratuit, sans inscription, sans envoi de fichier.",
+      "intro": "Besoin d’une page de PDF en image pour une présentation, un réseau social ou un message ? Chaque page devient un fichier JPG net, dans la résolution de votre choix.",
+      "steps": [
+        "Sélectionnez le PDF à convertir.",
+        "Choisissez la qualité : normale, haute ou très haute (300 ppp).",
+        "Téléchargez l’image, ou le ZIP de toutes les pages."
+      ],
+      "faq": [
+        ["Quelle résolution choisir ?", "150 ppp suffit pour l’écran. Prenez 300 ppp pour imprimer ou zoomer sur des détails."],
+        ["Puis-je convertir une seule page ?", "Utilisez d’abord « Extraire des pages » pour ne garder que la page voulue, puis convertissez-la."],
+        ["Mes documents restent-ils privés ?", "Oui. La conversion se fait dans votre navigateur, rien n’est envoyé sur Internet."]
+      ]
+    },
+    "jpg-pdf": {
+      "title": "Convertir JPG en PDF en ligne : images vers PDF gratuitement",
+      "description": "Assemblez vos photos JPG ou PNG dans un seul PDF, au format A4, Letter ou à la taille de l’image. Gratuit et sans envoi de fichier.",
+      "intro": "Transformez des photos de documents, des scans ou des captures d’écran en un PDF propre, prêt à être envoyé. Choisissez le format de page, l’orientation et les marges.",
+      "steps": [
+        "Sélectionnez une ou plusieurs images (JPG, PNG…).",
+        "Remettez-les dans l’ordre voulu et choisissez le format de page.",
+        "Cliquez sur « Convertir en PDF » et téléchargez le document."
+      ],
+      "faq": [
+        ["Quels formats d’image sont acceptés ?", "JPG et PNG, ainsi que la plupart des formats que votre navigateur sait afficher, comme WebP ou GIF."],
+        ["Puis-je mettre plusieurs images dans un seul PDF ?", "Oui, chaque image devient une page, dans l’ordre que vous choisissez."],
+        ["Les photos sont-elles envoyées sur un serveur ?", "Non, tout se passe sur votre appareil. C’est idéal pour des papiers d’identité ou des justificatifs."]
+      ]
+    },
+    "pdf-txt": {
+      "title": "Convertir PDF en texte (TXT) en ligne gratuitement",
+      "description": "Extrayez tout le texte d’un PDF dans un fichier .txt, page par page. Gratuit, sans inscription, sans envoi de fichier.",
+      "intro": "Récupérez le texte d’un PDF pour le copier, le traduire ou l’analyser. Le résultat est un simple fichier texte, organisé page par page.",
+      "steps": [
+        "Sélectionnez le PDF.",
+        "Cliquez sur « Extraire le texte ».",
+        "Téléchargez le fichier .txt obtenu."
+      ],
+      "faq": [
+        ["Pourquoi le fichier est-il vide ?", "Le PDF est probablement un scan : il contient des images de texte, pas du texte. Il faudrait une reconnaissance de caractères (OCR)."],
+        ["La mise en page est-elle conservée ?", "Seul le texte est extrait, ligne par ligne. Les colonnes, tableaux et images ne sont pas reproduits."],
+        ["Mon document reste-t-il confidentiel ?", "Oui, l’extraction se fait entièrement dans votre navigateur."]
+      ]
+    },
+    "rotate": {
+      "title": "Pivoter un PDF en ligne : faire tourner les pages gratuitement",
+      "description": "Faites pivoter toutes les pages d’un PDF, ou seulement certaines, de 90° ou 180°. Gratuit, sans inscription, sans envoi de fichier.",
+      "intro": "Un scan à l’envers ou une page en paysage mal orientée ? Redressez toutes les pages ou seulement celles que vous indiquez, en un clic.",
+      "steps": [
+        "Sélectionnez un ou plusieurs PDF.",
+        "Choisissez l’angle et, si besoin, les pages à pivoter (ex. 1, 3-5).",
+        "Cliquez sur « Pivoter PDF » et téléchargez le résultat."
+      ],
+      "faq": [
+        ["Puis-je ne pivoter qu’une seule page ?", "Oui : indiquez son numéro dans le champ « Pages ». Laissez-le vide pour pivoter tout le document."],
+        ["La rotation abîme-t-elle la qualité ?", "Non, seule l’orientation des pages change. Le contenu n’est pas recompressé."],
+        ["Puis-je pivoter plusieurs fichiers d’un coup ?", "Oui, ajoutez plusieurs PDF : vous récupérerez un ZIP avec chaque fichier pivoté."]
+      ]
+    },
+    "remove": {
+      "title": "Supprimer des pages d’un PDF en ligne gratuitement",
+      "description": "Retirez les pages inutiles d’un PDF en indiquant leurs numéros. Gratuit, sans inscription, sans envoi de fichier.",
+      "intro": "Page blanche, annexe superflue ou page en double ? Indiquez les pages à retirer et récupérez un PDF propre.",
+      "steps": [
+        "Sélectionnez le PDF.",
+        "Indiquez les pages à supprimer, par exemple 2, 5-7.",
+        "Cliquez sur « Supprimer les pages » et téléchargez le nouveau fichier."
+      ],
+      "faq": [
+        ["Comment connaître le numéro d’une page ?", "Ouvrez le PDF dans votre lecteur habituel : le numéro affiché dans la barre d’outils est celui à indiquer."],
+        ["Le fichier d’origine est-il modifié ?", "Non, PDFacile crée un nouveau fichier. L’original reste intact."],
+        ["Puis-je supprimer toutes les pages sauf une ?", "Oui, mais « Extraire des pages » est alors plus simple : indiquez seulement la page à garder."]
+      ]
+    },
+    "extract": {
+      "title": "Extraire des pages d’un PDF en ligne gratuitement",
+      "description": "Créez un nouveau PDF avec seulement les pages dont vous avez besoin. Gratuit, sans inscription, sans envoi de fichier.",
+      "intro": "Gardez uniquement les pages utiles d’un long document (un contrat signé, un relevé, un chapitre) et partagez un PDF plus court.",
+      "steps": [
+        "Sélectionnez le PDF.",
+        "Indiquez les pages à garder, par exemple 1, 4-6.",
+        "Cliquez sur « Extraire les pages » et téléchargez le résultat."
+      ],
+      "faq": [
+        ["Quelle différence avec « Diviser PDF » ?", "Extraire crée un seul PDF avec les pages choisies. Diviser crée plusieurs fichiers séparés."],
+        ["L’ordre des pages peut-il changer ?", "Les pages sont reprises dans l’ordre où vous les indiquez : « 3, 1 » met la page 3 en premier."],
+        ["Mes fichiers sont-ils stockés quelque part ?", "Non. Tout se passe dans votre navigateur et rien n’est conservé."]
+      ]
+    },
+    "watermark": {
+      "title": "Ajouter un filigrane à un PDF en ligne gratuitement",
+      "description": "Apposez un texte en filigrane (CONFIDENTIEL, COPIE, BROUILLON…) sur toutes les pages d’un PDF. Taille, couleur et opacité réglables.",
+      "intro": "Protégez vos documents avant de les partager : ajoutez « CONFIDENTIEL », « COPIE » ou votre nom en filigrane sur chaque page.",
+      "steps": [
+        "Sélectionnez le PDF.",
+        "Saisissez le texte et réglez la taille, l’opacité, la couleur et l’inclinaison.",
+        "Cliquez sur « Ajouter le filigrane » et téléchargez le document."
+      ],
+      "faq": [
+        ["Peut-on retirer le filigrane ensuite ?", "Il est ajouté au contenu des pages : il n’est pas prévu pour être retiré facilement, c’est le but."],
+        ["Pourquoi ajouter un filigrane à un justificatif ?", "Écrire par exemple « Dossier location – mars » sur une pièce d’identité limite sa réutilisation en cas de vol."],
+        ["Quels caractères sont acceptés ?", "Les lettres latines, accents compris. Les emoji et les alphabets non latins ne sont pas encore pris en charge."]
+      ]
+    },
+    "pagenum": {
+      "title": "Numéroter les pages d’un PDF en ligne gratuitement",
+      "description": "Ajoutez des numéros de page à un PDF : position, format (1, 1 / 10, Page 1 sur 10) et numéro de départ au choix.",
+      "intro": "Numérotez un mémoire, un rapport ou un dossier en quelques secondes. Vous choisissez la position, le format et le premier numéro.",
+      "steps": [
+        "Sélectionnez le PDF.",
+        "Choisissez la position, le format et le premier numéro.",
+        "Cliquez sur « Numéroter les pages » et téléchargez le document."
+      ],
+      "faq": [
+        ["Puis-je commencer à 0 ou à 3 ?", "Oui, indiquez le premier numéro voulu, par exemple pour ne pas compter la page de garde."],
+        ["Quels formats sont proposés ?", "« 1 », « 1 / 10 » et « Page 1 sur 10 »."],
+        ["Le reste du document est-il modifié ?", "Non, seuls les numéros sont ajoutés sur chaque page."]
+      ]
+    },
+    "metadata": {
+      "title": "Modifier les propriétés d’un PDF : titre, auteur, sujet",
+      "description": "Changez le titre, l’auteur et le sujet enregistrés dans un fichier PDF. Gratuit, sans inscription, sans envoi de fichier.",
+      "intro": "Le titre affiché dans l’onglet du navigateur ou le nom de l’auteur caché dans le fichier ne vous conviennent pas ? Modifiez-les en quelques secondes.",
+      "steps": [
+        "Sélectionnez le PDF : ses propriétés actuelles s’affichent.",
+        "Modifiez le titre, l’auteur ou le sujet.",
+        "Cliquez sur « Enregistrer » et téléchargez le fichier."
+      ],
+      "faq": [
+        ["À quoi servent ces propriétés ?", "Le titre s’affiche dans les lecteurs PDF et les résultats de recherche. L’auteur peut révéler un nom que vous ne souhaitez pas partager."],
+        ["Le contenu du PDF change-t-il ?", "Non, seules les informations internes du fichier sont modifiées."],
+        ["Mon fichier est-il envoyé en ligne ?", "Non, la modification se fait dans votre navigateur."]
+      ]
+    },
+    "sign": {
+      "title": "Signer un PDF en ligne gratuitement, sans envoi de fichier",
+      "description": "Dessinez, tapez ou importez votre signature et placez-la sur votre PDF. Gratuit, sans inscription, et votre document ne quitte jamais votre ordinateur.",
+      "intro": "Signez un contrat, un devis ou une attestation sans imprimer ni scanner. Créez votre signature, placez-la où vous voulez, téléchargez : c’est tout.",
+      "steps": [
+        "Sélectionnez le PDF à signer.",
+        "Dessinez votre signature, tapez votre nom ou importez une photo de votre signature.",
+        "Placez-la sur la page par glisser-déposer, puis cliquez sur « Signer le PDF »."
+      ],
+      "faq": [
+        ["Cette signature a-t-elle une valeur légale ?", "C’est une signature visuelle, comme une signature scannée. Elle suffit pour beaucoup de documents courants, mais pas lorsqu’une signature électronique certifiée est exigée."],
+        ["Puis-je signer toutes les pages ?", "Oui : choisissez « Toutes les pages » pour parapher chaque page au même endroit."],
+        ["Ma signature est-elle enregistrée quelque part ?", "Non. Elle n’existe que dans votre navigateur pendant que vous l’utilisez : rien n’est envoyé ni conservé."]
+      ]
+    }
+  }
+}

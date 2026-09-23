@@ -1,0 +1,41 @@
+# Publie PDFacile (dossier pdf-site) sur GitHub Pages à chaque modification
+# de la branche par défaut. À activer une fois : Settings → Pages → Source : GitHub Actions.
+name: Publier PDFacile
+
+on:
+  push:
+    paths: ["pdf-site/**", ".github/workflows/pages.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    if: github.ref_name == github.event.repository.default_branch
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: pages
+        uses: actions/configure-pages@v5
+      - name: Générer le site
+        run: python3 pdf-site/build.py
+        env:
+          # Adresse publique du site (tient compte d'un éventuel nom de domaine).
+          SITE_URL: ${{ steps.pages.outputs.base_url }}
+          # Facultatif : code de validation Google Search Console (Settings → Secrets and variables → Actions → Variables).
+          GOOGLE_SITE_VERIFICATION: ${{ vars.GOOGLE_SITE_VERIFICATION }}
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: pdf-site/dist
+      - id: deployment
+        uses: actions/deploy-pages@v4

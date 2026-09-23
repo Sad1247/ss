@@ -405,6 +405,46 @@ a.sheet:hover::after { width: 34px; height: 34px; }
 .check input { accent-color: var(--m); width: 16px; height: 16px; }
 .field input[type="file"] { font: 400 13px var(--body); max-width: 100%; }
 
+/* ---------- Pages publiées : guide, FAQ, pourquoi, pied de page ---------- */
+.why { border-top: 1px solid var(--rule-strong); padding-block: 40px 64px; }
+.why h2 { font: 700 28px/1.1 var(--display); letter-spacing: -.02em; margin: 0 0 24px; }
+.why-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 32px; }
+.why h3 { font: 700 19px/1.2 var(--display); margin: 0 0 8px; }
+.why p { margin: 0; color: var(--ink-2); font-size: 15px; max-width: 34em; }
+
+.guide { border-top: 1px solid var(--rule-strong); padding-block: 40px 72px; }
+.guide h1 { font: 800 clamp(32px, 4.6vw, 52px)/1.05 var(--display); letter-spacing: -.035em; margin: 0 0 16px; }
+.guide h2 { font: 700 22px/1.2 var(--display); letter-spacing: -.015em; margin: 0 0 16px; }
+.guide-intro { font-size: 18px; color: var(--ink-2); max-width: 40em; margin: 0 0 36px; }
+.guide-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px; margin-bottom: 40px; }
+.steps { margin: 0; padding: 0; list-style: none; counter-reset: step; display: grid; gap: 14px; }
+.steps li { counter-increment: step; display: grid; grid-template-columns: 36px 1fr; gap: 12px; align-items: baseline; font-size: 15.5px; }
+.steps li::before {
+  content: counter(step); font: 600 13px/1 var(--mono); color: var(--paper); background: var(--ink);
+  width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
+}
+.faq details { border-bottom: 1px solid var(--rule); }
+.faq details:first-child { border-top: 1px solid var(--rule); }
+.faq summary { cursor: pointer; font-weight: 600; padding: 14px 28px 14px 0; position: relative; list-style: none; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: "+"; position: absolute; right: 4px; top: 12px; font: 500 18px/1 var(--mono); color: var(--m); }
+.faq details[open] summary::after { content: "−"; }
+.faq details p { margin: 0 0 16px; color: var(--ink-2); font-size: 15px; }
+.related ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 10px; }
+.related a {
+  display: inline-block; text-decoration: none; font-weight: 500; font-size: 15px;
+  padding: 9px 14px; border: 1px solid var(--rule-strong); border-radius: 4px; background: var(--paper);
+}
+.related a:hover { border-color: var(--ink); box-shadow: -2px -1px 0 var(--c), 2px 1px 0 var(--m); }
+.legal { max-width: 760px; padding-top: 48px; border-top: 0; }
+.legal h2 { margin-top: 32px; margin-bottom: 8px; }
+.legal p { max-width: 40em; }
+.legal .small { font: 400 13px/1.4 var(--mono); color: var(--ink-2); margin-top: 32px; }
+.guide a { color: var(--ink); }
+.footer-links { display: flex; gap: 20px; }
+.footer-links a { color: var(--ink-2); font-size: 14px; }
+.footer-links a:hover { color: var(--ink); }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation-duration: 0s !important; }
   .press b { transform: none; }

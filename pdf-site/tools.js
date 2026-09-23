@@ -115,6 +115,15 @@ const IO = {
   metadata: 'PDF → PDF (titre, auteur)', protect: 'PDF + mot de passe', unlock: 'PDF − mot de passe',
 };
 
+// Adresse de la page de chaque outil sur le site publié (ex. : /fusionner-pdf/).
+const SLUGS = {
+  merge: 'fusionner-pdf', split: 'diviser-pdf', compress: 'compresser-pdf',
+  'pdf-jpg': 'pdf-en-jpg', 'jpg-pdf': 'jpg-en-pdf', 'pdf-txt': 'pdf-en-texte',
+  rotate: 'pivoter-pdf', remove: 'supprimer-pages-pdf', extract: 'extraire-pages-pdf',
+  watermark: 'filigrane-pdf', pagenum: 'numeroter-pages-pdf', metadata: 'modifier-proprietes-pdf',
+  sign: 'signer-pdf',
+};
+
 const TOOLS = [
   {
     id: 'merge', name: 'Fusionner PDF', cats: ['organize'], icon: 'merge',

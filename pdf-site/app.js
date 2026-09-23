@@ -4,6 +4,12 @@
 const $ = (sel) => document.querySelector(sel);
 const state = { tool: null, files: [], filter: 'all', downloadUrl: null };
 
+// Deux modes : « pages » (site publié, une vraie page par outil, générée par build.py)
+// et « hash » (fichier unique : index.html ouvert tel quel, ou page Artifact).
+const MODE = document.documentElement.dataset.mode || 'hash';
+const ROOT = document.documentElement.dataset.root || '';
+const toolHref = (t) => (MODE === 'pages' ? `${ROOT}${SLUGS[t.id]}/` : `#${t.id}`);
+
 /* ---------------------------------------------------------------- thème */
 
 (function initTheme() {
@@ -32,7 +38,7 @@ function sheetHtml(t) {
   const inner = `<span class="tile">${iconSvg(t)}</span><h3>${t.name}</h3><p>${t.desc}</p><p class="io">${IO[t.id] || ''}</p>`;
   return t.soon
     ? `<div class="sheet soon ${inkOf(t)}" aria-disabled="true"><span class="stamp">Bientôt</span>${inner}</div>`
-    : `<a class="sheet ${inkOf(t)}" href="#${t.id}">${inner}</a>`;
+    : `<a class="sheet ${inkOf(t)}" href="${toolHref(t)}">${inner}</a>`;
 }
 
 function renderGrid() {
@@ -76,7 +82,7 @@ function acceptAttr(tool) {
 function openTool(tool) {
   state.tool = tool;
   state.files = [];
-  document.title = `${tool.name} — PDFacile`;
+  if (MODE === 'hash') document.title = `${tool.name} — PDFacile`;
   $('#tool-icon').innerHTML = iconSvg(tool);
   $('#tool-icon').className = `tile big ${inkOf(tool)}`;
   $('#tool-io').textContent = IO[tool.id] || '';
@@ -259,20 +265,30 @@ $('#download').addEventListener('click', async (e) => {
 /* ---------------------------------------------------------------- routage */
 
 function route() {
-  const id = location.hash.replace(/^#\/?/, '');
+  const id = MODE === 'pages' ? document.documentElement.dataset.tool || '' : location.hash.replace(/^#\/?/, '');
   const tool = TOOLS.find((t) => t.id === id && !t.soon);
+  // Pages publiées sans outil (accueil, confidentialité, 404) : on garde la vue prévue par la page.
+  if (MODE === 'pages' && !tool) { state.tool = null; return; }
   $('#home').hidden = !!tool;
   $('#tool').hidden = !tool;
   if (tool) {
     openTool(tool);
   } else {
     state.tool = null;
-    document.title = 'PDFacile';
+    if (MODE === 'hash') document.title = 'PDFacile';
   }
-  window.scrollTo(0, 0);
+  if (MODE === 'hash') window.scrollTo(0, 0);
 }
 
-window.addEventListener('hashchange', route);
+if (MODE === 'hash') window.addEventListener('hashchange', route);
 renderFilters();
 renderGrid();
 route();
+
+// Liens du menu vers une catégorie depuis une autre page : /#convertir, /#outils.
+const HASH_FILTERS = { outils: 'all', organiser: 'organize', optimiser: 'optimize', convertir: 'convert', modifier: 'edit', securite: 'security' };
+const initialFilter = HASH_FILTERS[location.hash.slice(1)];
+if (initialFilter && !state.tool) {
+  setFilter(initialFilter);
+  setTimeout(() => $('.filters').scrollIntoView({ block: 'start' }), 0);
+}
