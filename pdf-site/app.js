@@ -24,17 +24,26 @@ const state = { tool: null, files: [], filter: 'all', downloadUrl: null };
 
 function renderFilters() {
   $('.filters').innerHTML = CATEGORIES.map((c) =>
-    `<button class="chip" role="tab" data-cat="${c.id}" aria-selected="${c.id === state.filter}">${c.label}</button>`).join('');
+    `<button class="chip ${c.ink || ''}" role="tab" data-cat="${c.id}" aria-selected="${c.id === state.filter}">` +
+    `${c.ink ? '<span class="dot"></span>' : ''}${c.label}</button>`).join('');
+}
+
+function sheetHtml(t) {
+  const inner = `<span class="tile">${iconSvg(t)}</span><h3>${t.name}</h3><p>${t.desc}</p><p class="io">${IO[t.id] || ''}</p>`;
+  return t.soon
+    ? `<div class="sheet soon ${inkOf(t)}" aria-disabled="true"><span class="stamp">Bientôt</span>${inner}</div>`
+    : `<a class="sheet ${inkOf(t)}" href="#${t.id}">${inner}</a>`;
 }
 
 function renderGrid() {
-  const list = TOOLS.filter((t) => state.filter === 'all' || t.cats.includes(state.filter))
-    .sort((a, b) => !!a.soon - !!b.soon);
-  $('#grid').innerHTML = list.map((t) => {
-    const inner = `<div class="tool-icon">${iconSvg(t)}</div><h3>${t.name}</h3><p>${t.desc}</p>`;
-    return t.soon
-      ? `<div class="card soon" aria-disabled="true"><span class="badge">Bientôt</span>${inner}</div>`
-      : `<a class="card" href="#${t.id}">${inner}</a>`;
+  const cats = CATEGORIES.filter((c) => c.id !== 'all' && (state.filter === 'all' || state.filter === c.id));
+  $('#grid').innerHTML = cats.map((c) => {
+    const tools = TOOLS.filter((t) => t.cats[0] === c.id).sort((a, b) => !!a.soon - !!b.soon);
+    const ready = tools.filter((t) => !t.soon).length;
+    const count = ready ? `${ready} outil${ready > 1 ? 's' : ''}` : 'bientôt';
+    return `<section class="shelf ${c.ink}"><header class="shelf-head"><h2>${c.label}</h2>` +
+      `<span class="meta">${count} · ${c.inkName}</span></header>` +
+      `<div class="sheets">${tools.map(sheetHtml).join('')}</div></section>`;
   }).join('');
 }
 
@@ -69,6 +78,9 @@ function openTool(tool) {
   state.files = [];
   document.title = `${tool.name} — PDFacile`;
   $('#tool-icon').innerHTML = iconSvg(tool);
+  $('#tool-icon').className = `tile big ${inkOf(tool)}`;
+  $('#tool-io').textContent = IO[tool.id] || '';
+  $('#tool-cat').textContent = CATEGORIES.find((c) => c.id === tool.cats[0]).label;
   $('#tool-title').textContent = tool.name;
   $('#tool-desc').textContent = tool.desc;
   for (const input of [$('#file-input'), $('#file-input-more')]) {
@@ -248,12 +260,13 @@ function route() {
     openTool(tool);
   } else {
     state.tool = null;
-    document.title = 'PDFacile — outils PDF gratuits';
+    document.title = 'PDFacile';
   }
   window.scrollTo(0, 0);
 }
 
 window.addEventListener('hashchange', route);
+$('#spec-count').textContent = TOOLS.filter((t) => !t.soon).length;
 renderFilters();
 renderGrid();
 route();

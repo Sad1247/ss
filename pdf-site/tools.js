@@ -95,18 +95,29 @@ async function copyPages(src, indices) {
 
 /* ------------------------------------------------------------- les outils */
 
+// Chaque catégorie est imprimée avec une encre : cyan, jaune, magenta, noir, et un ton direct.
 const CATEGORIES = [
   { id: 'all', label: 'Tout' },
-  { id: 'organize', label: 'Organiser PDF' },
-  { id: 'optimize', label: 'Optimiser le PDF' },
-  { id: 'convert', label: 'Convertir PDF' },
-  { id: 'edit', label: 'Modifier PDF' },
-  { id: 'security', label: 'Sécurité PDF' },
+  { id: 'organize', label: 'Organiser', ink: 'c', inkName: 'Encre cyan' },
+  { id: 'optimize', label: 'Optimiser', ink: 'y', inkName: 'Encre jaune' },
+  { id: 'convert', label: 'Convertir', ink: 'm', inkName: 'Encre magenta' },
+  { id: 'edit', label: 'Modifier', ink: 'k', inkName: 'Encre noire' },
+  { id: 'security', label: 'Sécurité', ink: 'spot', inkName: 'Ton direct' },
 ];
+
+// Ce qui entre et ce qui sort de chaque outil.
+const IO = {
+  merge: 'PDF + PDF → PDF', split: 'PDF → PDF × n', compress: 'PDF → PDF allégé',
+  'pdf-word': 'PDF → DOCX', 'pdf-ppt': 'PDF → PPTX', 'pdf-excel': 'PDF → XLSX',
+  'pdf-jpg': 'PDF → JPG × n', 'jpg-pdf': 'JPG / PNG → PDF', 'word-pdf': 'DOCX → PDF',
+  'pdf-txt': 'PDF → TXT', rotate: 'PDF → PDF ↻', remove: 'PDF − pages → PDF',
+  extract: 'PDF → pages choisies', watermark: 'PDF + texte → PDF', pagenum: 'PDF + 1, 2, 3 → PDF',
+  metadata: 'PDF → PDF (titre, auteur)', protect: 'PDF + mot de passe', unlock: 'PDF − mot de passe',
+};
 
 const TOOLS = [
   {
-    id: 'merge', name: 'Fusionner PDF', cats: ['organize'], color: '#e8553f', icon: 'merge',
+    id: 'merge', name: 'Fusionner PDF', cats: ['organize'], icon: 'merge',
     desc: 'Combinez plusieurs PDF en un seul document, dans l’ordre de votre choix.',
     accept: 'pdf', multiple: true, min: 2, action: 'Fusionner PDF',
     options: () => `<p class="note">Réorganisez les fichiers avec les flèches ◀ ▶. Ils seront fusionnés de gauche à droite.</p>`,
@@ -123,7 +134,7 @@ const TOOLS = [
     },
   },
   {
-    id: 'split', name: 'Diviser PDF', cats: ['organize'], color: '#e8553f', icon: 'split',
+    id: 'split', name: 'Diviser PDF', cats: ['organize'], icon: 'split',
     desc: 'Séparez un PDF par plages de pages, ou transformez chaque page en fichier indépendant.',
     accept: 'pdf', multiple: false, action: 'Diviser PDF',
     options: () => `
@@ -151,7 +162,7 @@ const TOOLS = [
     },
   },
   {
-    id: 'compress', name: 'Compresser PDF', cats: ['optimize'], color: '#4caf50', icon: 'compress',
+    id: 'compress', name: 'Compresser PDF', cats: ['optimize'], icon: 'compress',
     desc: 'Réduisez la taille de votre PDF en conservant la meilleure qualité possible.',
     accept: 'pdf', multiple: false, action: 'Compresser PDF',
     options: () => `
@@ -183,14 +194,14 @@ const TOOLS = [
         message: `${formatSize(file.size)} → ${formatSize(bytes.length)} (−${pct} %).` };
     },
   },
-  { id: 'pdf-word', name: 'PDF en Word', cats: ['convert'], color: '#2b5eb8', icon: 'W', soon: true,
+  { id: 'pdf-word', name: 'PDF en Word', cats: ['convert'], icon: 'W', soon: true,
     desc: 'Convertissez vos PDF en documents DOCX faciles à modifier.' },
-  { id: 'pdf-ppt', name: 'PDF en PowerPoint', cats: ['convert'], color: '#d9542b', icon: 'P', soon: true,
+  { id: 'pdf-ppt', name: 'PDF en PowerPoint', cats: ['convert'], icon: 'P', soon: true,
     desc: 'Transformez vos PDF en présentations PPTX modifiables.' },
-  { id: 'pdf-excel', name: 'PDF en Excel', cats: ['convert'], color: '#1f7a45', icon: 'X', soon: true,
+  { id: 'pdf-excel', name: 'PDF en Excel', cats: ['convert'], icon: 'X', soon: true,
     desc: 'Récupérez les tableaux de vos PDF dans des feuilles de calcul Excel.' },
   {
-    id: 'pdf-jpg', name: 'PDF en JPG', cats: ['convert'], color: '#d9b300', icon: 'image',
+    id: 'pdf-jpg', name: 'PDF en JPG', cats: ['convert'], icon: 'image',
     desc: 'Convertissez chaque page de votre PDF en image JPG de haute qualité.',
     accept: 'pdf', multiple: false, action: 'Convertir en JPG',
     options: () => `
@@ -213,7 +224,7 @@ const TOOLS = [
     },
   },
   {
-    id: 'jpg-pdf', name: 'JPG en PDF', cats: ['convert'], color: '#d9b300', icon: 'JPG',
+    id: 'jpg-pdf', name: 'JPG en PDF', cats: ['convert'], icon: 'JPG',
     desc: 'Convertissez vos images JPG ou PNG en PDF. Choisissez le format et les marges.',
     accept: 'image', multiple: true, min: 1, action: 'Convertir en PDF',
     options: () => `
@@ -258,10 +269,10 @@ const TOOLS = [
         message: `${files.length} image(s) converties en PDF.` };
     },
   },
-  { id: 'word-pdf', name: 'Word en PDF', cats: ['convert'], color: '#2b5eb8', icon: 'W', reverse: true, soon: true,
+  { id: 'word-pdf', name: 'Word en PDF', cats: ['convert'], icon: 'W', soon: true,
     desc: 'Convertissez vos documents DOC et DOCX en PDF fidèles à l’original.' },
   {
-    id: 'pdf-txt', name: 'PDF en texte', cats: ['convert'], color: '#607080', icon: 'TXT',
+    id: 'pdf-txt', name: 'PDF en texte', cats: ['convert'], icon: 'TXT',
     desc: 'Extrayez tout le texte d’un PDF dans un simple fichier .txt.',
     accept: 'pdf', multiple: false, action: 'Extraire le texte',
     options: () => `<p class="note">Fonctionne sur les PDF contenant du vrai texte (pas les scans).</p>`,
@@ -285,7 +296,7 @@ const TOOLS = [
     },
   },
   {
-    id: 'rotate', name: 'Pivoter PDF', cats: ['organize'], color: '#8a4fd8', icon: 'rotate',
+    id: 'rotate', name: 'Pivoter PDF', cats: ['organize'], icon: 'rotate',
     desc: 'Faites pivoter les pages de votre PDF. Toutes à la fois ou seulement certaines.',
     accept: 'pdf', multiple: true, min: 1, action: 'Pivoter PDF',
     options: () => `
@@ -315,7 +326,7 @@ const TOOLS = [
     },
   },
   {
-    id: 'remove', name: 'Supprimer des pages', cats: ['organize'], color: '#e8553f', icon: 'trash',
+    id: 'remove', name: 'Supprimer des pages', cats: ['organize'], icon: 'trash',
     desc: 'Retirez les pages dont vous n’avez pas besoin de votre document PDF.',
     accept: 'pdf', multiple: false, action: 'Supprimer les pages',
     options: () => `
@@ -333,7 +344,7 @@ const TOOLS = [
     },
   },
   {
-    id: 'extract', name: 'Extraire des pages', cats: ['organize'], color: '#e8553f', icon: 'extract',
+    id: 'extract', name: 'Extraire des pages', cats: ['organize'], icon: 'extract',
     desc: 'Récupérez uniquement les pages qui vous intéressent dans un nouveau PDF.',
     accept: 'pdf', multiple: false, action: 'Extraire les pages',
     options: () => `
@@ -348,7 +359,7 @@ const TOOLS = [
     },
   },
   {
-    id: 'watermark', name: 'Ajouter un filigrane', cats: ['edit'], color: '#b0418f', icon: 'watermark',
+    id: 'watermark', name: 'Ajouter un filigrane', cats: ['edit'], icon: 'watermark',
     desc: 'Apposez un texte en filigrane sur toutes les pages de votre PDF.',
     accept: 'pdf', multiple: false, action: 'Ajouter le filigrane',
     options: () => `
@@ -384,7 +395,7 @@ const TOOLS = [
     },
   },
   {
-    id: 'pagenum', name: 'Numéros de page', cats: ['edit'], color: '#b0418f', icon: 'number',
+    id: 'pagenum', name: 'Numéros de page', cats: ['edit'], icon: 'number',
     desc: 'Numérotez les pages de votre PDF en choisissant la position et le format.',
     accept: 'pdf', multiple: false, action: 'Numéroter les pages',
     options: () => `
@@ -423,7 +434,7 @@ const TOOLS = [
     },
   },
   {
-    id: 'metadata', name: 'Modifier les propriétés', cats: ['edit'], color: '#b0418f', icon: 'info',
+    id: 'metadata', name: 'Modifier les propriétés', cats: ['edit'], icon: 'info',
     desc: 'Changez le titre, l’auteur et le sujet enregistrés dans votre fichier PDF.',
     accept: 'pdf', multiple: false, action: 'Enregistrer',
     options: () => `
@@ -443,9 +454,9 @@ const TOOLS = [
       return { blob: pdfBlob(await doc.save()), filename: file.name, message: 'Propriétés mises à jour.' };
     },
   },
-  { id: 'protect', name: 'Protéger PDF', cats: ['security'], color: '#2d3a4a', icon: 'lock', soon: true,
+  { id: 'protect', name: 'Protéger PDF', cats: ['security'], icon: 'lock', soon: true,
     desc: 'Protégez vos fichiers PDF avec un mot de passe pour empêcher les accès non autorisés.' },
-  { id: 'unlock', name: 'Déverrouiller PDF', cats: ['security'], color: '#2d3a4a', icon: 'unlock', soon: true,
+  { id: 'unlock', name: 'Déverrouiller PDF', cats: ['security'], icon: 'unlock', soon: true,
     desc: 'Retirez le mot de passe de vos PDF pour les utiliser librement.' },
 ];
 
@@ -463,39 +474,35 @@ async function embedImage(doc, file) {
 
 /* ---------------------------------------------------------------- icônes */
 
+// Pictogrammes au trait (viewBox 24), dessinés à l'encre de la page.
+const PAGE = 'M6 3h9l4 4v14H6z M15 3v4h4';
 const GLYPHS = {
-  merge: '<path d="M8 8l6 6M14 9v5H9M40 40l-6-6M34 39v-5h5" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
-  split: '<path d="M15 15L9 9M9 14V9h5M33 33l6 6M39 34v5h-5" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
-  rotate: '<path d="M33 30a9 9 0 1 1-2-10M32 14v6h-6" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
-  trash: '<path d="M19 20h16M24 20v-2h6v2M21 20l1.2 14h9.6L33 20" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
-  extract: '<path d="M27 19v12M22 26l5 5 5-5M21 35h12" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
-  watermark: '<path d="M27 16s-7 8-7 13a7 7 0 0 0 14 0c0-5-7-13-7-13z" fill="#fff"/>',
-  number: '<text x="27" y="33" fill="#fff" font-family="Inter,sans-serif" font-weight="800" font-size="15" text-anchor="middle">1 2</text>',
-  info: '<circle cx="27" cy="19" r="2" fill="#fff"/><path d="M27 24v11" stroke="#fff" stroke-width="3" stroke-linecap="round"/>',
-  image: '<path d="M19 33l5-6 4 4 3-3 4 5z" fill="#fff"/><circle cx="31" cy="21" r="2.4" fill="#fff"/>',
-  lock: '<rect x="20" y="24" width="14" height="11" rx="2" fill="#fff"/><path d="M23 24v-3a4 4 0 0 1 8 0v3" stroke="#fff" stroke-width="2.4" fill="none"/>',
-  unlock: '<rect x="20" y="24" width="14" height="11" rx="2" fill="#fff"/><path d="M23 24v-3a4 4 0 0 1 8 0" stroke="#fff" stroke-width="2.4" fill="none"/>',
+  merge: 'M3 3h7v7H3z M14 3h7v7h-7z M6.5 10v2.5h11V10 M12 12.5V15 M8.5 15h7v6h-7z',
+  split: 'M8.5 3h7v6h-7z M12 9v2.5 M6.5 14v-2.5h11V14 M3 14h7v7H3z M14 14h7v7h-7z',
+  compress: 'M6 3h12v18H6z M12 5.5v4 M9.5 7.5l2.5 2.5 2.5-2.5 M12 18.5v-4 M9.5 16.5l2.5-2.5 2.5 2.5',
+  rotate: 'M4 9h10v12H4z M9 4.5a8.5 8.5 0 0 1 10.5 8 M17 10.5l2.5 2.5 2.5-2.5',
+  trash: 'M4 7h16 M9.5 7V4h5v3 M6.5 7l1 14h9l1-14 M10 11v6 M14 11v6',
+  extract: 'M13 3H6v18h6 M13 3l5 5v3 M13 3v5h5 M14 17h7 M18 14l3 3-3 3',
+  watermark: PAGE + ' M9 17l7-7 M9 13l3-3',
+  number: PAGE + ' M9.5 12h6.5 M9.5 16h6.5 M11.5 10l-.8 8 M15 10l-.8 8',
+  info: PAGE + ' M9 11h7 M9 14h7 M9 17h4',
+  image: 'M3 5h18v14H3z M3 16l5-5 4 4 3-3 6 6 M15.5 8.5h1',
+  lock: 'M5 11h14v10H5z M8 11V7.5a4 4 0 0 1 8 0V11 M12 15v2',
+  unlock: 'M5 11h14v10H5z M8 11V7.5a4 4 0 0 1 7.6-1.8 M12 15v2',
 };
 
 function iconSvg(tool) {
-  const c = tool.color;
-  const soft = `${c}40`;
-  const svg = (inner) => `<svg viewBox="0 0 48 48" width="48" height="48" aria-hidden="true">${inner}</svg>`;
-  if (tool.icon === 'merge' || tool.icon === 'split') {
-    return svg(`<rect x="0" y="0" width="22" height="22" rx="4" fill="${c}"/><rect x="26" y="26" width="22" height="22" rx="4" fill="${c}"/>${GLYPHS[tool.icon]}`);
+  const stroke = 'fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"';
+  if (GLYPHS[tool.icon]) {
+    return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${GLYPHS[tool.icon]}" ${stroke}/></svg>`;
   }
-  if (tool.icon === 'compress') {
-    const a = '<path d="M-4 -4l6 6M2 -2v4h-4" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>';
-    return svg([[0, 0, 0], [26, 0, 90], [0, 26, 270], [26, 26, 180]].map(([x, y, r]) =>
-      `<rect x="${x}" y="${y}" width="22" height="22" rx="4" fill="${c}"/><g transform="translate(${x + 11} ${y + 11}) rotate(${r})">${a}</g>`).join(''));
-  }
-  const glyph = GLYPHS[tool.icon] ||
-    `<text x="27" y="${tool.icon.length > 1 ? 32 : 35}" fill="#fff" font-family="Inter,sans-serif" font-weight="800" font-size="${tool.icon.length > 1 ? 11 : 18}" text-anchor="middle">${tool.icon}</text>`;
-  const small = `<rect x="0" y="0" width="22" height="22" rx="4" fill="${soft}"/><path d="M6 6l8 8M14 9v5H9" stroke="${c}" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
-  const big = `<rect x="10" y="12" width="34" height="34" rx="5" fill="${c}"/>`;
-  if (tool.reverse) {
-    // « X en PDF » : la grande tuile est derrière, la flèche sort en bas à droite
-    return svg(`<rect x="2" y="2" width="30" height="30" rx="5" fill="${c}"/>${glyph.replace(/x="27"/, 'x="17"').replace(/y="(\d+)"/, (_, y) => `y="${y - 12}"`)}<rect x="28" y="28" width="20" height="20" rx="4" fill="${c}"/><path d="M33 33l8 8M41 36v5h-5" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`);
-  }
-  return svg(small + big + glyph);
+  // Formats (W, P, X, JPG, TXT) : une page portant l'extension.
+  const size = tool.icon.length > 1 ? 5.2 : 7.5;
+  return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${PAGE}" ${stroke}/>` +
+    `<text x="12.5" y="${tool.icon.length > 1 ? 16.5 : 17.5}" text-anchor="middle" fill="currentColor" ` +
+    `font-family="IBM Plex Mono, monospace" font-weight="600" font-size="${size}">${tool.icon}</text></svg>`;
+}
+
+function inkOf(tool) {
+  return CATEGORIES.find((c) => c.id === tool.cats[0]).ink;
 }
