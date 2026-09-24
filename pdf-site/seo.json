@@ -1,13 +1,13 @@
 {
   "home": {
-    "title": "PDFacile – Outils PDF gratuits, sans envoi de fichier",
+    "title": "FreePDF – Outils PDF gratuits, sans envoi de fichier",
     "description": "Fusionner, diviser, compresser, convertir et signer vos PDF gratuitement. Tout se fait dans votre navigateur : vos fichiers ne sont jamais envoyés sur un serveur."
   },
   "tools": {
     "merge": {
       "title": "Fusionner PDF en ligne gratuitement, sans envoi de fichier",
       "description": "Assemblez plusieurs PDF en un seul document, dans l’ordre de votre choix. Gratuit, sans inscription, et vos fichiers ne quittent jamais votre ordinateur.",
-      "intro": "Rassemblez des factures, des chapitres ou des pièces justificatives dans un seul fichier PDF. Vous choisissez l’ordre, PDFacile fait le reste, directement dans votre navigateur.",
+      "intro": "Rassemblez des factures, des chapitres ou des pièces justificatives dans un seul fichier PDF. Vous choisissez l’ordre, FreePDF fait le reste, directement dans votre navigateur.",
       "steps": [
         "Sélectionnez ou déposez au moins deux fichiers PDF.",
         "Réorganisez-les avec les flèches pour choisir l’ordre final.",
@@ -30,7 +30,7 @@
       ],
       "faq": [
         ["Comment écrire les plages de pages ?", "Séparez-les par des virgules : « 1-3, 5, 8- ». « 8- » signifie de la page 8 jusqu’à la fin."],
-        ["Le PDF d’origine est-il modifié ?", "Non. PDFacile crée de nouveaux fichiers et votre document d’origine reste intact."],
+        ["Le PDF d’origine est-il modifié ?", "Non. FreePDF crée de nouveaux fichiers et votre document d’origine reste intact."],
         ["Est-ce vraiment gratuit ?", "Oui, sans inscription ni limite. Le traitement se fait sur votre ordinateur, cela ne nous coûte rien."]
       ]
     },
@@ -46,7 +46,7 @@
       "faq": [
         ["Quel niveau choisir ?", "Le niveau recommandé convient à la plupart des documents. Choisissez « fort » si le fichier doit passer sous une limite stricte, par exemple 2 Mo."],
         ["Le texte reste-t-il sélectionnable ?", "Non : pour gagner de la place, les pages sont converties en images optimisées. Gardez l’original si vous avez besoin de copier le texte."],
-        ["Et si mon fichier est déjà léger ?", "PDFacile vous le signale et vous rend le fichier d’origine plutôt qu’une version plus lourde."]
+        ["Et si mon fichier est déjà léger ?", "FreePDF vous le signale et vous rend le fichier d’origine plutôt qu’une version plus lourde."]
       ]
     },
     "pdf-jpg": {
@@ -120,7 +120,7 @@
       ],
       "faq": [
         ["Comment connaître le numéro d’une page ?", "Ouvrez le PDF dans votre lecteur habituel : le numéro affiché dans la barre d’outils est celui à indiquer."],
-        ["Le fichier d’origine est-il modifié ?", "Non, PDFacile crée un nouveau fichier. L’original reste intact."],
+        ["Le fichier d’origine est-il modifié ?", "Non, FreePDF crée un nouveau fichier. L’original reste intact."],
         ["Puis-je supprimer toutes les pages sauf une ?", "Oui, mais « Extraire des pages » est alors plus simple : indiquez seulement la page à garder."]
       ]
     },

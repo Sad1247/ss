@@ -95,7 +95,7 @@ async function copyPages(src, indices) {
 
 /* ------------------------------------------------------------- les outils */
 
-// Chaque catégorie est imprimée avec une encre : cyan, jaune, magenta, noir, et un ton direct.
+// Chaque catégorie a sa couleur (classes CSS .c, .y, .m, .k, .spot).
 const CATEGORIES = [
   { id: 'all', label: 'Tout' },
   { id: 'organize', label: 'Organiser', ink: 'c', inkName: 'Encre cyan' },
@@ -459,7 +459,7 @@ const TOOLS = [
     async run([file], o) {
       const doc = await loadPdf(file);
       doc.setTitle(o.title); doc.setAuthor(o.author); doc.setSubject(o.subject);
-      doc.setProducer('PDFacile'); doc.setModificationDate(new Date());
+      doc.setProducer('FreePDF'); doc.setModificationDate(new Date());
       return { blob: pdfBlob(await doc.save()), filename: file.name, message: 'Propriétés mises à jour.' };
     },
   },

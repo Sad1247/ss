@@ -2,7 +2,7 @@
 'use strict';
 
 const $ = (sel) => document.querySelector(sel);
-const state = { tool: null, files: [], filter: 'all', downloadUrl: null };
+const state = { tool: null, files: [], filter: 'all', query: '', downloadUrl: null };
 
 // Deux modes : « pages » (site publié, une vraie page par outil, générée par build.py)
 // et « hash » (fichier unique : index.html ouvert tel quel, ou page Artifact).
@@ -41,16 +41,23 @@ function sheetHtml(t) {
     : `<a class="sheet ${inkOf(t)}" href="${toolHref(t)}">${inner}</a>`;
 }
 
+// Recherche insensible aux accents et à la casse.
+const norm = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
 function renderGrid() {
+  const q = norm(state.query || '').trim();
+  const match = (t) => !q || norm(`${t.name} ${t.desc} ${IO[t.id] || ''}`).includes(q);
   const cats = CATEGORIES.filter((c) => c.id !== 'all' && (state.filter === 'all' || state.filter === c.id));
-  $('#grid').innerHTML = cats.map((c) => {
-    const tools = TOOLS.filter((t) => t.cats[0] === c.id).sort((a, b) => !!a.soon - !!b.soon);
+  const html = cats.map((c) => {
+    const tools = TOOLS.filter((t) => t.cats[0] === c.id && match(t)).sort((a, b) => !!a.soon - !!b.soon);
+    if (!tools.length) return '';
     const ready = tools.filter((t) => !t.soon).length;
     const count = ready ? `${ready} outil${ready > 1 ? 's' : ''}` : 'bientôt';
     return `<section class="shelf ${c.ink}"><header class="shelf-head"><h2>${c.label}</h2>` +
-      `<span class="meta">${count} · ${c.inkName}</span></header>` +
+      `<span class="meta">${count}</span></header>` +
       `<div class="sheets">${tools.map(sheetHtml).join('')}</div></section>`;
   }).join('');
+  $('#grid').innerHTML = html || `<p class="empty">Aucun outil ne correspond à « ${state.query.replace(/[<>&"]/g, '')} ».</p>`;
 }
 
 function setFilter(cat) {
@@ -58,6 +65,11 @@ function setFilter(cat) {
   renderFilters();
   renderGrid();
 }
+
+$('#tool-search').addEventListener('input', (e) => {
+  state.query = e.target.value;
+  renderGrid();
+});
 
 $('.filters').addEventListener('click', (e) => {
   const chip = e.target.closest('.chip');
@@ -82,7 +94,7 @@ function acceptAttr(tool) {
 function openTool(tool) {
   state.tool = tool;
   state.files = [];
-  if (MODE === 'hash') document.title = `${tool.name} — PDFacile`;
+  if (MODE === 'hash') document.title = `${tool.name} — FreePDF`;
   $('#tool-icon').innerHTML = iconSvg(tool);
   $('#tool-icon').className = `tile big ${inkOf(tool)}`;
   $('#tool-io').textContent = IO[tool.id] || '';
@@ -275,7 +287,7 @@ function route() {
     openTool(tool);
   } else {
     state.tool = null;
-    if (MODE === 'hash') document.title = 'PDFacile';
+    if (MODE === 'hash') document.title = 'FreePDF';
   }
   if (MODE === 'hash') window.scrollTo(0, 0);
 }

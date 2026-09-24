@@ -1,6 +1,6 @@
-# Publie PDFacile (dossier pdf-site) sur GitHub Pages à chaque modification
+# Publie FreePDF (dossier pdf-site) sur GitHub Pages à chaque modification
 # de la branche par défaut. À activer une fois : Settings → Pages → Source : GitHub Actions.
-name: Publier PDFacile
+name: Publier FreePDF
 
 on:
   push:
