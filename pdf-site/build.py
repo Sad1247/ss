@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Génère le site publié de PDFacile dans dist/.
+"""Génère le site publié de FreePDF dans dist/.
 
 Une vraie page par outil (/fusionner-pdf/, /signer-pdf/…) avec son titre, sa
 description, un mode d'emploi et une FAQ lisibles par Google, plus
 sitemap.xml, robots.txt, une page confidentialité et une page 404.
 
     python3 build.py                                  # adresse par défaut
-    SITE_URL=https://pdfacile.fr python3 build.py     # avec votre domaine
+    SITE_URL=https://freepdf.example python3 build.py     # avec votre domaine
 
 index.html reste utilisable tel quel (mode « hash », une seule page).
 """
@@ -59,13 +59,13 @@ def render(template, *, root, url, title, description, tool=None, article="", sh
         f'<meta name="description" content="{esc(description)}">',
         f'<link rel="canonical" href="{url}">',
         '<meta property="og:type" content="website">',
-        '<meta property="og:site_name" content="PDFacile">',
+        '<meta property="og:site_name" content="FreePDF">',
         '<meta property="og:locale" content="fr_FR">',
         f'<meta property="og:title" content="{esc(title)}">',
         f'<meta property="og:description" content="{esc(description)}">',
         f'<meta property="og:url" content="{url}">',
         '<meta name="twitter:card" content="summary">',
-        '<meta name="theme-color" content="#141b2d">',
+        '<meta name="theme-color" content="#141414">',
     ]
     if noindex:
         head.append('<meta name="robots" content="noindex">')
@@ -129,13 +129,13 @@ def tool_article(tool, seo, root):
 PRIVACY = """      <article class="guide legal">
         <p class="label">Confidentialité</p>
         <h1>Vos fichiers restent chez vous</h1>
-        <p class="guide-intro">PDFacile traite vos PDF directement dans votre navigateur. Aucun fichier n’est envoyé sur un serveur, ni conservé, ni lu par qui que ce soit d’autre que vous.</p>
+        <p class="guide-intro">FreePDF traite vos PDF directement dans votre navigateur. Aucun fichier n’est envoyé sur un serveur, ni conservé, ni lu par qui que ce soit d’autre que vous.</p>
         <h2>Ce qui se passe quand vous utilisez un outil</h2>
         <p>Les fichiers que vous sélectionnez sont lus et transformés par votre ordinateur, grâce aux bibliothèques libres pdf-lib, PDF.js et JSZip. Le résultat est créé sur votre appareil et téléchargé depuis celui-ci. Fermer la page efface tout.</p>
         <h2>Ce que nous ne faisons pas</h2>
         <p>Pas de compte, pas de cookie publicitaire, pas de mesure d’audience, pas de revente de données. Le site mémorise seulement, dans votre navigateur, votre choix de thème clair ou sombre.</p>
         <h2>Services techniques utilisés</h2>
-        <p>Comme la plupart des sites, PDFacile charge certaines ressources auprès de services tiers : les bibliothèques de traitement depuis cdnjs (Cloudflare), les polices depuis Google Fonts, et les pages depuis son hébergeur. Ces services voient l’adresse IP de votre connexion lors du chargement de la page, mais jamais vos fichiers.</p>
+        <p>Comme la plupart des sites, FreePDF charge certaines ressources auprès de services tiers : les bibliothèques de traitement depuis cdnjs (Cloudflare), les polices depuis Google Fonts, et les pages depuis son hébergeur. Ces services voient l’adresse IP de votre connexion lors du chargement de la page, mais jamais vos fichiers.</p>
         <p class="small">Dernière mise à jour : {date}</p>
       </article>"""
 
@@ -156,7 +156,7 @@ def main():
         shutil.copy(SRC / a, OUT / a)
     (OUT / ".nojekyll").write_text("")
 
-    app_ld = {"@context": "https://schema.org", "@type": "WebApplication", "name": "PDFacile",
+    app_ld = {"@context": "https://schema.org", "@type": "WebApplication", "name": "FreePDF",
               "url": f"{SITE_URL}/", "applicationCategory": "UtilitiesApplication",
               "operatingSystem": "Tous (navigateur web)", "inLanguage": "fr",
               "offers": {"@type": "Offer", "price": "0", "priceCurrency": "EUR"},
@@ -170,26 +170,26 @@ def main():
         s = seo["tools"][t["id"]]
         url = f"{SITE_URL}/{t['slug']}/"
         ld = [
-            {**app_ld, "name": f"{t['name']} – PDFacile", "url": url, "description": s["description"]},
+            {**app_ld, "name": f"{t['name']} – FreePDF", "url": url, "description": s["description"]},
             {"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [
                 {"@type": "Question", "name": q, "acceptedAnswer": {"@type": "Answer", "text": a}}
                 for q, a in s["faq"]]},
             {"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [
-                {"@type": "ListItem", "position": 1, "name": "PDFacile", "item": f"{SITE_URL}/"},
+                {"@type": "ListItem", "position": 1, "name": "FreePDF", "item": f"{SITE_URL}/"},
                 {"@type": "ListItem", "position": 2, "name": t["name"], "item": url}]},
         ]
         d = OUT / t["slug"]
         d.mkdir()
         (d / "index.html").write_text(render(
-            template, root="../", url=url, title=f"{s['title']} | PDFacile", description=s["description"],
+            template, root="../", url=url, title=f"{s['title']} | FreePDF", description=s["description"],
             tool=t, article=tool_article(t, s, "../"), show="tool", ld=ld), encoding="utf-8")
         pages.append(url)
 
     d = OUT / "confidentialite"
     d.mkdir()
     (d / "index.html").write_text(render(
-        template, root="../", url=f"{SITE_URL}/confidentialite/", title="Confidentialité | PDFacile",
-        description="PDFacile traite vos PDF dans votre navigateur : aucun fichier n’est envoyé ni conservé.",
+        template, root="../", url=f"{SITE_URL}/confidentialite/", title="Confidentialité | FreePDF",
+        description="FreePDF traite vos PDF dans votre navigateur : aucun fichier n’est envoyé ni conservé.",
         article=PRIVACY.replace("{date}", date.today().strftime("%d/%m/%Y")), show="page"), encoding="utf-8")
     pages.append(f"{SITE_URL}/confidentialite/")
 
@@ -202,7 +202,7 @@ def main():
         <p class="guide-intro">Le lien est peut-être ancien ou incomplet. Tous les outils sont sur la <a href="{root_abs}">page d’accueil</a>.</p>
       </article>"""
     (OUT / "404.html").write_text(render(
-        template, root=root_abs, url=f"{SITE_URL}/", title="Page introuvable | PDFacile",
+        template, root=root_abs, url=f"{SITE_URL}/", title="Page introuvable | FreePDF",
         description="Cette page n’existe pas.", article=notfound, show="page", noindex=True), encoding="utf-8")
 
     today = date.today().isoformat()

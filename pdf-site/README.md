@@ -1,4 +1,4 @@
-# PDFacile
+# FreePDF
 
 Site d'outils PDF (fusionner, diviser, compresser, convertir, filigrane…) inspiré de la
 présentation des grands services en ligne. **Tout le traitement se fait dans le navigateur**

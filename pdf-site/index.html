@@ -3,33 +3,29 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>PDFacile</title>
-  <meta name="description" content="Fusionner, diviser, compresser, convertir et annoter vos PDF directement dans le navigateur. Aucun fichier n'est envoyé sur un serveur.">
+  <title>FreePDF</title>
+  <meta name="description" content="Fusionner, diviser, compresser, convertir et signer vos PDF gratuitement, directement dans le navigateur. Aucun fichier n'est envoyé sur un serveur.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Caveat:wght@600&family=Dancing+Script:wght@600&family=Great+Vibes&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Caveat:wght@600&family=Dancing+Script:wght@600&family=Great+Vibes&display=swap" rel="stylesheet">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header class="topbar">
-    <a class="logo" href="#accueil" aria-label="PDFacile, accueil">
-      <svg class="reg" viewBox="0 0 32 32" width="28" height="28" aria-hidden="true">
-        <circle cx="16" cy="16" r="9" fill="none" stroke="currentColor" stroke-width="2"/>
-        <circle cx="16" cy="16" r="3.5" fill="currentColor"/>
-        <path d="M16 1v30M1 16h30" stroke="currentColor" stroke-width="2"/>
-      </svg>
-      <span class="logo-text">PDFacile</span>
+    <a class="logo" href="#accueil" aria-label="FreePDF, accueil">
+      <span class="logo-free">Free</span><span class="logo-pdf">PDF</span>
     </a>
     <nav class="mainnav" aria-label="Outils principaux">
       <a href="#merge">Fusionner</a>
       <a href="#split">Diviser</a>
       <a href="#compress">Compresser</a>
+      <a href="#sign">Signer</a>
       <a href="#accueil" data-filter="convert">Convertir</a>
       <a href="#accueil" data-filter="all">Tous les outils</a>
     </nav>
     <button class="theme-toggle" type="button" aria-label="Changer de thème" title="Changer de thème">
-      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg>
+      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" fill="currentColor"/></svg>
     </button>
   </header>
 
@@ -37,20 +33,15 @@
     <!-- Accueil -->
     <section id="home" class="view">
       <div class="hero">
-        <div class="hero-copy">
-          <p class="eyebrow">Atelier PDF · traitement 100 % local</p>
-          <h1>Vos PDF, <em>pliés en quatre.</em></h1>
-          <p class="lede">Fusionner, découper, compresser, convertir, signer. Tout se passe dans votre navigateur&nbsp;: aucun fichier ne quitte votre ordinateur.</p>
-        </div>
-        <div class="hero-art" aria-hidden="true">
-          <div class="paper p3"></div>
-          <div class="paper p2"></div>
-          <div class="paper p1">
-            <span class="crop tl"></span><span class="crop tr"></span><span class="crop bl"></span><span class="crop br"></span>
-            <div class="lines"><i></i><i></i><i></i><i class="short"></i><i></i><i class="short"></i></div>
-            <div class="cmyk"><b class="c"></b><b class="m"></b><b class="y"></b><b class="k"></b></div>
-            <span class="format">A4 · 210 × 297 mm</span>
-          </div>
+        <p class="pill">
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M6 11h12v10H6z M8.5 11V7.5a3.5 3.5 0 0 1 7 0V11" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+          Aucun fichier envoyé&nbsp;: tout reste sur votre appareil
+        </p>
+        <h1>Tous vos outils PDF, <mark>gratuits</mark>.</h1>
+        <p class="lede">Fusionner, diviser, compresser, convertir, signer. Sans inscription, sans limite, sans filigrane.</p>
+        <div class="search">
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <input type="search" id="tool-search" placeholder="Rechercher un outil…" aria-label="Rechercher un outil" autocomplete="off">
         </div>
       </div>
 
@@ -58,11 +49,23 @@
       <div id="grid"></div>
 
       <section class="why" aria-labelledby="why-title">
-        <h2 id="why-title">Pourquoi PDFacile</h2>
+        <h2 id="why-title">Pourquoi FreePDF&nbsp;?</h2>
         <div class="why-cols">
-          <div><h3>Vos fichiers restent chez vous</h3><p>Les PDF sont traités par votre navigateur. Rien n’est envoyé sur Internet, rien n’est stocké, même pas par nous. Idéal pour les contrats, fiches de paie et papiers d’identité.</p></div>
-          <div><h3>Gratuit, sans inscription</h3><p>Pas de compte à créer, pas de limite de fichiers, pas de filigrane ajouté sur vos documents.</p></div>
-          <div><h3>Pas d’attente</h3><p>Aucun envoi, aucune file d’attente : le traitement démarre dès que vous cliquez, même pour de gros fichiers.</p></div>
+          <div>
+            <span class="why-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 11h12v10H6z M8.5 11V7.5a3.5 3.5 0 0 1 7 0V11" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></span>
+            <h3>Vos fichiers restent chez vous</h3>
+            <p>Les PDF sont traités par votre navigateur. Rien n’est envoyé sur Internet, rien n’est stocké, même pas par nous. Idéal pour les contrats, fiches de paie et papiers d’identité.</p>
+          </div>
+          <div>
+            <span class="why-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6-4.5-4.2 6.1-.7z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></span>
+            <h3>Gratuit, sans inscription</h3>
+            <p>Pas de compte à créer, pas de limite de fichiers, pas de filigrane ajouté sur vos documents.</p>
+          </div>
+          <div>
+            <span class="why-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></span>
+            <h3>Pas d’attente</h3>
+            <p>Aucun envoi, aucune file d’attente&nbsp;: le traitement démarre dès que vous cliquez, même pour de gros fichiers.</p>
+          </div>
         </div>
       </section>
     </section>
@@ -72,20 +75,17 @@
       <nav class="crumbs"><a class="back" href="#accueil">← Tous les outils</a><span id="tool-cat"></span></nav>
       <div class="tool-head">
         <div class="tile big" id="tool-icon"></div>
-        <div>
-          <h1 id="tool-title"></h1>
-          <p id="tool-desc"></p>
-          <p class="io" id="tool-io"></p>
-        </div>
+        <h1 id="tool-title"></h1>
+        <p id="tool-desc"></p>
+        <p class="io" id="tool-io"></p>
       </div>
 
       <div id="stage-pick" class="stage">
         <label class="dropzone" id="dropzone">
           <input type="file" id="file-input" hidden>
-          <span class="crop tl"></span><span class="crop tr"></span><span class="crop bl"></span><span class="crop br"></span>
-          <span class="drop-title">Déposez vos fichiers ici</span>
+          <span class="drop-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 16V4 M7 9l5-5 5 5 M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
           <span class="btn primary big">Sélectionner des fichiers</span>
-          <span class="hint">Les fichiers restent sur votre ordinateur.</span>
+          <span class="hint">ou glissez-déposez-les ici · ils restent sur votre appareil</span>
         </label>
       </div>
 
@@ -93,7 +93,7 @@
         <div class="work">
           <div class="table">
             <div class="table-head">
-              <span class="label" id="table-label">Sur la table</span>
+              <span class="label" id="table-label">Vos fichiers</span>
               <label class="add-more" id="add-more">
                 <input type="file" id="file-input-more" hidden>
                 + Ajouter
@@ -101,8 +101,7 @@
             </div>
             <div class="files" id="files"></div>
           </div>
-          <aside class="ticket">
-            <p class="label">Fiche de travail</p>
+          <aside class="panel">
             <h2 id="opt-title">Options</h2>
             <form id="opt-form" onsubmit="return false"></form>
             <button class="btn primary big full" id="run">Lancer</button>
@@ -112,24 +111,24 @@
       </div>
 
       <div id="stage-busy" class="stage center" hidden>
-        <div class="press" aria-hidden="true"><b class="c"></b><b class="m"></b><b class="y"></b><b class="k"></b></div>
-        <p id="busy-msg" class="mono">Traitement en cours…</p>
+        <div class="spinner" aria-hidden="true"></div>
+        <p id="busy-msg">Traitement en cours…</p>
       </div>
 
       <div id="stage-done" class="stage center" hidden>
-        <div class="receipt">
-          <p class="label">Tirage terminé</p>
-          <h2 id="done-title">C'est prêt.</h2>
+        <div class="done">
+          <span class="done-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <h2 id="done-title">C’est prêt&nbsp;!</h2>
           <p id="done-msg"></p>
-          <a class="btn primary big full" id="download" href="#">Télécharger</a>
-          <button class="btn ghost full" id="restart">Traiter d'autres fichiers</button>
+          <a class="btn primary big" id="download" href="#">Télécharger</a>
+          <button class="btn ghost" id="restart">Traiter d’autres fichiers</button>
         </div>
       </div>
     </section>
   </main>
 
   <footer class="footer">
-    <div class="cmyk-strip" aria-hidden="true"><b class="c"></b><b class="m"></b><b class="y"></b><b class="k"></b></div>
+    <span class="footer-brand"><span class="logo-free">Free</span><span class="logo-pdf">PDF</span></span>
   </footer>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
