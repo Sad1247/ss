@@ -10,6 +10,7 @@ sitemap.xml, robots.txt, une page confidentialité et une page 404.
 
 index.html reste utilisable tel quel (mode « hash », une seule page).
 """
+import hashlib
 import html
 import json
 import os
@@ -22,6 +23,7 @@ SRC = Path(__file__).resolve().parent
 OUT = SRC / "dist"
 SITE_URL = os.environ.get("SITE_URL", "https://sad1247.github.io/ss").rstrip("/")
 ASSETS = ["style.css", "tools.js", "app.js", "favicon.svg"]
+VERSIONS = {a: hashlib.sha1((SRC / a).read_bytes()).hexdigest()[:10] for a in ASSETS}
 
 esc = html.escape
 
@@ -75,8 +77,10 @@ def render(template, *, root, url, title, description, tool=None, article="", sh
     h = re.sub(r"<title>.*?</title>\n\s*<meta name=\"description\"[^>]*>", "\n  ".join(head), h, count=1, flags=re.S)
 
     # Fichiers et liens internes : chemins relatifs à la racine du site.
+    # Numéro de version = empreinte du fichier : chaque mise à jour force les navigateurs
+    # (et les iframes, comme sur Blogger, qui ont leur propre cache) à la recharger.
     for asset in ("style.css", "tools.js", "app.js", "favicon.svg"):
-        h = h.replace(f'"{asset}"', f'"{root}{asset}"')
+        h = h.replace(f'"{asset}"', f'"{root}{asset}?v={VERSIONS[asset]}"')
     home = root or "./"
     h = h.replace('href="#accueil" data-filter="convert"', f'href="{root}#convertir" data-filter="convert"')
     h = h.replace('href="#accueil" data-filter="all"', f'href="{root}#outils" data-filter="all"')
