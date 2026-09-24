@@ -2150,6 +2150,34 @@ static class Harness3D
         Frames(2);
         Check("une fois dans le bureau RH, il s'efface", AucunVisible(discretsRH));
 
+        // Le linteau au-dessus de sa porte part avec les pans : laisse seul,
+        // il flottait au-dessus de la tete du patron.
+        GameObject linteauRH = null;
+        if (discretsRH != null)
+            foreach (var m in discretsRH.Murs)
+                if (m != null && m.name == "MurEntrePiecesLinteau"
+                    && Mathf.Abs(m.transform.position.x - porteRH.transform.position.x) < 0.01f)
+                    linteauRH = m;
+        Check("le mur au-dessus de sa porte s'efface aussi quand on y entre",
+              linteauRH != null && !linteauRH.GetComponent<MeshRenderer>().enabled);
+
+        // Son mur de gauche prolonge la facade gauche du batiment : meme
+        // aplomb, meme epaisseur, sans decrochement a l'angle.
+        var facade = Trouver("MurGauche5");
+        Transform murGaucheRH = null;
+        for (int i = 0; i < bureauRHFerme.transform.childCount; i++)
+        {
+            var e = bureauRHFerme.transform.GetChild(i);
+            if (e.gameObject.name != "MurPiece") continue;
+            if (murGaucheRH == null || e.position.x < murGaucheRH.position.x) murGaucheRH = e;
+        }
+        Check("son mur de gauche est dans l'alignement de la facade",
+              facade != null && murGaucheRH != null &&
+              Mathf.Abs(murGaucheRH.position.x - facade.transform.position.x) < 0.01f);
+        Check("et de la meme epaisseur qu'elle",
+              facade != null && murGaucheRH != null &&
+              Mathf.Abs(murGaucheRH.localScale.x - facade.transform.localScale.x) < 0.01f);
+
         // Le vantail s'ecarte vers le bureau RH, et non vers la salle de
         // repos ou il balaierait le cercle de fauteuils. Le cadre de la porte
         // est pivote d'un quart de tour — son axe Z local pointe vers la

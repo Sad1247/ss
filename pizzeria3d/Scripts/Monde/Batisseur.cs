@@ -119,6 +119,12 @@ namespace Pizzeria3D
 
         // La piece du fond et l'emplacement de sa dalle, poses pendant le decor
         // et repris au moment d'installer les zones d'achat.
+        /// <summary>
+        /// La facade gauche du batiment : son aplomb et son epaisseur. Le
+        /// bureau RH, qui la prolonge vers le fond, s'y aligne exactement.
+        /// </summary>
+        const float FacadeGaucheX = -8.0f, EpaisseurFacade = 0.6f;
+
         static GameObject _piece;
         static OrdinateurPortable _portable;
         static Vector3 _pieceEtSaDalle;
@@ -355,9 +361,9 @@ namespace Pizzeria3D
                            new Vector3(0.15f, hautBaie - basBaie, largeurBaie),
                            Bloc.Couleur(0xBFE8F2)).SansCollision();
             }
-            MurPerce("MurGauche", parent, false, -8.0f, -7.5f, 7.5f, 3.2f, 0.6f,
+            MurPerce("MurGauche", parent, false, FacadeGaucheX, -7.5f, 7.5f, 3.2f, EpaisseurFacade,
                      Bloc.MachineBis, baiesGauche);
-            Obstacles.Ajouter(new Vector3(-8.0f, 0f, 0f), 0.6f, 15f);
+            Obstacles.Ajouter(new Vector3(FacadeGaucheX, 0f, 0f), EpaisseurFacade, 15f);
 
             // La cour reste degagee : la palette et la pile de cartons qui s'y
             // trouvaient encombraient le sol sans rien apporter.
@@ -487,7 +493,7 @@ namespace Pizzeria3D
         /// repos : bati a part des deux, sur un objet toujours actif, pour
         /// rester en place que l'une ou l'autre soit deja payee ou non — seul
         /// le passage, lui, reste bouche tant que les deux ne le sont pas.
-        /// Renvoie les pans a escamoter du cote de la salle de repos.
+        /// Renvoie les pans a escamoter, linteau compris.
         /// </summary>
         static List<GameObject> MurEntrePieces(Transform parent, float x, float centreZ, float demiZ,
                                                string nom,
@@ -507,11 +513,13 @@ namespace Pizzeria3D
                 Obstacles.Ajouter(new Vector3(x, 0f, centreZ + sens * offsetSegment), 0.4f, demiSegment);
                 segments.Add(pan);
             }
-            // Le linteau au-dessus de la porte, sans obstacle propre.
-            Bloc.Boite("MurEntrePiecesLinteau", parent,
+            // Le linteau au-dessus de la porte, sans obstacle propre. Il
+            // s'escamote avec les pans : laisse seul, il flottait au-dessus
+            // de la porte une fois dans la piece.
+            segments.Add(Bloc.Boite("MurEntrePiecesLinteau", parent,
                        new Vector3(x, hauteur + (hauteurMur - hauteur) * 0.5f, centreZ),
                        new Vector3(0.4f, hauteurMur - hauteur, largeur),
-                       Bloc.MachineBis).SansCollision();
+                       Bloc.MachineBis).SansCollision());
 
             seuilPos = new Vector3(x, 0f, centreZ);
             seuil = Obstacles.Ajouter(seuilPos, 0.4f, largeur);
@@ -538,12 +546,21 @@ namespace Pizzeria3D
             go.SetActive(false);
             var t = go.transform;
 
-            Bloc.Boite("SolBureauRH", t, new Vector3(0f, -0.2f, -0.15f),
-                       new Vector3(demiX * 2f + 0.4f, 0.4f, demiZ * 2f + 0.3f),
+            // Son mur de gauche prolonge la facade gauche du batiment : meme
+            // aplomb, meme epaisseur. Decale de vingt centimetres et plus
+            // mince, il faisait un decrochement bien visible a l'angle.
+            float gauche = FacadeGaucheX - centre.x;
+            float bordGauche = gauche - EpaisseurFacade * 0.5f;     // face exterieure
+            float bordDroit = demiX + 0.2f;                          // sous le mur mitoyen
+            float largeur = bordDroit - bordGauche;
+            float milieu = (bordDroit + bordGauche) * 0.5f;
+
+            Bloc.Boite("SolBureauRH", t, new Vector3(milieu, -0.2f, -0.15f),
+                       new Vector3(largeur, 0.4f, demiZ * 2f + 0.3f),
                        Bloc.Sol).SansCollision();
 
-            Mur(t, new Vector3(-demiX, 1.6f, 0f), new Vector3(0.4f, 3.2f, demiZ * 2f), centre);
-            Mur(t, new Vector3(0f, 1.6f, demiZ - 0.2f), new Vector3(demiX * 2f + 0.4f, 3.2f, 0.4f),
+            Mur(t, new Vector3(gauche, 1.6f, 0f), new Vector3(EpaisseurFacade, 3.2f, demiZ * 2f), centre);
+            Mur(t, new Vector3(milieu, 1.6f, demiZ - 0.2f), new Vector3(largeur, 3.2f, 0.4f),
                 centre);
 
             // Le bureau RH : un plan, un caisson, un ecran pose et une
